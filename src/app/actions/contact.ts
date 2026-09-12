@@ -47,6 +47,7 @@ export async function sendContactEmail(data: {
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
+      cache: "no-store",
       headers: {
         accept: "application/json",
         "api-key": BREVO_API_KEY,
