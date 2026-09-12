@@ -38,9 +38,9 @@ export async function sendContactEmail(data: {
     if (process.env.NODE_ENV === "development") {
       // Simulate a successful send in development mode
       await new Promise(resolve => setTimeout(resolve, 1500));
-      return { success: true, demo: true };
+      return { success: true, demo: true, debug: { hasApiKey: false } };
     }
-    return { success: false, error: "Email service not configured. Please check environment variables." };
+    return { success: false, error: "Email service not configured. Please check environment variables.", debug: { hasApiKey: false, nodeEnv: process.env.NODE_ENV } };
   }
 
   // ---- Send via Brevo SMTP API -----------------------------------------
@@ -81,12 +81,12 @@ export async function sendContactEmail(data: {
     console.log("📨 Brevo API Response:", JSON.stringify(result, null, 2));
     
     if (response.ok) {
-      return { success: true };
+      return { success: true, debug: { hasApiKey: true, status: response.status } };
     }
     console.error("❌ Brevo API Error:", result);
-    return { success: false, error: "Failed to send email. Please try again later." };
-  } catch (error) {
+    return { success: false, error: `Brevo API Error: ${result.message || response.statusText}`, debug: { hasApiKey: true, status: response.status, response: result } };
+  } catch (error: any) {
     console.error("Contact form error:", error);
-    return { success: false, error: "An unexpected error occurred. Please try again." };
+    return { success: false, error: `Network/Unexpected Error: ${error.message || "Unknown"}`, debug: { hasApiKey: !!BREVO_API_KEY, error: error.toString() } };
   }
 }

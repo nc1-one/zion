@@ -28,6 +28,8 @@ export function Contact() {
 
     try {
       const result = await sendContactEmail(formData);
+      console.log("Form submission result:", result);
+      
       if (result.success) {
         setStatus("success");
         setFormData({
