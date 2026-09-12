@@ -7,16 +7,21 @@ export function Footer() {
   return (
     <footer className="py-12 px-6 md:px-12 border-t border-solid border-gray-850">
       <div className="max-w-[1180px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/logo.png"
-            alt=""
-            width={28}
-            height={28}
-            className="w-7 h-7 object-contain"
-          />
-          <div className="font-display text-[0.95rem] font-bold text-gray-400">
-            Zion <span className="text-gold-dark">Systems & Build</span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt=""
+              width={28}
+              height={28}
+              className="w-7 h-7 object-contain"
+            />
+            <div className="font-display text-[0.95rem] font-bold text-gray-400">
+              Zion <span className="text-gold-dark">Systems & Build</span>
+            </div>
+          </div>
+          <div className="text-[0.65rem] text-gray-600 font-mono mt-1 pl-10">
+            v0.1.0
           </div>
         </div>
 
