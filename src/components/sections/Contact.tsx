@@ -182,10 +182,10 @@ export function Contact() {
                       onChange={handleChange}
                       className="p-3.5 bg-gray-900 border border-solid border-gray-800 rounded-lg text-white font-body text-[0.88rem] outline-none transition-all focus:border-gold focus:shadow-[0_0_0_3px_rgba(205,162,70,0.1)] cursor-pointer"
                     >
-                      <option>Ministry / NGO</option>
-                      <option>Local Church</option>
-                      <option>Faith-Based Business</option>
-                      <option>Individual Project</option>
+                      <option value="Ministry / NGO">Ministry / NGO</option>
+                      <option value="Local Church">Local Church</option>
+                      <option value="Faith-Based Business">Faith-Based Business</option>
+                      <option value="Individual Project">Individual Project</option>
                     </select>
                   </div>
 
