@@ -78,8 +78,8 @@ export function Contact() {
             className="flex flex-col gap-6"
           >
             {[
-              { icon: Mail, label: "Email Us", val: "hello@zionbuild.com" },
-              { icon: Phone, label: "Call Us", val: "+63 (900) 123 4567" },
+              { icon: Mail, label: "Email Us", val: "support@zionsystems.dev" },
+              { icon: Phone, label: "Call Us", val: "+63 (908) 890 1896" },
               { icon: MessageSquare, label: "Office", val: "Manila, Philippines" },
             ].map(item => (
               <div key={item.label} className="flex gap-4 items-start">
