@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, FileDown, Loader2, RotateCcw, Send } from "lucide-react";
 import { useAssessment } from "./AssessmentProvider";
 import { ScopeSheet } from "./ScopeSheet";
@@ -17,7 +17,7 @@ import {
   TIMELINES,
 } from "@/lib/assessment/questions";
 import type { Answers } from "@/lib/assessment/types";
-import { hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
+import { money, weeksLabel } from "@/lib/assessment/format";
 import { serviceTitle } from "@/lib/assessment/services";
 import { cn } from "@/lib/utils";
 
@@ -53,9 +53,12 @@ const STEPS: Step[] = [
 
 export function Assessment() {
   const { stage } = useAssessment();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  const sheetY = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
   return (
-    <section id="assessment" className="relative pt-[calc(var(--nav-height)+2.5rem)] md:pt-[calc(var(--nav-height)+3.5rem)] pb-20 md:pb-28 px-5 md:px-10 overflow-clip">
+    <section ref={sectionRef} id="assessment" className="relative pt-[calc(var(--nav-height)+2.5rem)] md:pt-[calc(var(--nav-height)+3.5rem)] pb-20 md:pb-28 px-5 md:px-10 overflow-clip">
       <div className="relative max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-10 lg:gap-16 items-start">
         <div className="lg:sticky lg:top-[calc(var(--nav-height)+2rem)]">
           <AnimatePresence mode="wait">
@@ -73,7 +76,7 @@ export function Assessment() {
             </motion.div>
           </AnimatePresence>
         </div>
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}>
+        <motion.div style={{ y: stage === "intro" ? sheetY : 0 }} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}>
           <ScopeSheet />
         </motion.div>
       </div>
@@ -443,9 +446,6 @@ function DonePanel() {
           <dt className="annot text-gold-deep">Estimated investment</dt>
           <dd className="font-display text-[1.8rem] font-semibold text-ink leading-tight mt-0.5">
             <CountUp value={proposal.totalCost} format={money} />
-          </dd>
-          <dd className="font-mono text-[0.68rem] text-graphite mt-1">
-            {hoursLabel(proposal.totalHours)} × {money(proposal.hourlyRate)}/hour
           </dd>
         </div>
         <div className="px-4 py-3 border-l border-rule">

@@ -215,7 +215,7 @@ export function HubSpotPrototype() {
       {app.screen === "dashboard" && (
         <>
           <ScreenHeader
-            title="Good morning, Tess"
+            title="Dashboard"
             subtitle="Thursday, October 29 · Zion's illustration of a HubSpot setup"
             action={<SmallButton onClick={() => app.notify("Board link copied. The numbers stay live, no export needed.")}><Share2 size={12} /> Share with board</SmallButton>}
           />

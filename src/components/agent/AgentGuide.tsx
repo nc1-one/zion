@@ -219,7 +219,12 @@ export function AgentGuide() {
         aria-label="Zion Agent guide"
         className="agent-bob w-14 h-14 rounded-full bg-sheet border border-rule shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] flex items-center justify-center cursor-pointer hover:border-gold transition-colors"
       >
-        <motion.span key={notice?.id ?? 0} initial={{ y: 0 }} animate={notice ? { y: [0, -9, 0, -4, 0] } : { y: 0 }} transition={{ duration: 0.7 }}>
+        <motion.span
+          key={notice?.id ?? 0}
+          initial={{ y: 0, rotate: 0 }}
+          animate={notice ? { y: [0, -9, 0, -4, 0] } : { rotate: [0, -14, 12, -8, 0] }}
+          transition={notice ? { duration: 0.7 } : { duration: 1, delay: 1.4 }}
+        >
           <AgentMascot size={40} mood={mood} />
         </motion.span>
       </button>

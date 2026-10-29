@@ -26,7 +26,7 @@ const PROJECTS: ProjectType[] = [
   {
     title: "Jesus.Net Philippines",
     kind: "Digital ministry portal",
-    desc: "A full-scale digital missions portal featuring pathway-based navigation for individuals, churches, and Bible study leaders. Reach millions across 160+ countries.",
+    desc: "Missions portal for individuals, churches, and Bible study leaders in 160+ countries.",
     tags: ["Web Platform", "Ministry Tech", "Multi-Tool"],
     monogram: "J.NET",
     link: "https://jesus.net.ph",
@@ -37,7 +37,7 @@ const PROJECTS: ProjectType[] = [
   {
     title: "Turn Vertical",
     kind: "Digital evangelism platform",
-    desc: "Website and mobile app that helps believers record testimonies and share Gospel videos via QR codes and links.",
+    desc: "App for recording testimonies and sharing Gospel videos.",
     tags: ["Web App", "Mobile App", "Video Platform"],
     monogram: "TV",
     appStore: "https://apps.apple.com/my/app/turn-vertical/id6758944157",
@@ -47,7 +47,7 @@ const PROJECTS: ProjectType[] = [
   {
     title: "HopeBegins.Today",
     kind: "Faith-based mental health",
-    desc: "A ministry website for a faith-driven mental health coaching program combining Christian principles with technology.",
+    desc: "Website for a faith-based mental health coaching program.",
     tags: ["Ministry Website", "Booking System"],
     monogram: "HB",
     link: "https://hopebegins.today",
@@ -57,7 +57,7 @@ const PROJECTS: ProjectType[] = [
   {
     title: "Glassbox Philippines",
     kind: "Systems integration",
-    desc: "End-to-end systems integration for an architectural finishes company, connecting inventory and ordering workflows.",
+    desc: "Inventory and ordering connected for a finishes company.",
     tags: ["Systems Integration", "Enterprise"],
     monogram: "GB",
     category: "Enterprise",
@@ -66,7 +66,7 @@ const PROJECTS: ProjectType[] = [
   {
     title: "Himala Every Day",
     kind: "Devotional landing page",
-    desc: "A beautifully crafted landing page for a daily devotional ministry reaching readers in 25+ languages.",
+    desc: "Landing page for a devotional read in 25+ languages.",
     tags: ["Landing Page", "UI/UX"],
     monogram: "HED",
     link: "https://himalaeveryday.ph",
@@ -76,7 +76,7 @@ const PROJECTS: ProjectType[] = [
   {
     title: "eSTAR Foundation",
     kind: "Ministry impact reporting",
-    desc: "A missions-focused reporting platform featuring the Harvest database that maps churches and unreached communities.",
+    desc: "Reporting platform that maps churches and unreached communities.",
     tags: ["Impact Reporting", "Missions Data"],
     monogram: "eSF",
     link: "https://www.estar.ws/",

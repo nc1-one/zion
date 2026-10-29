@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { sendContactEmail } from "@/app/actions/contact";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { ORG_TYPES, labelOf } from "@/lib/assessment/questions";
-import { hostOf, hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
+import { hostOf, money, weeksLabel } from "@/lib/assessment/format";
 
 const ORG_OPTIONS = [...ORG_TYPES.map((o) => o.label), "Individual project"];
 
@@ -153,10 +153,10 @@ export function Contact() {
                       <div className="text-[0.92rem] font-medium text-ink mt-1 truncate">{scope ? scope.projectTitle : attachedQuote!.title}</div>
                       <div className="text-[0.8rem] text-graphite mt-0.5">
                         {scope
-                          ? `${money(scope.totalCost)} · ${hoursLabel(scope.totalHours)} · ${weeksLabel(scope.totalWeeks)}`
-                          : attachedQuote!.cadence === "monthly"
-                            ? `${money(attachedQuote!.totalCost)} / month · ${attachedQuote!.term ?? ""}${attachedQuote!.contractTotal ? ` · ${money(attachedQuote!.contractTotal)} total` : ""}`
-                            : `${money(attachedQuote!.totalCost)} · ${hoursLabel(attachedQuote!.totalHours)}${attachedQuote!.weeks ? ` · about ${weeksLabel(attachedQuote!.weeks)}` : ""}`}
+                          ? `${money(scope.totalCost)} · ${weeksLabel(scope.totalWeeks)}`
+                          : attachedQuote!.kind === "managed-it"
+                            ? `${money(attachedQuote!.monthlyTotal)} / month · ${attachedQuote!.term ?? ""}${attachedQuote!.contractTotal ? ` · ${money(attachedQuote!.contractTotal)} total` : ""}`
+                            : [attachedQuote!.setupTotal ? `${money(attachedQuote!.setupTotal)} setup` : "", attachedQuote!.monthlyTotal ? `${money(attachedQuote!.monthlyTotal)} / month` : ""].filter(Boolean).join(" · ")}
                       </div>
                     </div>
                     <button

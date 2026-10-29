@@ -72,7 +72,11 @@ export function Offerings() {
                     const active = svc.id === selected.id;
                     const index = SERVICES.indexOf(svc);
                     return (
-                      <button
+                      <motion.button
+                        initial={{ opacity: 0, x: -12 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
                         key={svc.id}
                         id={`offering-tab-${svc.id}`}
                         type="button"
@@ -101,7 +105,7 @@ export function Offerings() {
                           size={16}
                           className={cn("transition-[opacity,transform]", active ? "opacity-100 text-ink" : "opacity-0 -translate-x-1 group-hover:opacity-60")}
                         />
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -147,11 +151,6 @@ export function Offerings() {
                     </li>
                   ))}
                 </ul>
-
-                <div className="mt-7 pt-5 border-t border-rule">
-                  <div className="annot text-graphite">Best for</div>
-                  <p className="mt-1.5 text-[0.92rem] leading-[1.6] text-ink-soft">{selected.bestFor}</p>
-                </div>
 
                 <Button onClick={scopeThis} className="mt-7">
                   Scope this with the Zion Agent <ArrowRight size={16} />

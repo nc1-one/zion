@@ -116,7 +116,11 @@ export function ZPL() {
               {PHASES.map((p, i) => {
                 const state = i < active ? "done" : i === active ? "active" : "upcoming";
                 return (
-                  <button
+                  <motion.button
+                    initial={{ opacity: 0, y: 14 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.45, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
                     key={p.key}
                     id={`zpl-tab-${p.key}`}
                     type="button"
@@ -145,7 +149,7 @@ export function ZPL() {
                     >
                       {p.name}
                     </span>
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -169,8 +173,6 @@ export function ZPL() {
                 </div>
                 <h3 className="mt-3 font-display text-[2rem] leading-[1.1] font-semibold">{phase.name}</h3>
                 <p className="mt-3 text-[0.98rem] leading-[1.7] text-ink-soft">{detail.desc}</p>
-                <div className="mt-6 annot text-mist">Your role</div>
-                <p className="mt-1.5 text-[0.92rem] leading-[1.6] text-ink-soft">{detail.role}</p>
               </div>
               <div className="bg-sheet p-7 md:p-9 flex flex-col">
                 <div className="annot text-mist">You receive</div>

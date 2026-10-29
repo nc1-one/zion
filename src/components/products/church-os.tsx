@@ -154,7 +154,7 @@ export function ChurchOSPrototype() {
     <ProtoApp app={app} name="Church OS · Grace Fellowship" user="Pastor Dan Castillo" nav={nav} alerts={drifting.length - assigned.length}>
       {app.screen === "dashboard" && (
         <>
-          <ScreenHeader title="Good morning, Pastor Dan" subtitle="Sunday, October 26" />
+          <ScreenHeader title="Dashboard" subtitle="Sunday, October 26" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
             <Stat label="Attendance" value="412" sub="+6% vs last month" tone="good" />
             <Stat label="Giving, October" value={peso(monthTotal)} sub="128 recurring givers" />
