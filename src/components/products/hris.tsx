@@ -269,7 +269,7 @@ export function ChurchHRISPrototype() {
     <ProtoApp app={app} name="Church HRIS · Grace Fellowship" user="Tess Aquino" nav={nav} alerts={pending.length + docAlerts.length}>
       {app.screen === "dashboard" && (
         <>
-          <ScreenHeader title="Good morning, Tess" subtitle="Thursday, October 29" />
+          <ScreenHeader title="Overview" subtitle="Thursday, October 29" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
             <Stat label="Headcount" value={String(staff.length)} sub={`${staff.filter((s) => s.type === "Regular").length} regular`} />
             <Stat label="Next pay date" value="Oct 30" sub={run === "Draft" ? "Pay run in draft" : run === "Approved" ? "Approved, payslips not sent" : "Payslips sent"} tone={run === "Sent" ? "good" : undefined} />

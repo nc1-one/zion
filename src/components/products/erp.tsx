@@ -269,7 +269,7 @@ export function ErpPrototype() {
     <ProtoApp app={app} name="ERP · Bautista Builders Supply" user="Marites Bautista" nav={nav} alerts={low.filter((i) => !onOrder(i.id)).length + overdue.length}>
       {app.screen === "dashboard" && (
         <>
-          <ScreenHeader title="Good morning, Marites" subtitle="Thursday, October 29 · Quezon City and Pasig" />
+          <ScreenHeader title="Dashboard" subtitle="Thursday, October 29 · Quezon City and Pasig" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
             <Stat label="Sales today" value={peso(salesToday)} sub="+9% vs last Thursday" tone="good" />
             <Stat label="Low stock" value={String(low.length)} sub={`${low.filter((i) => onOrder(i.id)).length} already on order`} tone={low.some((i) => !onOrder(i.id)) ? "bad" : undefined} />

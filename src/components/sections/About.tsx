@@ -8,22 +8,22 @@ import { CheckCircle2, Heart, Lightbulb, Target } from "lucide-react";
 const VALUES = [
   {
     title: "Excellence for the Kingdom",
-    desc: "Work built for a higher purpose deserves careful craft: tested, documented, and easy for your team to run.",
+    desc: "Tested, documented, easy to run.",
     icon: Target,
   },
   {
     title: "Radical Transparency",
-    desc: "You see the plan, the weekly progress, and the pricing. Estimates show hours and our $8 hourly rate.",
+    desc: "You see the plan, progress, and pricing.",
     icon: Lightbulb,
   },
   {
     title: "Mission Alignment",
-    desc: "We judge a project by what your organization can do afterwards, not by how much we shipped.",
+    desc: "Success is what you can do afterwards.",
     icon: Heart,
   },
   {
     title: "Production Integrity",
-    desc: "Every release passes the same quality gates in the Zion Production Line before it reaches your people.",
+    desc: "Every release passes the same quality gates.",
     icon: CheckCircle2,
   },
 ];
@@ -48,7 +48,7 @@ export function About() {
 
         <div>
           <h3 className="font-display text-[1.6rem] font-semibold text-ink">Our core values</h3>
-          <p className="mt-1 text-[0.92rem] text-graphite">Four commitments we make on every project.</p>
+          
           <ul className="mt-6 border-t border-rule">
             {VALUES.map((value, idx) => (
               <motion.li

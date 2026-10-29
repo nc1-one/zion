@@ -14,7 +14,7 @@ import {
   labelOf,
 } from "@/lib/assessment/questions";
 import { surveyNotes } from "@/lib/assessment/survey";
-import { formatDate, hostOf, hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
+import { formatDate, hostOf, money, weeksLabel } from "@/lib/assessment/format";
 import { PHASES } from "@/lib/assessment/types";
 import { serviceTitle } from "@/lib/assessment/services";
 import { cn } from "@/lib/utils";
@@ -151,9 +151,7 @@ export function ScopeSheet() {
                       <span className="font-display text-gold-deep mr-1.5">{PHASES.find((p) => p.key === phase.key)!.numeral}</span>
                       {phase.name}
                     </span>
-                    <span className="font-mono text-[0.72rem] text-graphite">
-                      {phase.hours} h · {money(phase.cost)}
-                    </span>
+                    <span className="text-[0.72rem] text-graphite">{weeksLabel(phase.weeks)}</span>
                   </div>
                   <ul>
                     {phase.deliverables.map((d) => (
@@ -161,10 +159,6 @@ export function ScopeSheet() {
                         <span className="min-w-0">
                           <span className="block text-[0.85rem] font-medium text-ink">{d.name}</span>
                           <span className="block text-[0.78rem] leading-[1.5] text-graphite mt-0.5">{d.description}</span>
-                        </span>
-                        <span className="shrink-0 pt-0.5 text-right">
-                          <span className="block font-mono text-[0.75rem] text-ink">{money(d.cost)}</span>
-                          <span className="block font-mono text-[0.65rem] text-mist mt-0.5">{d.hours} h</span>
                         </span>
                       </li>
                     ))}
@@ -201,15 +195,12 @@ export function ScopeSheet() {
       {/* Title block, as on a drawing sheet */}
       <footer className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_1.4fr] border-t border-rule text-left">
         <TitleCell label="Prepared by" value={done ? (proposal.source === "agent" ? "Zion Agent" : "Zion estimator") : "Zion Agent"} />
-        <TitleCell label="Rate" value={done ? `${money(proposal.hourlyRate)} / hour` : "$8 / hour"} />
+        <TitleCell label="Date" value={done ? formatDate(proposal.createdAt) : null} />
         <TitleCell label="Timeline" value={done ? weeksLabel(proposal.totalWeeks) : null} />
         <div className="col-span-2 sm:col-span-1 px-5 sm:px-6 py-3.5 border-t sm:border-t-0 sm:border-l border-rule bg-gold-wash/60">
           <div className="annot text-gold-deep">Estimated investment</div>
           <div className={cn("font-display text-[1.9rem] leading-none font-semibold mt-1", done ? "text-ink" : "text-mist")}>
             {done ? <CountUp value={proposal.totalCost} format={money} /> : "$ —"}
-          </div>
-          <div className="font-mono text-[0.65rem] text-graphite mt-1.5">
-            {done ? `${hoursLabel(proposal.totalHours)} · ${formatDate(proposal.createdAt)}` : "Hours × rate"}
           </div>
         </div>
       </footer>

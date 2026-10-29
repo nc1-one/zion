@@ -1,5 +1,5 @@
 // Server-side estimating: effort guide, fallback estimator, and turning effort
-// into a priced proposal at Zion's published hourly rate.
+// into a priced proposal at Zion's internal hourly rate.
 
 import { randomBytes } from "node:crypto";
 import type { BuildTypeId, FeatureId, TimelineId } from "./questions";
@@ -89,12 +89,37 @@ export interface Draft {
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
+// Internally a proposal carries hours; the browser gets costs only.
+type PublicPhase = Proposal["phases"][number];
+type InternalPhase = Omit<PublicPhase, "deliverables"> & {
+  hours: number;
+  deliverables: (PublicPhase["deliverables"][number] & { hours: number })[];
+};
+export type InternalProposal = Omit<Proposal, "phases"> & { phases: InternalPhase[]; totalHours: number };
+
+export function publicProposal(p: InternalProposal): Proposal {
+  const copy: Partial<InternalProposal> = { ...p };
+  delete copy.totalHours;
+  return {
+    ...(copy as Omit<InternalProposal, "totalHours">),
+    phases: p.phases.map((ph) => ({
+      key: ph.key,
+      name: ph.name,
+      objective: ph.objective,
+      startWeek: ph.startWeek,
+      weeks: ph.weeks,
+      cost: ph.cost,
+      deliverables: ph.deliverables.map((d) => ({ name: d.name, description: d.description, cost: d.cost })),
+    })),
+  };
+}
+
 export function finalizeProposal(
   draft: Draft,
   answers: Answers,
   scan: ScanResult | null,
   source: Proposal["source"],
-): Proposal {
+): InternalProposal {
   const capacity = WEEKLY_CAPACITY[answers.timeline];
 
   // Keep one entry per ZPL phase, in ZPL order.
@@ -105,7 +130,7 @@ export function finalizeProposal(
 
   let week = 1;
   let totalCost = 0;
-  const phases: Proposal["phases"] = [];
+  const phases: InternalProposal["phases"] = [];
 
   for (const key of PHASE_KEYS) {
     const phase = byKey.get(key);
@@ -151,7 +176,6 @@ export function finalizeProposal(
     totalWeeks: Math.max(1, week - 1),
     totalHours: phases.reduce((sum, p) => sum + p.hours, 0),
     totalCost,
-    hourlyRate: HOURLY_RATE,
     assumptions: draft.assumptions.slice(0, 6).map((a) => a.slice(0, 300)),
     recommendedServices: [...new Set(draft.recommendedServices)].slice(0, 7),
     answers,

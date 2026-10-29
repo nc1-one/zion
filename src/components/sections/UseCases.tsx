@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Pause, Play, RotateCcw } from "lucide-react";
+import { ArrowRight, Pause, Play, RotateCcw } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { Button } from "@/components/ui/Button";
 import type { Answers, PhaseKey } from "@/lib/assessment/types";
 import { PHASES } from "@/lib/assessment/types";
 import { cn } from "@/lib/utils";
-import { RevealHeading, TraceRule } from "@/components/ui/motion";
+import { RevealHeading } from "@/components/ui/motion";
 
 interface Milestone {
   start: number;
@@ -23,7 +23,6 @@ interface UseCase {
   tab: string;
   title: string;
   challenge: string;
-  builds: string[];
   weeks: number;
   milestones: Milestone[];
   related: string[];
@@ -39,7 +38,6 @@ const USE_CASES: UseCase[] = [
     title: "Online giving and events for a growing church",
     challenge:
       "Giving by envelope, sign-ups in a spreadsheet, sermons hard to find.",
-    builds: ["Refreshed website with a sermon library", "Recurring online giving with receipts", "Event registration with reminders"],
     weeks: 8,
     milestones: [
       { start: 1, end: 1, phase: "discover", title: "Discovery with your staff", detail: "We map your ministries, your audiences, and the questions visitors ask most." },
@@ -57,7 +55,6 @@ const USE_CASES: UseCase[] = [
     title: "A donor portal with impact reporting",
     challenge:
       "Donors ask what their gifts did. The answer takes a week.",
-    builds: ["Donor accounts with recurring gifts", "Impact dashboards by program", "One reporting format for field teams"],
     weeks: 14,
     milestones: [
       { start: 1, end: 2, phase: "discover", title: "Program and donor mapping", detail: "Interviews with your team and key donors to define what the portal must answer." },
@@ -75,7 +72,6 @@ const USE_CASES: UseCase[] = [
     title: "An online store and marketing launch",
     challenge:
       "Orders by chat, inventory on paper, growth stuck at word of mouth.",
-    builds: ["Online store with payments", "Inventory and accounting sync", "Search, social, and email launch campaign"],
     weeks: 10,
     milestones: [
       { start: 1, end: 1, phase: "discover", title: "Brand and customer workshop", detail: "Who you serve, what sets you apart, and how your values should show up online." },
@@ -93,7 +89,6 @@ const USE_CASES: UseCase[] = [
     title: "An enrollment and learning portal",
     challenge:
       "Applications by email, tuition tracked by hand, materials lost in chats.",
-    builds: ["Online applications and tuition payments", "Student dashboard with class materials", "Admin view for registrars"],
     weeks: 12,
     milestones: [
       { start: 1, end: 1, phase: "discover", title: "Enrollment journey mapping", detail: "Every step from inquiry to first class, mapped with your registrar and teachers." },
@@ -145,7 +140,6 @@ export function UseCases() {
   return (
     <section id="use-cases" className="py-20 md:py-28 px-5 md:px-10">
       <div className="max-w-[1200px] mx-auto">
-        <TraceRule className="mb-14 md:mb-16" />
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 mb-10">
           <div>
             <RevealHeading text="Example projects" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
@@ -190,16 +184,6 @@ export function UseCases() {
                 <div className="annot text-graphite">Example engagement · {useCase.tab}</div>
                 <h3 className="mt-3 font-display text-[1.9rem] leading-[1.1] font-semibold text-ink">{useCase.title}</h3>
                 <p className="mt-3 text-[0.95rem] leading-[1.65] text-ink-soft">{useCase.challenge}</p>
-
-                <div className="mt-6 annot text-graphite">What Zion builds</div>
-                <ul className="mt-2.5 flex flex-col gap-2">
-                  {useCase.builds.map((b) => (
-                    <li key={b} className="flex gap-2.5 text-[0.92rem] text-ink">
-                      <Check size={16} strokeWidth={2.5} className="text-gold-deep shrink-0 mt-0.5" />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
 
                 {useCase.related.length > 0 && (
                   <p className="mt-6 text-[0.85rem] text-graphite">
@@ -307,26 +291,6 @@ export function UseCases() {
                 </motion.div>
               </AnimatePresence>
 
-              <ol className="mt-5 flex flex-col">
-                {useCase.milestones.map((m, i) => (
-                  <li key={m.title}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActive(i);
-                        setPlaying(false);
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-3 py-2 text-left text-[0.85rem] border-b border-rule-soft last:border-0 cursor-pointer",
-                        i === active ? "text-ink font-medium" : "text-graphite hover:text-ink",
-                      )}
-                    >
-                      <span className="font-mono text-[0.7rem] w-16 shrink-0 text-mist">{weekRange(m).replace("Weeks ", "W").replace("Week ", "W")}</span>
-                      {m.title}
-                    </button>
-                  </li>
-                ))}
-              </ol>
             </div>
           </div>
         </div>

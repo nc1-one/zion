@@ -1,5 +1,5 @@
 import { runAgent } from "@/lib/assessment/agent";
-import { estimatorDraft, finalizeProposal } from "@/lib/assessment/estimate";
+import { estimatorDraft, finalizeProposal, publicProposal } from "@/lib/assessment/estimate";
 import { AssessRequestSchema } from "@/lib/assessment/types";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
@@ -18,11 +18,11 @@ export async function POST(request: Request) {
 
   try {
     const draft = await runAgent(answers, scan);
-    return Response.json(finalizeProposal(draft, answers, scan, "agent"));
+    return Response.json(publicProposal(finalizeProposal(draft, answers, scan, "agent")));
   } catch (error) {
     // Keep the experience working without the agent (no API key, timeout,
     // refusal): fall back to the rules-based estimator.
     console.error("Zion Agent unavailable, using estimator:", error instanceof Error ? error.message : error);
-    return Response.json(finalizeProposal(estimatorDraft(answers, scan), answers, scan, "estimator"));
+    return Response.json(publicProposal(finalizeProposal(estimatorDraft(answers, scan), answers, scan, "estimator")));
   }
 }

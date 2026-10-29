@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono, Cormorant_Garamond } from "next/font/google";
+import { Outfit, JetBrains_Mono, Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -12,6 +12,12 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
   weight: ["400", "500"],
+});
+
+// Product prototypes use Inter, like most real business software.
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
 });
 
 const cormorant = Cormorant_Garamond({
@@ -33,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${jetbrains.variable} ${cormorant.variable} scroll-smooth`}>
+    <html lang="en" className={`${outfit.variable} ${jetbrains.variable} ${cormorant.variable} ${inter.variable} scroll-smooth`}>
       <body className="antialiased">{children}</body>
     </html>
   );

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, ChevronLeft, ChevronRight, X, type LucideIcon } from "lucide-react";
+import { Bell, CheckCircle2, ChevronLeft, ChevronRight, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ---- App state: screen stack, navigation, toasts -------------------------------
@@ -45,20 +44,7 @@ export function useProtoApp(home: string) {
   const notify = useCallback((text: string) => setToast((t) => ({ key: (t?.key ?? 0) + 1, text })), []);
   const clearToast = useCallback(() => setToast(null), []);
 
-  return {
-    screen: top.screen,
-    id: top.id,
-    stack,
-    dir,
-    // Open a detail screen on top of the current one.
-    open,
-    // Jump to a top-level section from the sidebar.
-    section,
-    back,
-    notify,
-    toast,
-    clearToast,
-  };
+  return { screen: top.screen, id: top.id, stack, dir, open, section, back, notify, toast, clearToast };
 }
 
 export type ProtoAppState = ReturnType<typeof useProtoApp>;
@@ -67,9 +53,9 @@ export type ProtoAppState = ReturnType<typeof useProtoApp>;
 
 // Screens slide forward when opened and back when closed.
 const SLIDE = {
-  enter: (dir: number) => ({ opacity: 0, x: dir * 24 }),
+  enter: (dir: number) => ({ opacity: 0, x: dir * 20 }),
   center: { opacity: 1, x: 0 },
-  exit: (dir: number) => ({ opacity: 0, x: dir * -24 }),
+  exit: (dir: number) => ({ opacity: 0, x: dir * -20 }),
 };
 
 export function ProtoApp({
@@ -81,54 +67,67 @@ export function ProtoApp({
   children,
 }: {
   app: ProtoAppState;
-  name: string;
+  name: string; // "Product · Organization"
   user: string;
   nav: ProtoNavItem[];
   alerts?: number;
   children: React.ReactNode;
 }) {
+  const [product, org] = name.split(" · ");
   const root = nav.find((n) => n.id === app.stack[0].screen);
   const crumbs = [root?.label ?? "", ...app.stack.slice(1).map((s) => s.label ?? "")];
-  const initials = user
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("");
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
     if (!app.toast) return;
-    const timer = window.setTimeout(app.clearToast, 2600);
+    const timer = window.setTimeout(app.clearToast, 2800);
     return () => window.clearTimeout(timer);
   }, [app.toast, app.clearToast]);
 
   return (
-    <div className="relative rounded-[14px] border border-rule bg-night overflow-hidden flex flex-col h-[640px]">
-      {/* title bar */}
-      <div className="flex items-center justify-between gap-3 px-4 h-12 border-b border-rule bg-sheet shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <Image src="/logo.png" alt="" width={22} height={22} className="w-[22px] h-[22px] object-contain shrink-0" />
-          <span className="text-[0.85rem] font-semibold text-ink truncate">{name}</span>
+    <div className="proto-light relative rounded-xl border border-rule bg-paper overflow-hidden flex flex-col h-[660px] text-left">
+      {/* top bar */}
+      <div className="flex items-center gap-3 px-3 sm:px-4 h-12 border-b border-rule bg-sheet shrink-0">
+        <div className="flex items-center gap-2 min-w-0 sm:w-[10.5rem] shrink-0">
+          <span className="w-6 h-6 rounded-md bg-gold text-sheet text-[0.7rem] font-bold flex items-center justify-center shrink-0" aria-hidden>
+            {product.slice(0, 1)}
+          </span>
+          <span className="min-w-0 leading-tight">
+            <span className="block text-[0.8rem] font-semibold text-ink truncate">{product}</span>
+            {org && <span className="block text-[0.66rem] text-mist truncate">{org}</span>}
+          </span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          className="hidden md:flex items-center gap-2 flex-1 max-w-[22rem] h-8 px-2.5 rounded-lg border border-rule bg-paper text-[0.78rem] text-mist hover:border-mist transition-colors cursor-pointer"
+        >
+          <Search size={14} />
+          <span className="flex-1 text-left">Search or jump to…</span>
+          <kbd className="font-mono text-[0.65rem] px-1.5 py-0.5 rounded border border-rule bg-sheet">⌘K</kbd>
+        </button>
+        <div className="ml-auto flex items-center gap-3 shrink-0">
+          <button type="button" onClick={() => setPaletteOpen(true)} className="md:hidden text-graphite cursor-pointer" aria-label="Search">
+            <Search size={16} />
+          </button>
           <span className="relative text-graphite" aria-label={`${alerts} alerts`}>
             <Bell size={16} />
             {alerts > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-gold text-paper text-[0.6rem] font-bold flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-danger text-sheet text-[0.6rem] font-bold flex items-center justify-center">
                 {alerts}
               </span>
             )}
           </span>
           <span className="flex items-center gap-2">
             <Avatar name={user} size={26} />
-            <span className="hidden md:inline text-[0.78rem] text-ink-soft">{user}</span>
-            <span className="sr-only">{initials}</span>
+            <span className="hidden lg:inline text-[0.78rem] text-ink-soft">{user}</span>
           </span>
         </div>
       </div>
 
       <div className="flex-1 min-h-0 grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] sm:grid-rows-1 sm:grid-cols-[11.5rem_minmax(0,1fr)]">
         {/* sidebar */}
-        <nav aria-label={`${name} prototype`} className="flex sm:flex-col gap-0.5 p-2 sm:p-3 border-b sm:border-b-0 sm:border-r border-rule overflow-x-auto sm:overflow-visible bg-night">
+        <nav aria-label={`${product} navigation`} className="flex sm:flex-col gap-0.5 p-2 sm:p-2.5 border-b sm:border-b-0 sm:border-r border-rule overflow-x-auto sm:overflow-visible bg-night">
           {nav.map((item) => {
             const on = item.id === app.stack[0].screen;
             return (
@@ -138,34 +137,27 @@ export function ProtoApp({
                 onClick={() => app.section(item.id)}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-2.5 shrink-0 px-3 py-2 rounded-lg text-[0.82rem] text-left transition-colors cursor-pointer",
-                  on ? "text-gold-bright font-semibold" : "text-graphite hover:text-ink",
+                  "relative flex items-center gap-2.5 shrink-0 px-2.5 py-1.5 rounded-md text-[0.8rem] text-left transition-colors cursor-pointer",
+                  on ? "text-ink font-semibold" : "text-graphite hover:text-ink hover:bg-raised",
                 )}
               >
-                {on && (
-                  <motion.span
-                    layoutId={`${name}-nav`}
-                    className="absolute inset-0 rounded-lg bg-gold-wash border border-gold/30"
-                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  />
-                )}
-                <item.icon size={15} strokeWidth={1.8} className="relative" />
+                {on && <motion.span layoutId={`${product}-nav`} className="absolute inset-0 rounded-md bg-sheet border border-rule shadow-[0_1px_2px_rgba(16,24,40,0.06)]" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+                <item.icon size={15} strokeWidth={1.9} className={cn("relative", on ? "text-gold" : "")} />
                 <span className="relative flex-1">{item.label}</span>
-                {item.badge ? <span className="relative font-mono text-[0.65rem] text-gold-bright">{item.badge}</span> : null}
+                {item.badge ? <span className="relative min-w-5 px-1.5 rounded-full bg-raised text-[0.66rem] font-medium text-graphite text-center">{item.badge}</span> : null}
               </button>
             );
           })}
+          <div className="hidden sm:block mt-auto px-2.5 pt-3 text-[0.66rem] leading-relaxed text-mist border-t border-rule">
+            Prototype with sample data
+          </div>
         </nav>
 
         {/* main */}
         <div className="flex flex-col min-h-0 bg-paper">
-          <div className="flex items-center gap-1.5 h-10 px-4 border-b border-rule shrink-0 text-[0.75rem]">
+          <div className="flex items-center gap-1.5 h-10 px-4 border-b border-rule bg-sheet shrink-0 text-[0.75rem]">
             {app.stack.length > 1 && (
-              <button
-                type="button"
-                onClick={app.back}
-                className="flex items-center gap-0.5 mr-2 pr-2.5 border-r border-rule text-gold-bright hover:text-ink cursor-pointer"
-              >
+              <button type="button" onClick={app.back} className="flex items-center gap-0.5 mr-1.5 pr-2.5 border-r border-rule text-graphite hover:text-ink cursor-pointer">
                 <ChevronLeft size={14} /> Back
               </button>
             )}
@@ -185,7 +177,7 @@ export function ProtoApp({
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 className="p-4 sm:p-5"
               >
                 {children}
@@ -195,16 +187,20 @@ export function ProtoApp({
         </div>
       </div>
 
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} nav={nav} onGo={(id) => app.section(id)} />
+
       <AnimatePresence>
         {app.toast && (
           <motion.div
             key={app.toast.key}
             role="status"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className="absolute bottom-4 right-4 z-30 max-w-[18rem] px-4 py-2.5 rounded-lg bg-raised border border-gold/40 text-[0.8rem] text-ink shadow-[0_12px_30px_-12px_rgba(0,0,0,0.8)]"
+            initial={{ opacity: 0, y: 16, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 10, x: "-50%" }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-4 left-1/2 z-40 flex items-center gap-2 max-w-[90%] px-3.5 py-2.5 rounded-lg bg-ink text-sheet text-[0.8rem] shadow-[0_12px_24px_-8px_rgba(16,24,40,0.35)]"
           >
+            <CheckCircle2 size={15} className="text-[#47CD89] shrink-0" />
             {app.toast.text}
           </motion.div>
         )}
@@ -213,9 +209,71 @@ export function ProtoApp({
   );
 }
 
+// Jump to any section by typing, like ⌘K in real apps.
+function CommandPalette({ open, onClose, nav, onGo }: { open: boolean; onClose: () => void; nav: ProtoNavItem[]; onGo: (id: string) => void }) {
+  const [query, setQuery] = useState("");
+  const results = nav.filter((n) => n.label.toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  const go = (id: string) => {
+    onGo(id);
+    setQuery("");
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div className="absolute inset-0 z-30 bg-ink/20 flex justify-center pt-16 px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+          <motion.div
+            role="dialog"
+            aria-label="Search"
+            className="w-full max-w-md h-fit bg-sheet rounded-xl border border-rule shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)] overflow-hidden"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.16 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (results[0]) go(results[0].id);
+              }}
+              className="flex items-center gap-2 px-3.5 h-11 border-b border-rule"
+            >
+              <Search size={15} className="text-mist" />
+              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Jump to…" aria-label="Jump to" className="flex-1 bg-transparent text-[0.85rem] text-ink placeholder:text-mist outline-none" />
+              <kbd className="font-mono text-[0.62rem] text-mist">Esc</kbd>
+            </form>
+            <ul className="p-1.5 max-h-64 overflow-y-auto">
+              {results.map((r, i) => (
+                <li key={r.id}>
+                  <button type="button" onClick={() => go(r.id)} className={cn("w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.82rem] text-ink-soft text-left hover:bg-raised cursor-pointer", i === 0 && query && "bg-raised")}>
+                    <r.icon size={15} className="text-mist" />
+                    <span className="flex-1">{r.label}</span>
+                    {i === 0 && query && <CornerDownLeft size={13} className="text-mist" />}
+                  </button>
+                </li>
+              ))}
+              {results.length === 0 && <li className="px-3 py-4 text-[0.8rem] text-mist">No matches.</li>}
+            </ul>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ---- Overlays ----------------------------------------------------------------------
 
-// A dialog that stays inside the prototype window.
+// Forms open in a panel that slides in from the right, like most business apps.
 export function ProtoModal({
   open,
   title,
@@ -231,7 +289,7 @@ export function ProtoModal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Escape closes; focus moves into the dialog and returns when it closes.
+  // Escape closes; focus moves into the panel and returns when it closes.
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -249,34 +307,28 @@ export function ProtoModal({
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
-          className="absolute inset-0 z-20 bg-night/80 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
+        <motion.div className="absolute inset-0 z-20 bg-ink/25 flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
           <motion.div
             ref={panelRef}
             tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="w-full max-w-md bg-sheet border border-rule rounded-xl"
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="h-full w-[min(25rem,92%)] bg-sheet border-l border-rule flex flex-col shadow-[-16px_0_32px_-16px_rgba(16,24,40,0.2)]"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 38 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 h-12 border-b border-rule">
-              <span className="text-[0.92rem] font-semibold text-ink">{title}</span>
-              <button type="button" onClick={onClose} aria-label="Close" className="text-graphite hover:text-ink cursor-pointer">
+            <div className="flex items-center justify-between px-4 h-12 border-b border-rule shrink-0">
+              <span className="text-[0.9rem] font-semibold text-ink">{title}</span>
+              <button type="button" onClick={onClose} aria-label="Close" className="w-7 h-7 rounded-md flex items-center justify-center text-graphite hover:bg-raised cursor-pointer">
                 <X size={16} />
               </button>
             </div>
-            <div className="p-4 flex flex-col gap-3">{children}</div>
-            {footer && <div className="px-4 py-3 border-t border-rule flex justify-end gap-2">{footer}</div>}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3.5">{children}</div>
+            {footer && <div className="px-4 py-3 border-t border-rule flex justify-end gap-2 shrink-0 bg-paper">{footer}</div>}
           </motion.div>
         </motion.div>
       )}
@@ -290,10 +342,10 @@ export function ScreenHeader({ title, subtitle, action }: { title: string; subti
   return (
     <div className="flex items-start justify-between gap-3 mb-4">
       <div className="min-w-0">
-        <h4 className="font-display text-[1.45rem] leading-tight font-semibold text-ink">{title}</h4>
-        {subtitle && <p className="text-[0.78rem] text-graphite mt-0.5">{subtitle}</p>}
+        <h4 className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{title}</h4>
+        {subtitle && <p className="text-[0.78rem] text-mist mt-0.5">{subtitle}</p>}
       </div>
-      {action && <div className="shrink-0 flex gap-2">{action}</div>}
+      {action && <div className="shrink-0 flex flex-wrap justify-end gap-2">{action}</div>}
     </div>
   );
 }
@@ -303,7 +355,7 @@ export const ProtoTitle = ({ title, action }: { title: string; action?: React.Re
 
 export function Panel({ title, action, children, className }: { title?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <section className={cn("bg-sheet border border-rule rounded-lg", className)}>
+    <section className={cn("bg-sheet border border-rule rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.04)]", className)}>
       {title && (
         <div className="flex items-center justify-between gap-3 px-3.5 h-10 border-b border-rule">
           <span className="text-[0.8rem] font-semibold text-ink">{title}</span>
@@ -317,10 +369,10 @@ export function Panel({ title, action, children, className }: { title?: string; 
 
 export function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "good" | "bad" }) {
   return (
-    <div className="bg-sheet border border-rule rounded-lg p-3">
-      <div className="text-[0.72rem] font-medium text-graphite">{label}</div>
-      <div className="font-display text-[1.6rem] leading-tight font-semibold text-ink mt-0.5 tabular-nums">{value}</div>
-      {sub && <div className={cn("text-[0.7rem] mt-0.5", tone === "good" ? "text-[#8FD3AE]" : tone === "bad" ? "text-danger" : "text-mist")}>{sub}</div>}
+    <div className="bg-sheet border border-rule rounded-lg p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="text-[0.74rem] font-medium text-mist">{label}</div>
+      <div className="text-[1.45rem] leading-tight font-semibold text-ink mt-1 tabular-nums tracking-[-0.01em]">{value}</div>
+      {sub && <div className={cn("text-[0.72rem] mt-0.5", tone === "good" ? "text-good" : tone === "bad" ? "text-danger" : "text-mist")}>{sub}</div>}
     </div>
   );
 }
@@ -334,10 +386,10 @@ export function Bars({ data, format = (n: number) => String(n), height = "h-32" 
     <div>
       <div className={cn("flex items-end gap-2", height)}>
         {data.map((d, i) => (
-          <div key={d.label} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
-            <span className="font-mono text-[0.6rem] text-graphite tabular-nums">{format(d.value)}</span>
+          <div key={d.label} className="group flex-1 flex flex-col items-center justify-end h-full gap-1">
+            <span className="font-mono text-[0.6rem] text-mist tabular-nums opacity-70 group-hover:opacity-100 transition-opacity">{format(d.value)}</span>
             <motion.div
-              className={cn("w-full rounded-t-[3px]", i === data.length - 1 ? "bg-gold" : "bg-gold/35")}
+              className={cn("w-full rounded-t-[3px] transition-colors", i === data.length - 1 ? "bg-gold" : "bg-gold/25 group-hover:bg-gold/45")}
               initial={{ height: 0 }}
               animate={{ height: `${((d.value - floor) / (max - floor || 1)) * 100}%` }}
               transition={{ duration: 0.6, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
@@ -345,9 +397,9 @@ export function Bars({ data, format = (n: number) => String(n), height = "h-32" 
           </div>
         ))}
       </div>
-      <div className="flex gap-2 mt-1.5">
+      <div className="flex gap-2 mt-1.5 border-t border-rule pt-1.5">
         {data.map((d) => (
-          <span key={d.label} className="flex-1 text-center font-mono text-[0.6rem] text-mist">
+          <span key={d.label} className="flex-1 text-center text-[0.62rem] text-mist">
             {d.label}
           </span>
         ))}
@@ -358,7 +410,7 @@ export function Bars({ data, format = (n: number) => String(n), height = "h-32" 
 
 export function Meter({ value, max, className }: { value: number; max: number; className?: string }) {
   return (
-    <div className={cn("h-1.5 rounded-full bg-rule overflow-hidden", className)}>
+    <div className={cn("h-1.5 rounded-full bg-raised overflow-hidden", className)}>
       <motion.div
         className="h-full bg-gold rounded-full"
         initial={{ width: 0 }}
@@ -369,16 +421,31 @@ export function Meter({ value, max, className }: { value: number; max: number; c
   );
 }
 
-// Status shown as a colored dot and plain text, not a pill.
+// Status badge in the style of real business apps: tinted, compact, square-ish.
 export function Status({ tone, children }: { tone: "good" | "warn" | "bad" | "muted"; children: React.ReactNode }) {
-  const color = { good: "bg-[#8FD3AE]", warn: "bg-gold", bad: "bg-danger", muted: "bg-mist" }[tone];
+  const styles = {
+    good: "bg-good/10 text-good",
+    warn: "bg-warn/10 text-warn",
+    bad: "bg-danger-wash text-danger",
+    muted: "bg-raised text-graphite",
+  }[tone];
+  const dot = { good: "bg-good", warn: "bg-warn", bad: "bg-danger", muted: "bg-mist" }[tone];
   return (
-    <span className="inline-flex items-center gap-1.5 text-[0.75rem] text-ink-soft whitespace-nowrap">
-      <span className={cn("w-1.5 h-1.5 rounded-full", color)} aria-hidden />
+    <span className={cn("inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md text-[0.7rem] font-medium whitespace-nowrap", styles)}>
+      <span className={cn("w-1.5 h-1.5 rounded-full", dot)} aria-hidden />
       {children}
     </span>
   );
 }
+
+const AVATAR_TONES = [
+  "bg-[#EFF8FF] text-[#175CD3]",
+  "bg-[#ECFDF3] text-[#067647]",
+  "bg-[#FEF6EE] text-[#B93815]",
+  "bg-[#F4F3FF] text-[#5925DC]",
+  "bg-[#FDF2FA] text-[#C11574]",
+  "bg-[#F2F4F7] text-[#344054]",
+];
 
 export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   const initials = name
@@ -388,11 +455,11 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  const tone = name.length % 3 === 0 ? "bg-gold-wash text-gold-bright" : name.length % 3 === 1 ? "bg-raised text-ink" : "bg-trace-wash text-trace";
+  const hash = [...name].reduce((h, c) => h + c.charCodeAt(0), 0);
   return (
     <span
-      className={cn("inline-flex items-center justify-center rounded-full font-semibold shrink-0 border border-rule", tone)}
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
+      className={cn("inline-flex items-center justify-center rounded-full font-semibold shrink-0", AVATAR_TONES[hash % AVATAR_TONES.length])}
+      style={{ width: size, height: size, fontSize: size * 0.38 }}
       aria-hidden
     >
       {initials}
@@ -411,10 +478,10 @@ export interface Column<T> {
 // List table with clickable rows that open a detail screen.
 export function Table<T>({ columns, rows, rowKey, onRowClick, empty = "Nothing here yet." }: { columns: Column<T>[]; rows: T[]; rowKey: (row: T) => string; onRowClick?: (row: T) => void; empty?: string }) {
   return (
-    <div className="bg-sheet border border-rule rounded-lg overflow-hidden">
+    <div className="bg-sheet border border-rule rounded-lg overflow-hidden shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <table className="w-full text-left text-[0.8rem]">
         <thead>
-          <tr className="border-b border-rule">
+          <tr className="border-b border-rule bg-paper">
             {columns.map((c) => (
               <th key={c.key} className={cn("px-3 py-2 text-[0.7rem] font-medium text-mist", c.align === "right" && "text-right", c.hideOnMobile && "hidden md:table-cell")}>
                 {c.label}
@@ -423,9 +490,12 @@ export function Table<T>({ columns, rows, rowKey, onRowClick, empty = "Nothing h
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr
+          {rows.map((row, i) => (
+            <motion.tr
               key={rowKey(row)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: Math.min(i, 10) * 0.025 }}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={
                 onRowClick
@@ -438,41 +508,48 @@ export function Table<T>({ columns, rows, rowKey, onRowClick, empty = "Nothing h
                   : undefined
               }
               tabIndex={onRowClick ? 0 : undefined}
-              className={cn("border-b border-rule-soft last:border-0 transition-colors", onRowClick && "cursor-pointer hover:bg-raised focus-visible:bg-raised")}
+              className={cn("border-b border-rule-soft last:border-0 transition-colors", onRowClick && "cursor-pointer hover:bg-paper focus-visible:bg-paper")}
             >
               {columns.map((c) => (
                 <td key={c.key} className={cn("px-3 py-2.5 text-ink-soft align-middle", c.align === "right" && "text-right", c.hideOnMobile && "hidden md:table-cell")}>
                   {c.render(row)}
                 </td>
               ))}
-            </tr>
+            </motion.tr>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-6 text-center text-graphite">
+              <td colSpan={columns.length} className="px-3 py-8 text-center text-mist">
                 {empty}
               </td>
             </tr>
           )}
         </tbody>
       </table>
+      {rows.length > 0 && (
+        <div className="px-3 py-2 border-t border-rule bg-paper text-[0.7rem] text-mist">
+          {rows.length} {rows.length === 1 ? "result" : "results"}
+        </div>
+      )}
     </div>
   );
 }
 
-// Segmented control with a sliding highlight.
+// Segmented control: the selected option lifts onto a white chip.
 export function Segmented<T extends string>({ id, options, value, onChange }: { id: string; options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
-    <div className="inline-flex p-0.5 rounded-lg border border-rule bg-night">
+    <div className="inline-flex p-0.5 rounded-lg bg-raised border border-rule">
       {options.map((o) => (
         <button
           key={o.id}
           type="button"
           onClick={() => onChange(o.id)}
           aria-pressed={o.id === value}
-          className={cn("relative px-2.5 py-1 text-[0.72rem] rounded-md cursor-pointer", o.id === value ? "text-paper font-semibold" : "text-graphite hover:text-ink")}
+          className={cn("relative px-2.5 py-1 text-[0.74rem] rounded-md cursor-pointer transition-colors", o.id === value ? "text-ink font-semibold" : "text-graphite hover:text-ink")}
         >
-          {o.id === value && <motion.span layoutId={`${id}-seg`} className="absolute inset-0 rounded-md bg-gold" transition={{ type: "spring", stiffness: 500, damping: 36 }} />}
+          {o.id === value && (
+            <motion.span layoutId={`${id}-seg`} className="absolute inset-0 rounded-md bg-sheet shadow-[0_1px_2px_rgba(16,24,40,0.1)]" transition={{ type: "spring", stiffness: 500, damping: 36 }} />
+          )}
           <span className="relative">{o.label}</span>
         </button>
       ))}
@@ -482,7 +559,7 @@ export function Segmented<T extends string>({ id, options, value, onChange }: { 
 
 export function KeyValues({ items }: { items: [string, React.ReactNode][] }) {
   return (
-    <dl className="grid grid-cols-[8rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-[0.8rem]">
+    <dl className="grid grid-cols-[8rem_minmax(0,1fr)] gap-x-3 gap-y-2.5 text-[0.8rem]">
       {items.map(([k, v]) => (
         <React.Fragment key={k}>
           <dt className="text-mist">{k}</dt>
@@ -494,7 +571,7 @@ export function KeyValues({ items }: { items: [string, React.ReactNode][] }) {
 }
 
 export const textareaClass =
-  "w-full min-h-[5rem] px-3 py-2 rounded-lg bg-paper border border-rule text-[0.82rem] text-ink placeholder:text-mist outline-none focus:border-gold transition-colors resize-y";
+  "w-full min-h-[5rem] px-3 py-2 rounded-lg bg-sheet border border-rule text-[0.82rem] text-ink placeholder:text-mist outline-none focus:border-gold focus:shadow-[0_0_0_3px_var(--color-gold-wash)] transition-[border-color,box-shadow] resize-y";
 
 export function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: boolean) => void; label: string }) {
   return (
@@ -507,20 +584,20 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: bo
         e.stopPropagation();
         onChange(!on);
       }}
-      className={cn("relative w-9 h-5 rounded-full border transition-colors cursor-pointer shrink-0", on ? "bg-gold border-gold" : "bg-night border-rule")}
+      className={cn("relative w-9 h-5 rounded-full transition-colors cursor-pointer shrink-0", on ? "bg-gold" : "bg-rule")}
     >
-      <motion.span className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full", on ? "bg-paper" : "bg-mist")} animate={{ left: on ? 18 : 2 }} transition={{ type: "spring", stiffness: 500, damping: 32 }} />
+      <motion.span className="absolute top-0.5 w-4 h-4 rounded-full bg-sheet shadow-[0_1px_2px_rgba(16,24,40,0.2)]" animate={{ left: on ? 18 : 2 }} transition={{ type: "spring", stiffness: 500, damping: 32 }} />
     </button>
   );
 }
 
 export const inputClass =
-  "w-full h-9 px-3 rounded-lg bg-paper border border-rule text-[0.82rem] text-ink placeholder:text-mist outline-none focus:border-gold transition-colors";
+  "w-full h-9 px-3 rounded-lg bg-sheet border border-rule text-[0.82rem] text-ink placeholder:text-mist outline-none focus:border-gold focus:shadow-[0_0_0_3px_var(--color-gold-wash)] transition-[border-color,box-shadow]";
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[0.75rem] font-medium text-graphite">{label}</span>
+      <span className="text-[0.76rem] font-medium text-ink-soft">{label}</span>
       {children}
     </label>
   );
@@ -532,7 +609,7 @@ export function PrimaryButton({ children, onClick, disabled, type = "button" }: 
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold text-paper text-[0.78rem] font-semibold hover:bg-gold-bright disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold text-sheet text-[0.78rem] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.1)] hover:brightness-110 active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed transition-[filter,transform] cursor-pointer"
     >
       {children}
     </button>
@@ -549,7 +626,7 @@ export function SmallButton({ children, onClick, disabled, label }: { children: 
         onClick?.();
       }}
       disabled={disabled}
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-rule text-[0.72rem] font-medium text-ink hover:border-gold hover:text-gold-bright disabled:opacity-40 disabled:cursor-default transition-colors cursor-pointer"
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-rule bg-sheet text-[0.74rem] font-medium text-ink-soft shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:bg-paper hover:text-ink disabled:opacity-40 disabled:cursor-default transition-colors cursor-pointer"
     >
       {children}
     </button>

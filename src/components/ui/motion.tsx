@@ -89,45 +89,13 @@ export function RevealHeading({
   );
 }
 
-// A gold circuit trace, like the logo, that draws itself across a section edge.
-export function TraceRule({ className }: { className?: string }) {
-  return (
-    <svg className={cn("block w-full h-6 overflow-visible", className)} viewBox="0 0 1200 24" preserveAspectRatio="none" aria-hidden>
-      <motion.path
-        d="M0 12 H520 L536 4 H760 L776 12 H1200"
-        fill="none"
-        className="stroke-gold"
-        strokeWidth="1.5"
-        vectorEffect="non-scaling-stroke"
-        initial={{ pathLength: 0, opacity: 0.4 }}
-        whileInView={{ pathLength: 1, opacity: 0.55 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 1.4, ease: [0.65, 0, 0.35, 1] }}
-      />
-      {[520, 776].map((x, i) => (
-        <motion.circle
-          key={x}
-          cx={x}
-          cy={i === 0 ? 12 : 12}
-          r="3.5"
-          className="fill-gold"
-          initial={{ scale: 0 }}
-          whileInView={{ scale: 1 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ delay: 0.6 + i * 0.3, duration: 0.3 }}
-        />
-      ))}
-    </svg>
-  );
-}
-
 // Thin gold reading-progress line under the navigation bar.
 export function ScrollProgress() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.3 });
   return (
     <motion.div
-      className="fixed left-0 right-0 top-[var(--nav-height)] h-[2px] bg-gold origin-left z-50 print:hidden"
+      className="absolute left-0 right-0 -bottom-px h-[2px] bg-gold origin-left print:hidden"
       style={{ scaleX }}
       aria-hidden
     />

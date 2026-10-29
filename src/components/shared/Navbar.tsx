@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "./nav-links";
+import { ScrollProgress } from "@/components/ui/motion";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,8 +28,19 @@ export function Navbar() {
     return () => observer.disconnect();
   }, []);
 
+  const [hidden, setHidden] = useState(false);
+
+  // Solid once scrolled; tucks away while scrolling down, returns on the way up.
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 12);
+    let last = window.scrollY;
+    const handleScroll = () => {
+      const y = window.scrollY;
+      setIsScrolled(y > 12);
+      if (Math.abs(y - last) > 6) {
+        setHidden(y > last && y > 400);
+        last = y;
+      }
+    };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -45,10 +57,12 @@ export function Navbar() {
     <>
       <nav
         className={cn(
-          "fixed top-0 inset-x-0 z-50 h-[var(--nav-height)] flex items-center justify-between px-5 md:px-10 border-b transition-[background-color,border-color] duration-300",
+          "fixed top-0 inset-x-0 z-50 h-[var(--nav-height)] flex items-center justify-between px-5 md:px-10 border-b transition-[background-color,border-color,transform] duration-300",
           isScrolled || isMenuOpen ? "bg-paper border-rule" : "bg-transparent border-transparent",
+          hidden && !isMenuOpen && "-translate-y-full",
         )}
       >
+        <ScrollProgress />
         <a href="#assessment" className="flex items-center gap-3 no-underline" onClick={() => setIsMenuOpen(false)}>
           <Image src="/logo.png" alt="" width={36} height={36} priority className="w-9 h-9 object-contain" />
           <span className="flex flex-col leading-none">

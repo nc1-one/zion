@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { ProposalSchema, QuoteSchema, type Proposal, type Quote } from "@/lib/assessment/types";
-import { formatDate, hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
+import { formatDate, money, weeksLabel } from "@/lib/assessment/format";
+import { HOURLY_RATE } from "@/lib/assessment/pricing";
 import { serviceTitle } from "@/lib/assessment/services";
 
 // Validation schema for the contact form
@@ -25,19 +26,22 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+// Internal only: approximate effort behind a price, for the Zion team.
+const effort = (usd: number) => `≈${Math.round(usd / HOURLY_RATE)} h`;
+
 function proposalHtml(p: Proposal): string {
   const phases = p.phases
     .map(
       (phase) => `
         <tr><td colspan="2" style="padding: 14px 0 6px; font-weight: 600; border-bottom: 1px solid #D6DADA;">
           ${escapeHtml(phase.name)} · weeks ${phase.startWeek}–${phase.startWeek + phase.weeks - 1}
-          <span style="float: right; font-weight: 400;">${phase.hours} h · ${money(phase.cost)}</span>
+          <span style="float: right; font-weight: 400;">${money(phase.cost)} <span style="color: #999;">(${effort(phase.cost)})</span></span>
         </td></tr>
         ${phase.deliverables
           .map(
             (d) => `<tr>
               <td style="padding: 6px 12px 6px 0; vertical-align: top;">${escapeHtml(d.name)}<br/><span style="color: #56616D; font-size: 13px;">${escapeHtml(d.description)}</span></td>
-              <td style="padding: 6px 0; text-align: right; vertical-align: top; white-space: nowrap;">${d.hours} h · ${money(d.cost)}</td>
+              <td style="padding: 6px 0; text-align: right; vertical-align: top; white-space: nowrap;">${money(d.cost)} <span style="color: #999;">(${effort(d.cost)})</span></td>
             </tr>`,
           )
           .join("")}`,
@@ -53,7 +57,7 @@ function proposalHtml(p: Proposal): string {
     </p>
     <h3 style="margin: 0 0 6px;">${escapeHtml(p.projectTitle)}</h3>
     <p style="line-height: 1.6;">${escapeHtml(p.summary)}</p>
-    <p><strong>Estimated investment:</strong> ${money(p.totalCost)} (${hoursLabel(p.totalHours)} at ${money(p.hourlyRate)}/hour) &nbsp;·&nbsp; <strong>Timeline:</strong> ${weeksLabel(p.totalWeeks)}</p>
+    <p><strong>Estimated investment:</strong> ${money(p.totalCost)} <span style="color: #999;">(${effort(p.totalCost)} internal)</span> &nbsp;·&nbsp; <strong>Timeline:</strong> ${weeksLabel(p.totalWeeks)}</p>
     ${p.siteFindings.length ? `<p><strong>Site survey</strong></p><ul>${p.siteFindings.map((f) => `<li>${escapeHtml(f)}</li>`).join("")}</ul>` : ""}
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">${phases}</table>
     ${p.assumptions.length ? `<p><strong>Assumptions</strong></p><ul>${p.assumptions.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul>` : ""}
@@ -62,19 +66,23 @@ function proposalHtml(p: Proposal): string {
 }
 
 function quoteHtml(q: Quote): string {
-  const per = q.cadence === "monthly" ? " a month" : "";
+  const price = (l: { oneTime: number; monthly: number }) =>
+    [l.oneTime ? `${money(l.oneTime)} setup (${effort(l.oneTime)})` : "", l.monthly ? `${money(l.monthly)}/mo (${effort(l.monthly)})` : ""].filter(Boolean).join(" · ");
   return `
     <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;" />
     <h2 style="color: #8A681D; margin: 0 0 4px;">Quote ${escapeHtml(q.ref)}: ${escapeHtml(q.title)}</h2>
-    <p style="margin: 0 0 12px; color: #56616D; font-size: 13px;">${q.cadence === "monthly" ? "Monthly plan" : "One-time project"} · ${formatDate(q.createdAt)}</p>
-    <p><strong>Initial quote:</strong> ${money(q.totalCost)}${per} (${hoursLabel(q.totalHours)}${per} at ${money(q.hourlyRate)}/hour)${q.weeks ? ` · about ${weeksLabel(q.weeks)}` : ""}</p>
+    <p style="margin: 0 0 12px; color: #56616D; font-size: 13px;">${q.kind === "managed-it" ? "Managed IT plan" : "Digital product"} · ${formatDate(q.createdAt)}</p>
+    <p>
+      ${q.setupTotal ? `<strong>Setup:</strong> ${money(q.setupTotal)} &nbsp;·&nbsp; ` : ""}
+      ${q.monthlyTotal ? `<strong>Monthly:</strong> ${money(q.monthlyTotal)}` : ""}
+      ${q.weeks ? ` &nbsp;·&nbsp; live in about ${weeksLabel(q.weeks)}` : ""}
+    </p>
     ${q.term ? `<p><strong>Contract:</strong> ${escapeHtml(q.term)}${q.contractTotal ? ` · ${money(q.contractTotal)} total` : ""}</p>` : ""}
-    ${q.options.length ? `<p><strong>Options:</strong> ${q.options.map(escapeHtml).join(" · ")}</p>` : ""}
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
       ${q.lines
         .map(
           (l) => `<tr><td style="padding: 6px 12px 6px 0; border-bottom: 1px solid #eee;">${escapeHtml(l.label)}</td>
-            <td style="padding: 6px 0; text-align: right; border-bottom: 1px solid #eee; white-space: nowrap;">${l.hours} h · ${money(l.cost)}</td></tr>`,
+            <td style="padding: 6px 0; text-align: right; border-bottom: 1px solid #eee; white-space: nowrap;">${price(l)}</td></tr>`,
         )
         .join("")}
     </table>
@@ -111,7 +119,7 @@ export async function sendContactEmail(data: ContactInput) {
   const subject = proposal
     ? `Scope ${proposal.ref}: ${fullName} (${money(proposal.totalCost)}, ${weeksLabel(proposal.totalWeeks)})`
     : quote
-      ? `Quote ${quote.ref}: ${quote.title} for ${fullName} (${money(quote.totalCost)}${quote.cadence === "monthly" ? "/month" : ""})`
+      ? `Quote ${quote.ref}: ${quote.title} for ${fullName} (${[quote.setupTotal ? `${money(quote.setupTotal)} setup` : "", quote.monthlyTotal ? `${money(quote.monthlyTotal)}/mo` : ""].filter(Boolean).join(" + ")})`
       : `New Inquiry: ${fullName} (${organizationType || "General"})`;
 
   // ---- Send via Brevo SMTP API -----------------------------------------
