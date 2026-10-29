@@ -63,7 +63,7 @@ export function ScopeSheet() {
             </motion.div>
           ) : (
             <>
-              <h3 className="font-display text-[1.75rem] sm:text-[2rem] leading-[1.1] font-semibold text-rule select-none">
+              <h3 className="font-display text-[1.75rem] sm:text-[2rem] leading-[1.1] font-semibold text-mist select-none">
                 {host ? `Project for ${host}` : "Your project"}
               </h3>
               <p className="mt-3 text-[0.88rem] text-mist">
@@ -199,7 +199,7 @@ export function ScopeSheet() {
         <TitleCell label="Timeline" value={done ? weeksLabel(proposal.totalWeeks) : null} />
         <div className="col-span-2 sm:col-span-1 px-5 sm:px-6 py-3.5 border-t sm:border-t-0 sm:border-l border-rule bg-gold-wash/60">
           <div className="annot text-gold-deep">Estimated investment</div>
-          <div className={cn("font-display text-[1.9rem] leading-none font-semibold mt-1", done ? "text-ink" : "text-rule")}>
+          <div className={cn("font-display text-[1.9rem] leading-none font-semibold mt-1", done ? "text-ink" : "text-mist")}>
             {done ? money(proposal.totalCost) : "$ —"}
           </div>
         </div>
@@ -244,7 +244,7 @@ function TitleCell({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="px-5 sm:px-6 py-3.5 border-rule [&:not(:first-child)]:border-l">
       <div className="annot text-mist">{label}</div>
-      <div className={cn("text-[0.85rem] font-medium mt-1", value ? "text-ink" : "text-rule")}>{value ?? "—"}</div>
+      <div className={cn("text-[0.85rem] font-medium mt-1", value ? "text-ink" : "text-mist")}>{value ?? "—"}</div>
     </div>
   );
 }

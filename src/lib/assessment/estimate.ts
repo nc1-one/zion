@@ -18,6 +18,7 @@ export const BUILD_HOURS: Record<BuildTypeId, number> = {
   mobile: 170,
   integration: 90,
   itsupport: 35,
+  marketing: 50,
 };
 
 export const FEATURE_HOURS: Record<FeatureId, number> = {
@@ -44,6 +45,7 @@ const BUILD_SERVICES: Record<BuildTypeId, ServiceId[]> = {
   mobile: ["software", "design"],
   integration: ["software", "consulting", "infrastructure"],
   itsupport: ["managed", "security", "infrastructure"],
+  marketing: ["marketing", "design"],
 };
 
 // Effort guide handed to the agent so its estimates stay in the same range as
@@ -149,7 +151,7 @@ export function finalizeProposal(
     totalWeeks: Math.max(1, week - 1),
     totalCost,
     assumptions: draft.assumptions.slice(0, 6).map((a) => a.slice(0, 300)),
-    recommendedServices: [...new Set(draft.recommendedServices)].slice(0, 6),
+    recommendedServices: [...new Set(draft.recommendedServices)].slice(0, 7),
     answers,
   };
 }
@@ -306,6 +308,7 @@ const SHORT_BUILD_NAMES: Record<BuildTypeId, string> = {
   mobile: "Mobile app",
   integration: "Systems integration",
   itsupport: "IT support",
+  marketing: "Marketing launch",
 };
 
 const BUILD_DESCRIPTIONS: Record<BuildTypeId, string> = {
@@ -315,6 +318,7 @@ const BUILD_DESCRIPTIONS: Record<BuildTypeId, string> = {
   mobile: "iOS and Android app from a shared codebase, including app store submission.",
   integration: "Connections between your existing systems so data flows without re-typing.",
   itsupport: "Infrastructure review, hardening, and an ongoing support setup for your team.",
+  marketing: "Search and social setup, an email newsletter, and a first campaign with tracking in place.",
 };
 
 const FEATURE_DESCRIPTIONS: Record<FeatureId, string> = {

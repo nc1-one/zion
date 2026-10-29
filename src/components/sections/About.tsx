@@ -38,7 +38,8 @@ export function About() {
           </h2>
           <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
             Zion Systems &amp; Build was founded on the belief that the organizations doing the most important work in the world
-            should have access to the best technology. We aren&apos;t just a service provider — we are a partner in your mission.
+            should have access to the best technology — churches, ministries, nonprofits, and faith-driven businesses alike. We
+            aren&apos;t just a service provider — we are a partner in your mission.
           </p>
           <figure className="mt-8 p-6 bg-sheet border border-rule rounded-[10px] max-w-[32rem]">
             <blockquote className="font-display text-[1.25rem] italic leading-[1.5] text-ink">

@@ -8,12 +8,13 @@ export const BUILD_TYPES = [
   { id: "mobile", label: "A mobile app", hint: "iOS and Android" },
   { id: "integration", label: "Connected systems", hint: "CRM, inventory, workflow automation" },
   { id: "itsupport", label: "IT support or security", hint: "Infrastructure, audits, managed IT" },
+  { id: "marketing", label: "Marketing and growth", hint: "SEO, social, email, campaigns" },
 ] as const;
 
 export const ORG_TYPES = [
   { id: "ministry", label: "Ministry or NGO" },
   { id: "church", label: "Local church" },
-  { id: "business", label: "Faith-based business" },
+  { id: "business", label: "Faith-driven business" },
   { id: "school", label: "School or training org" },
   { id: "other", label: "Something else" },
 ] as const;

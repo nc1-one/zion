@@ -11,7 +11,7 @@ import {
 
 // ---- Zion offerings and ZPL phases ---------------------------------------
 
-export const SERVICE_IDS = ["software", "infrastructure", "consulting", "managed", "design", "security"] as const;
+export const SERVICE_IDS = ["software", "design", "infrastructure", "managed", "security", "marketing", "consulting"] as const;
 export type ServiceId = (typeof SERVICE_IDS)[number];
 
 export const PHASES = [
@@ -27,7 +27,7 @@ export type PhaseKey = (typeof PHASE_KEYS)[number];
 // ---- Assessment input -----------------------------------------------------
 
 export const AnswersSchema = z.object({
-  buildTypes: z.array(z.enum(idsOf(BUILD_TYPES))).min(1).max(6),
+  buildTypes: z.array(z.enum(idsOf(BUILD_TYPES))).min(1).max(7),
   orgType: z.enum(idsOf(ORG_TYPES)),
   features: z.array(z.enum(idsOf(FEATURES))).max(8),
   audience: z.enum(idsOf(AUDIENCE_SIZES)),
@@ -98,7 +98,7 @@ export const ProposalSchema = z.object({
   totalWeeks: z.number().int().min(1),
   totalCost: z.number().nonnegative(),
   assumptions: z.array(z.string().max(300)).max(6),
-  recommendedServices: z.array(z.enum(SERVICE_IDS)).max(6),
+  recommendedServices: z.array(z.enum(SERVICE_IDS)).max(7),
   answers: AnswersSchema,
 });
 export type Proposal = z.infer<typeof ProposalSchema>;

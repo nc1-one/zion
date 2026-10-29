@@ -19,6 +19,8 @@ interface AssessmentState {
   proposal: Proposal | null;
   error: string | null;
   attachToContact: boolean;
+  // A message for the Zion Agent guide to say next (e.g. after a preset).
+  notice: { id: number; text: string } | null;
 }
 
 interface AssessmentContextValue extends AssessmentState {
@@ -29,6 +31,8 @@ interface AssessmentContextValue extends AssessmentState {
   editAnswers: () => void;
   reset: () => void;
   setAttachToContact: (attach: boolean) => void;
+  preset: (answers: Partial<Answers>, notice: string) => void;
+  say: (text: string) => void;
 }
 
 const AssessmentContext = createContext<AssessmentContextValue | null>(null);
@@ -43,6 +47,7 @@ const INITIAL: AssessmentState = {
   proposal: null,
   error: null,
   attachToContact: false,
+  notice: null,
 };
 
 export function AssessmentProvider({ children }: { children: React.ReactNode }) {
@@ -121,9 +126,24 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
 
   const setAttachToContact = useCallback((attach: boolean) => setState((s) => ({ ...s, attachToContact: attach })), []);
 
+  const say = useCallback((text: string) => setState((s) => ({ ...s, notice: { id: (s.notice?.id ?? 0) + 1, text } })), []);
+
+  // Start a fresh assessment with some answers filled in (from Offerings or Use cases).
+  const preset = useCallback((answers: Partial<Answers>, notice: string) => {
+    runId.current++;
+    scanPromise.current = null;
+    setState((s) => ({
+      ...INITIAL,
+      answers: { ...EMPTY_ANSWERS, ...answers },
+      notice: { id: (s.notice?.id ?? 0) + 1, text: notice },
+    }));
+    document.getElementById("assessment")?.scrollIntoView({ behavior: "smooth" });
+    window.setTimeout(() => document.getElementById("site-url")?.focus({ preventScroll: true }), 600);
+  }, []);
+
   const value = useMemo(
-    () => ({ ...state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachToContact }),
-    [state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachToContact],
+    () => ({ ...state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachToContact, preset, say }),
+    [state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachToContact, preset, say],
   );
 
   return (
