@@ -13,6 +13,7 @@ export interface Service {
   id: ServiceId;
   group: ServiceGroupId;
   title: string;
+  tagline?: string;
   desc: string;
   includes: string[];
   bestFor: string;
@@ -36,7 +37,7 @@ export const SERVICES: Service[] = [
     id: "design",
     group: "build",
     title: "UI/UX & Product Design",
-    desc: "User-centered design that makes complex systems intuitive — from wireframes to high-fidelity prototypes.",
+    desc: "Design that makes complex systems easy to use, from first wireframes to clickable prototypes.",
     includes: ["Websites and landing pages", "Brand-aligned design systems", "Wireframes and clickable prototypes", "Accessibility reviews"],
     bestFor: "Churches and organizations whose website no longer reflects who they are.",
     buildType: "redesign",
@@ -54,9 +55,17 @@ export const SERVICES: Service[] = [
     id: "managed",
     group: "run",
     title: "Managed IT Services",
-    desc: "Ongoing support, maintenance, and monitoring so your team stays focused on the mission while we handle the tech.",
-    includes: ["Helpdesk for your staff", "Updates and maintenance", "Device and account management", "Monthly health reports"],
-    bestFor: "Organizations without an in-house IT person.",
+    tagline: "No need to build an IT team. We'll be your IT team.",
+    desc: "A monthly plan that covers your staff's day-to-day IT: a helpdesk to call, devices and accounts kept in order, backups and security watched, and a plain-language report each month.",
+    includes: [
+      "Helpdesk for your staff by chat, email, and phone",
+      "New staff set up, leavers offboarded",
+      "Devices, email, and Microsoft 365 or Google Workspace managed",
+      "Backups, updates, and security monitoring",
+      "Software licenses and vendors handled for you",
+      "A monthly report in plain language",
+    ],
+    bestFor: "Churches, ministries, and small businesses that need IT handled but can't justify hiring an IT person.",
     buildType: "itsupport",
   },
   {

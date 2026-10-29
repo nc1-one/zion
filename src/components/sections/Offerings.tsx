@@ -5,9 +5,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Code, Megaphone, Monitor, Settings, Shield, Users, Zap, type LucideIcon } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { Button } from "@/components/ui/Button";
+import { ManagedIT } from "./ManagedIT";
 import { SERVICE_GROUPS, SERVICES } from "@/lib/assessment/services";
 import type { ServiceId } from "@/lib/assessment/types";
 import { cn } from "@/lib/utils";
+import { RevealHeading } from "@/components/ui/motion";
 
 const ICONS: Record<ServiceId, LucideIcon> = {
   software: Code,
@@ -47,15 +49,13 @@ export function Offerings() {
       <div className="max-w-[1200px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 mb-12">
           <div>
-            <div className="annot text-gold-deep mb-4">{proposal ? "In your scope" : "What we offer"}</div>
-            <h2 className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink">
-              {proposal ? "The Zion teams behind your build." : "Build it, run it, grow it."}
-            </h2>
+            {proposal && <div className="annot text-gold-deep mb-4">In your scope</div>}
+            <RevealHeading key={proposal ? "scope" : "all"} text={proposal ? "The Zion teams behind your build." : "Build it, run it, grow it."} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           </div>
           <p className="text-[1rem] leading-[1.7] text-graphite lg:pt-9 max-w-[36rem]">
             {proposal
               ? `Your scope draws on ${inScope.size} of our ${SERVICES.length} offerings, marked below. The same team stays with you from discovery through launch.`
-              : "Seven offerings for churches, ministries, and faith-driven businesses, from your first website to the marketing that grows it. Pick one to see what's included, or let the Zion Agent scope it with you."}
+              : "Seven offerings for churches, ministries, and faith-driven businesses, from your first website to the marketing that grows it and the IT that keeps it running. Pick one to see what's included."}
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export function Offerings() {
                           {svc.title}
                         </span>
                         {inScope.has(svc.id) && (
-                          <span className="annot text-gold-deep border border-gold rounded-full px-2 py-0.5 bg-gold-wash">In scope</span>
+                          <span className="annot text-gold-deep">In scope</span>
                         )}
                         <ArrowRight
                           size={16}
@@ -133,7 +133,7 @@ export function Offerings() {
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className="w-12 h-12 rounded-xl bg-ink flex items-center justify-center">
+                  <span className="w-12 h-12 rounded-xl bg-gold-wash border border-gold/40 flex items-center justify-center">
                     <SelectedIcon size={22} strokeWidth={1.7} className="text-gold-bright" />
                   </span>
                   <span className="annot text-graphite pt-1">
@@ -166,6 +166,8 @@ export function Offerings() {
             </AnimatePresence>
           </div>
         </div>
+
+        <ManagedIT />
       </div>
     </section>
   );

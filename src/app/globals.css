@@ -8,23 +8,32 @@
   trace  – the Zion Agent's annotations
 */
 @theme {
-  /* Text tokens all meet WCAG AA (4.5:1) on paper, sheet, and gold-wash. */
-  --color-paper: #F2F4F3;
-  --color-sheet: #FFFFFF;
-  --color-ink: #0E1A25;
-  --color-ink-soft: #1F2D3A;
-  --color-graphite: #45515D;
-  --color-mist: #5F6B76;
-  --color-rule: #C9D0D0;
-  --color-rule-soft: #E2E6E5;
+  /*
+    Zion palette, dark first: midnight navy surfaces, the logo's gold, parchment text.
+    night < paper < sheet < raised are surface levels; ink/ink-soft/graphite/mist are
+    text levels and all meet WCAG AA (4.5:1) on every surface.
+  */
+  --color-night: #070E15;
+  --color-paper: #0B141D;
+  --color-sheet: #101C28;
+  --color-raised: #162534;
+  --color-ink: #EFEADF;
+  --color-ink-soft: #D5D2C8;
+  --color-graphite: #A9B2BB;
+  --color-mist: #8C97A3;
+  --color-rule: #2A3D50;
+  --color-rule-soft: #1C2C3C;
 
-  --color-gold: #C9A043;
-  --color-gold-bright: #E3C374;
-  --color-gold-deep: #765811;
-  --color-gold-wash: #F6EDD3;
+  --color-gold: #CDA246;
+  --color-gold-bright: #E5C77A;
+  --color-gold-deep: #D8B65F;
+  --color-gold-wash: #2A2416;
 
-  --color-trace: #1F4C7A;
-  --color-trace-wash: #E4ECF5;
+  --color-trace: #9FB6CC;
+  --color-trace-wash: #1A2C3E;
+
+  --color-danger: #F0A595;
+  --color-danger-wash: #3A1D1A;
 
   --font-display: var(--font-cormorant), "Cormorant Garamond", serif;
   --font-body: var(--font-outfit), system-ui, sans-serif;
@@ -40,6 +49,7 @@
 /* Global styles live in layers so Tailwind utilities can override them. */
 @layer base {
   html {
+    color-scheme: dark;
     scroll-padding-top: calc(var(--nav-height) + 12px);
   }
 

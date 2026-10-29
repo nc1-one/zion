@@ -7,7 +7,7 @@ export const BUILD_TYPES = [
   { id: "webapp", label: "A web app or portal", hint: "Members, giving, bookings, dashboards" },
   { id: "mobile", label: "A mobile app", hint: "iOS and Android" },
   { id: "integration", label: "Connected systems", hint: "CRM, inventory, workflow automation" },
-  { id: "itsupport", label: "IT support or security", hint: "Infrastructure, audits, managed IT" },
+  { id: "itsupport", label: "Managed IT or security", hint: "We become your IT team" },
   { id: "marketing", label: "Marketing and growth", hint: "SEO, social, email, campaigns" },
 ] as const;
 

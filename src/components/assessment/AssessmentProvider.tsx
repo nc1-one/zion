@@ -2,10 +2,11 @@
 
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { MotionConfig } from "framer-motion";
-import type { Answers, Proposal, ScanResult } from "@/lib/assessment/types";
+import type { Answers, Proposal, Quote, ScanResult } from "@/lib/assessment/types";
 
 export type Stage = "intro" | "questions" | "drafting" | "done";
 export type ScanStatus = "none" | "scanning" | "done";
+export type Attachment = "scope" | "quote" | null;
 
 export const EMPTY_ANSWERS: Partial<Answers> = { buildTypes: [], features: [], goal: "" };
 
@@ -18,7 +19,9 @@ interface AssessmentState {
   answers: Partial<Answers>;
   proposal: Proposal | null;
   error: string | null;
-  attachToContact: boolean;
+  // What the contact form sends along: the drafted scope or a quick quote.
+  attachment: Attachment;
+  quote: Quote | null;
   // A message for the Zion Agent guide to say next (e.g. after a preset).
   notice: { id: number; text: string } | null;
 }
@@ -30,7 +33,8 @@ interface AssessmentContextValue extends AssessmentState {
   draft: (answers: Partial<Answers>) => Promise<void>;
   editAnswers: () => void;
   reset: () => void;
-  setAttachToContact: (attach: boolean) => void;
+  setAttachment: (attachment: Attachment) => void;
+  sendQuote: (quote: Quote) => void;
   preset: (answers: Partial<Answers>, notice: string) => void;
   say: (text: string) => void;
 }
@@ -46,7 +50,8 @@ const INITIAL: AssessmentState = {
   answers: EMPTY_ANSWERS,
   proposal: null,
   error: null,
-  attachToContact: false,
+  attachment: null,
+  quote: null,
   notice: null,
 };
 
@@ -105,7 +110,7 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
       const data = await res.json();
       if (runId.current !== id) return;
       if (!res.ok) throw new Error(data.error ?? "The agent couldn't draft your scope.");
-      setState((s) => ({ ...s, stage: "done", proposal: data as Proposal, attachToContact: true }));
+      setState((s) => ({ ...s, stage: "done", proposal: data as Proposal, attachment: "scope" }));
     } catch (error) {
       if (runId.current !== id) return;
       setState((s) => ({
@@ -121,10 +126,21 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
   const reset = useCallback(() => {
     runId.current++;
     scanPromise.current = null;
-    setState(INITIAL);
+    setState((s) => ({ ...INITIAL, quote: s.quote, attachment: s.quote ? "quote" : null }));
   }, []);
 
-  const setAttachToContact = useCallback((attach: boolean) => setState((s) => ({ ...s, attachToContact: attach })), []);
+  const setAttachment = useCallback((attachment: Attachment) => setState((s) => ({ ...s, attachment })), []);
+
+  // Attach a quick quote to the contact form and take the visitor there.
+  const sendQuote = useCallback((quote: Quote) => {
+    setState((s) => ({
+      ...s,
+      quote,
+      attachment: "quote",
+      notice: { id: (s.notice?.id ?? 0) + 1, text: `I've attached your quote for ${quote.title}. Add your details and send it to the team.` },
+    }));
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   const say = useCallback((text: string) => setState((s) => ({ ...s, notice: { id: (s.notice?.id ?? 0) + 1, text } })), []);
 
@@ -134,6 +150,8 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
     scanPromise.current = null;
     setState((s) => ({
       ...INITIAL,
+      quote: s.quote,
+      attachment: s.quote ? "quote" : null,
       answers: { ...EMPTY_ANSWERS, ...answers },
       notice: { id: (s.notice?.id ?? 0) + 1, text: notice },
     }));
@@ -142,8 +160,8 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const value = useMemo(
-    () => ({ ...state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachToContact, preset, say }),
-    [state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachToContact, preset, say],
+    () => ({ ...state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachment, sendQuote, preset, say }),
+    [state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachment, sendQuote, preset, say],
   );
 
   return (

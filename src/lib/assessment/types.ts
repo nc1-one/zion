@@ -67,12 +67,12 @@ export const AssessRequestSchema = z.object({
 export type AssessRequest = z.infer<typeof AssessRequestSchema>;
 
 // ---- Proposal returned to the browser --------------------------------------
-// Costs are computed on the server from hidden effort estimates; hours never
-// leave the server.
+// Costs are hours × the published hourly rate, computed on the server.
 
 export const DeliverableSchema = z.object({
   name: z.string().max(120),
   description: z.string().max(400),
+  hours: z.number().nonnegative(),
   cost: z.number().nonnegative(),
 });
 
@@ -82,6 +82,7 @@ export const PhasePlanSchema = z.object({
   objective: z.string().max(400),
   startWeek: z.number().int().min(1),
   weeks: z.number().int().min(1),
+  hours: z.number().nonnegative(),
   cost: z.number().nonnegative(),
   deliverables: z.array(DeliverableSchema).max(8),
 });
@@ -96,10 +97,32 @@ export const ProposalSchema = z.object({
   siteFindings: z.array(z.string().max(300)).max(6),
   phases: z.array(PhasePlanSchema).min(1).max(5),
   totalWeeks: z.number().int().min(1),
+  totalHours: z.number().nonnegative(),
   totalCost: z.number().nonnegative(),
+  hourlyRate: z.number().positive(),
   assumptions: z.array(z.string().max(300)).max(6),
   recommendedServices: z.array(z.enum(SERVICE_IDS)).max(7),
   answers: AnswersSchema,
 });
 export type Proposal = z.infer<typeof ProposalSchema>;
+
+// ---- Quick quotes (digital products, managed IT) ----------------------------
+
+export const QuoteSchema = z.object({
+  ref: z.string().max(20),
+  createdAt: z.string().max(40),
+  title: z.string().max(140),
+  cadence: z.enum(["one-time", "monthly"]),
+  lines: z
+    .array(z.object({ label: z.string().max(120), hours: z.number().nonnegative(), cost: z.number().nonnegative() }))
+    .min(1)
+    .max(12),
+  options: z.array(z.string().max(120)).max(6),
+  totalHours: z.number().nonnegative(),
+  totalCost: z.number().nonnegative(),
+  hourlyRate: z.number().positive(),
+  weeks: z.number().int().min(1).optional(),
+  note: z.string().max(300).optional(),
+});
+export type Quote = z.infer<typeof QuoteSchema>;
 export type PhasePlan = z.infer<typeof PhasePlanSchema>;

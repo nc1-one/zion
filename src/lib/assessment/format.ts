@@ -2,6 +2,8 @@ const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD",
 
 export const money = (n: number) => usd.format(n);
 
+export const hoursLabel = (n: number) => `${n.toLocaleString()} ${n === 1 ? "hour" : "hours"}`;
+
 export const weeksLabel = (n: number) => `${n} ${n === 1 ? "week" : "weeks"}`;
 
 export function hostOf(url: string | null | undefined): string | null {

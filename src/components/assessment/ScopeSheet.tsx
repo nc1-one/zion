@@ -14,10 +14,11 @@ import {
   labelOf,
 } from "@/lib/assessment/questions";
 import { surveyNotes } from "@/lib/assessment/survey";
-import { formatDate, hostOf, money, weeksLabel } from "@/lib/assessment/format";
+import { formatDate, hostOf, hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
 import { PHASES } from "@/lib/assessment/types";
 import { serviceTitle } from "@/lib/assessment/services";
 import { cn } from "@/lib/utils";
+import { CountUp } from "@/components/ui/motion";
 
 // The scope of work, drawn as a drafting sheet. It fills in live while the
 // visitor answers, then becomes the agent's finished proposal.
@@ -41,7 +42,7 @@ export function ScopeSheet() {
       id="scope-sheet"
       aria-live="polite"
       aria-busy={stage === "drafting"}
-      className="relative bg-sheet border border-rule rounded-[10px] shadow-[0_1px_0_rgba(19,32,44,0.04),0_30px_70px_-34px_rgba(19,32,44,0.35)]"
+      className="relative bg-sheet border border-rule rounded-[10px]"
     >
       <header className="flex items-center justify-between gap-4 px-5 sm:px-7 py-3 border-b border-rule">
         <span className="annot text-graphite">Scope of work</span>
@@ -150,7 +151,9 @@ export function ScopeSheet() {
                       <span className="font-display text-gold-deep mr-1.5">{PHASES.find((p) => p.key === phase.key)!.numeral}</span>
                       {phase.name}
                     </span>
-                    <span className="font-mono text-[0.72rem] text-graphite">{money(phase.cost)}</span>
+                    <span className="font-mono text-[0.72rem] text-graphite">
+                      {phase.hours} h · {money(phase.cost)}
+                    </span>
                   </div>
                   <ul>
                     {phase.deliverables.map((d) => (
@@ -159,7 +162,10 @@ export function ScopeSheet() {
                           <span className="block text-[0.85rem] font-medium text-ink">{d.name}</span>
                           <span className="block text-[0.78rem] leading-[1.5] text-graphite mt-0.5">{d.description}</span>
                         </span>
-                        <span className="font-mono text-[0.75rem] text-ink shrink-0 pt-0.5">{money(d.cost)}</span>
+                        <span className="shrink-0 pt-0.5 text-right">
+                          <span className="block font-mono text-[0.75rem] text-ink">{money(d.cost)}</span>
+                          <span className="block font-mono text-[0.65rem] text-mist mt-0.5">{d.hours} h</span>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -195,12 +201,15 @@ export function ScopeSheet() {
       {/* Title block, as on a drawing sheet */}
       <footer className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_1.4fr] border-t border-rule text-left">
         <TitleCell label="Prepared by" value={done ? (proposal.source === "agent" ? "Zion Agent" : "Zion estimator") : "Zion Agent"} />
-        <TitleCell label="Date" value={done ? formatDate(proposal.createdAt) : null} />
+        <TitleCell label="Rate" value={done ? `${money(proposal.hourlyRate)} / hour` : "$8 / hour"} />
         <TitleCell label="Timeline" value={done ? weeksLabel(proposal.totalWeeks) : null} />
         <div className="col-span-2 sm:col-span-1 px-5 sm:px-6 py-3.5 border-t sm:border-t-0 sm:border-l border-rule bg-gold-wash/60">
           <div className="annot text-gold-deep">Estimated investment</div>
           <div className={cn("font-display text-[1.9rem] leading-none font-semibold mt-1", done ? "text-ink" : "text-mist")}>
-            {done ? money(proposal.totalCost) : "$ —"}
+            {done ? <CountUp value={proposal.totalCost} format={money} /> : "$ —"}
+          </div>
+          <div className="font-mono text-[0.65rem] text-graphite mt-1.5">
+            {done ? `${hoursLabel(proposal.totalHours)} · ${formatDate(proposal.createdAt)}` : "Hours × rate"}
           </div>
         </div>
       </footer>

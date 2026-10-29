@@ -7,6 +7,7 @@ import { useAssessment } from "./AssessmentProvider";
 import { ScopeSheet } from "./ScopeSheet";
 import { AgentMascot, type AgentMood } from "@/components/agent/AgentMascot";
 import { Button } from "@/components/ui/Button";
+import { CountUp, RevealHeading } from "@/components/ui/motion";
 import {
   AUDIENCE_SIZES,
   BUILD_TYPES,
@@ -16,7 +17,7 @@ import {
   TIMELINES,
 } from "@/lib/assessment/questions";
 import type { Answers } from "@/lib/assessment/types";
-import { money, weeksLabel } from "@/lib/assessment/format";
+import { hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
 import { serviceTitle } from "@/lib/assessment/services";
 import { cn } from "@/lib/utils";
 
@@ -73,7 +74,9 @@ export function Assessment() {
             </motion.div>
           </AnimatePresence>
         </div>
-        <ScopeSheet />
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}>
+          <ScopeSheet />
+        </motion.div>
       </div>
     </section>
   );
@@ -113,9 +116,12 @@ function IntroPanel() {
   return (
     <div>
       <AgentHeader>Free scoping assessment</AgentHeader>
-      <h1 className="font-display text-[clamp(2.6rem,5.6vw,4.4rem)] leading-[1.02] font-semibold text-ink tracking-[-0.01em]">
-        Know what to build <em className="text-gold-deep">before</em> you build it.
-      </h1>
+      <RevealHeading
+        as="h1"
+        text="Know what to build before you build it."
+        emphasis="before"
+        className="font-display text-[clamp(2.6rem,5.6vw,4.4rem)] leading-[1.04] font-semibold text-ink tracking-[-0.01em]"
+      />
       <p className="mt-6 text-[1.05rem] leading-[1.7] text-ink-soft max-w-[34rem]">
         I&apos;m the Zion Agent. I&apos;ll read your current website, ask seven quick questions, and draft a roadmap,
         deliverables, timeline, and cost for your project. Free, and about three minutes.
@@ -129,7 +135,7 @@ function IntroPanel() {
         <div
           className={cn(
             "mt-2 flex items-center gap-2 p-1.5 bg-sheet border rounded-xl transition-[border-color,box-shadow] focus-within:border-trace focus-within:shadow-[0_0_0_4px_var(--color-trace-wash)]",
-            error ? "border-[#A23B2C]" : "border-rule",
+            error ? "border-danger" : "border-rule",
           )}
         >
           <input
@@ -155,7 +161,7 @@ function IntroPanel() {
           </Button>
         </div>
         {error && (
-          <p id="site-url-error" className="mt-2 text-[0.85rem] text-[#8E2F22]">
+          <p id="site-url-error" className="mt-2 text-[0.85rem] text-danger">
             {error}
           </p>
         )}
@@ -175,14 +181,9 @@ function IntroPanel() {
         </div>
       </form>
 
-      <ul className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-px bg-rule border border-rule rounded-xl overflow-hidden max-w-[34rem]">
-        {["Roadmap", "Deliverables", "Timeline", "Cost"].map((item, i) => (
-          <li key={item} className="bg-sheet/80 px-4 py-3">
-            <div className="font-mono text-[0.65rem] text-gold-deep">0{i + 1}</div>
-            <div className="text-[0.85rem] font-medium text-ink mt-0.5">{item}</div>
-          </li>
-        ))}
-      </ul>
+      <p className="mt-8 max-w-[34rem] text-[0.9rem] leading-[1.6] text-graphite">
+        You&apos;ll get a phased roadmap, a list of deliverables, a timeline, and a cost estimate at our $8 hourly rate.
+      </p>
 
       <div className="mt-10 max-w-[34rem]">
         <div className="annot text-mist mb-2">Trusted by Kingdom organizations</div>
@@ -270,7 +271,7 @@ function QuestionPanel() {
       </div>
 
       {error && (
-        <p role="alert" className="mb-6 px-4 py-3 rounded-lg bg-[#FBEAE7] text-[#8E2F22] text-[0.85rem]">
+        <p role="alert" className="mb-6 px-4 py-3 rounded-lg bg-danger-wash text-danger text-[0.85rem]">
           {error}
         </p>
       )}
@@ -322,7 +323,7 @@ function QuestionPanel() {
                         className={cn(
                           "w-[18px] h-[18px] shrink-0 flex items-center justify-center border-[1.5px] transition-colors",
                           current.kind === "multi" ? "rounded-[5px]" : "rounded-full",
-                          selected ? "bg-ink border-ink text-gold-bright" : "border-mist bg-sheet",
+                          selected ? "bg-gold border-gold text-paper" : "border-mist bg-sheet",
                         )}
                         aria-hidden
                       >
@@ -423,11 +424,11 @@ function DraftingPanel() {
 // ---- Done --------------------------------------------------------------------
 
 function DonePanel() {
-  const { proposal, editAnswers, reset, setAttachToContact } = useAssessment();
+  const { proposal, editAnswers, reset, setAttachment } = useAssessment();
   if (!proposal) return null;
 
   const send = () => {
-    setAttachToContact(true);
+    setAttachment("scope");
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -446,7 +447,12 @@ function DonePanel() {
       <dl className="mt-7 grid grid-cols-2 max-w-[32rem] border border-rule rounded-xl bg-sheet overflow-hidden">
         <div className="px-4 py-3 bg-gold-wash">
           <dt className="annot text-gold-deep">Estimated investment</dt>
-          <dd className="font-display text-[1.8rem] font-semibold text-ink leading-tight mt-0.5">{money(proposal.totalCost)}</dd>
+          <dd className="font-display text-[1.8rem] font-semibold text-ink leading-tight mt-0.5">
+            <CountUp value={proposal.totalCost} format={money} />
+          </dd>
+          <dd className="font-mono text-[0.68rem] text-graphite mt-1">
+            {hoursLabel(proposal.totalHours)} × {money(proposal.hourlyRate)}/hour
+          </dd>
         </div>
         <div className="px-4 py-3 border-l border-rule">
           <dt className="annot text-mist">Timeline</dt>
