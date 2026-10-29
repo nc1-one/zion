@@ -137,7 +137,7 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
       ...s,
       quote,
       attachment: "quote",
-      notice: { id: (s.notice?.id ?? 0) + 1, text: `I've attached your quote for ${quote.title}. Add your details and send it to the team.` },
+      notice: { id: (s.notice?.id ?? 0) + 1, text: `Quote attached. Add your details and send.` },
     }));
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   }, []);

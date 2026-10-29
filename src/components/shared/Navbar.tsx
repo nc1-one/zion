@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "./nav-links";
@@ -9,6 +10,22 @@ import { NAV_LINKS } from "./nav-links";
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
+
+  // Track which section is on screen so the underline can follow it.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) if (entry.isIntersecting) setActive(`#${entry.target.id}`);
+      },
+      { rootMargin: "-45% 0px -50% 0px" },
+    );
+    for (const link of NAV_LINKS) {
+      const el = document.querySelector(link.href);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12);
@@ -47,14 +64,21 @@ export function Navbar() {
             <a
               key={link.name}
               href={link.href}
-              className="px-3.5 py-2 text-[0.85rem] font-medium text-graphite hover:text-ink transition-colors no-underline"
+              aria-current={active === link.href ? "location" : undefined}
+              className={cn(
+                "relative px-3.5 py-2 text-[0.85rem] font-medium transition-colors no-underline",
+                active === link.href ? "text-ink" : "text-graphite hover:text-ink",
+              )}
             >
               {link.name}
+              {active === link.href && (
+                <motion.span layoutId="nav-underline" className="absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] rounded-full bg-gold" transition={{ type: "spring", stiffness: 420, damping: 36 }} />
+              )}
             </a>
           ))}
           <a
             href="#contact"
-            className="ml-3 px-4 py-2 text-[0.85rem] font-semibold text-paper bg-gold rounded-lg hover:bg-gold-bright transition-colors no-underline"
+            className="ml-3 px-4 py-2 text-[0.85rem] font-semibold text-paper bg-gold rounded-lg hover:bg-gold-bright hover:-translate-y-px transition-[background-color,transform] no-underline"
           >
             Talk to us
           </a>

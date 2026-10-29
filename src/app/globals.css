@@ -13,24 +13,24 @@
     night < paper < sheet < raised are surface levels; ink/ink-soft/graphite/mist are
     text levels and all meet WCAG AA (4.5:1) on every surface.
   */
-  --color-night: #070E15;
-  --color-paper: #0B141D;
-  --color-sheet: #101C28;
-  --color-raised: #162534;
-  --color-ink: #EFEADF;
-  --color-ink-soft: #D5D2C8;
-  --color-graphite: #A9B2BB;
-  --color-mist: #8C97A3;
-  --color-rule: #2A3D50;
-  --color-rule-soft: #1C2C3C;
+  --color-night: #060B11;
+  --color-paper: #09111A;
+  --color-sheet: #121F2C;
+  --color-raised: #1B2C3D;
+  --color-ink: #F4EFE4;
+  --color-ink-soft: #DCD8CE;
+  --color-graphite: #B6BFC8;
+  --color-mist: #97A3AF;
+  --color-rule: #344B61;
+  --color-rule-soft: #22364A;
 
-  --color-gold: #CDA246;
-  --color-gold-bright: #E5C77A;
-  --color-gold-deep: #D8B65F;
-  --color-gold-wash: #2A2416;
+  --color-gold: #D4A949;
+  --color-gold-bright: #EBCD80;
+  --color-gold-deep: #DDB95E;
+  --color-gold-wash: #2E2715;
 
-  --color-trace: #9FB6CC;
-  --color-trace-wash: #1A2C3E;
+  --color-trace: #A9C0D6;
+  --color-trace-wash: #1B3045;
 
   --color-danger: #F0A595;
   --color-danger-wash: #3A1D1A;
@@ -74,22 +74,12 @@
 }
 
 @layer components {
-  /* Hairline drafting grid used behind the assessment */
-  .drafting-grid {
-    background-image:
-      linear-gradient(var(--color-rule-soft) 1px, transparent 1px),
-      linear-gradient(90deg, var(--color-rule-soft) 1px, transparent 1px);
-    background-size: 28px 28px;
-    mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, black 30%, transparent 75%);
-  }
-
-  /* Small caps label used for sheet annotations */
+  /* Small label above values and fields: sentence case, body face */
   .annot {
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.005em;
   }
 }
 

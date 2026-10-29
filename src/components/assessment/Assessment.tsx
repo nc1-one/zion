@@ -56,7 +56,6 @@ export function Assessment() {
 
   return (
     <section id="assessment" className="relative pt-[calc(var(--nav-height)+2.5rem)] md:pt-[calc(var(--nav-height)+3.5rem)] pb-20 md:pb-28 px-5 md:px-10 overflow-clip">
-      <div className="drafting-grid absolute inset-0 pointer-events-none" aria-hidden />
       <div className="relative max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-10 lg:gap-16 items-start">
         <div className="lg:sticky lg:top-[calc(var(--nav-height)+2rem)]">
           <AnimatePresence mode="wait">
@@ -119,13 +118,11 @@ function IntroPanel() {
       <RevealHeading
         as="h1"
         text="Know what to build before you build it."
-        emphasis="before"
         className="font-display text-[clamp(2.6rem,5.6vw,4.4rem)] leading-[1.04] font-semibold text-ink tracking-[-0.01em]"
       />
       <p className="mt-6 text-[1.05rem] leading-[1.7] text-ink-soft max-w-[34rem]">
-        I&apos;m the Zion Agent. I&apos;ll read your current website, ask seven quick questions, and draft a roadmap,
-        deliverables, timeline, and cost for your project. Free, and about three minutes.
-      </p>
+            Paste your website and answer seven questions. Get a roadmap, timeline, and cost in about three minutes.
+          </p>
       <p className="mt-3 text-[0.9rem] text-graphite">For churches, ministries, nonprofits, schools, and faith-driven businesses.</p>
 
       <form onSubmit={submit} className="mt-8 max-w-[34rem]" noValidate>
@@ -181,9 +178,6 @@ function IntroPanel() {
         </div>
       </form>
 
-      <p className="mt-8 max-w-[34rem] text-[0.9rem] leading-[1.6] text-graphite">
-        You&apos;ll get a phased roadmap, a list of deliverables, a timeline, and a cost estimate at our $8 hourly rate.
-      </p>
 
       <div className="mt-10 max-w-[34rem]">
         <div className="annot text-mist mb-2">Trusted by Kingdom organizations</div>
@@ -393,7 +387,7 @@ function DraftingPanel() {
         Drafting your scope of work.
       </h2>
       <p className="mt-4 text-[0.95rem] text-graphite max-w-[30rem]">
-        This usually takes under a minute. Your scope appears on the sheet when it&apos;s ready.
+        Usually under a minute.
       </p>
       <ol className="mt-8 flex flex-col gap-1">
         {DRAFT_STEPS.map((label, i) => (
@@ -440,8 +434,8 @@ function DonePanel() {
       </h2>
       <p className="mt-4 text-[0.95rem] leading-[1.65] text-graphite max-w-[32rem]">
         {proposal.source === "agent"
-          ? "I drafted this from your answers and your site. Send it to the team and a Zion team member will review it with you, usually within one business day."
-          : "Drafted with Zion's standard estimator from your answers. Send it to the team and a Zion team member will refine it with you, usually within one business day."}
+          ? "Drafted from your answers and your site. Send it and we'll review it with you."
+          : "Drafted from your answers. Send it and we'll refine it with you."}
       </p>
 
       <dl className="mt-7 grid grid-cols-2 max-w-[32rem] border border-rule rounded-xl bg-sheet overflow-hidden">

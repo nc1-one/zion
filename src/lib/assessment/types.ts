@@ -122,6 +122,8 @@ export const QuoteSchema = z.object({
   totalCost: z.number().nonnegative(),
   hourlyRate: z.number().positive(),
   weeks: z.number().int().min(1).optional(),
+  term: z.string().max(40).optional(),
+  contractTotal: z.number().nonnegative().optional(),
   note: z.string().max(300).optional(),
 });
 export type Quote = z.infer<typeof QuoteSchema>;

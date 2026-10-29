@@ -116,10 +116,10 @@ export function Portfolio() {
       <div className="max-w-[1200px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
           <div>
-            <RevealHeading text="Projects built on purpose." className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
+            <RevealHeading text="Selected work" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
             <p className="mt-4 text-[1rem] leading-[1.7] text-graphite max-w-[34rem]">
-              Systems we&apos;ve built for organizations doing Kingdom work across multiple sectors.
-            </p>
+            Built for churches, ministries, and businesses.
+          </p>
           </div>
 
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter projects">
