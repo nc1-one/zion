@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "gold" | "ghost" | "outline";
 }
 
@@ -12,22 +11,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center gap-2 px-8 py-3.5 font-body text-sm font-semibold rounded-lg border-none cursor-pointer tracking-wide transition-all duration-300 ease-out-expo no-underline",
+          "inline-flex items-center gap-2 px-5 py-3 font-body text-[0.9rem] font-semibold rounded-lg cursor-pointer transition-[background-color,border-color,color,transform] duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-px",
           {
-            "bg-gold text-gray-950 hover:bg-gold-light hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(205,162,70,0.35)]":
-              variant === "gold",
-            "bg-transparent text-gray-300 border-2 border-solid border-gray-700 hover:border-gray-500 hover:text-white hover:-translate-y-0.5":
-              variant === "ghost",
-            "bg-transparent text-white border border-solid border-gold/30 hover:border-gold/60 hover:bg-gold/5 transition-all":
-              variant === "outline",
+            "bg-gold text-ink hover:bg-gold-bright": variant === "gold",
+            "bg-transparent text-ink border border-rule hover:border-ink": variant === "ghost",
+            "bg-transparent text-sheet border border-sheet/30 hover:border-sheet/70": variant === "outline",
           },
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </button>
     );
-  }
+  },
 );
 Button.displayName = "Button";
