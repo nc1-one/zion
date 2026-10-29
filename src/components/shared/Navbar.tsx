@@ -1,37 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
-
-const NAV_LINKS = [
-  { name: "Home", href: "#hero" },
-  { name: "Services", href: "#services" },
-  { name: "ZPL", href: "#zpl" },
-  { name: "Portfolio", href: "#portfolio" },
-  { name: "About", href: "#about" },
-];
+import { cn } from "@/lib/utils";
+import { NAV_LINKS } from "./nav-links";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeLink, setActiveLink] = useState("Home");
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 12);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = isMenuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
@@ -41,82 +28,64 @@ export function Navbar() {
     <>
       <nav
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 h-[72px] flex items-center justify-between px-6 md:px-12 transition-all duration-500 ease-out-expo border-b border-solid",
-          isScrolled
-            ? "bg-gray-950/92 backdrop-blur-2xl border-gold/12 shadow-[0_4px_30px_rgba(0,0,0,0.3)]"
-            : "bg-gray-950/60 backdrop-blur-2xl border-gold/6"
+          "fixed top-0 inset-x-0 z-50 h-[var(--nav-height)] flex items-center justify-between px-5 md:px-10 border-b transition-[background-color,border-color] duration-300",
+          isScrolled || isMenuOpen ? "bg-paper/90 backdrop-blur-xl border-rule" : "bg-transparent border-transparent",
         )}
       >
-        <a href="#hero" className="flex items-center gap-3.5 group no-underline">
-          <Image
-            src="/logo.png"
-            alt=""
-            width={40}
-            height={40}
-            priority
-            className="w-10 h-10 shrink-0 object-contain"
-          />
-          <div className="flex flex-col leading-none">
-            <div className="font-display text-[1.25rem] font-bold text-white tracking-tight">
-              Zion <span className="text-gold">Systems & Build</span>
-            </div>
-            <div className="text-[0.6rem] font-normal text-gray-500 tracking-[0.18em] uppercase mt-0.5">
-              Frameworks for a Higher Purpose
-            </div>
-          </div>
+        <a href="#assessment" className="flex items-center gap-3 no-underline" onClick={() => setIsMenuOpen(false)}>
+          <Image src="/logo.png" alt="" width={36} height={36} priority className="w-9 h-9 object-contain" />
+          <span className="flex flex-col leading-none">
+            <span className="font-display text-[1.2rem] font-bold text-ink tracking-tight">
+              Zion <span className="text-gold-deep">Systems &amp; Build</span>
+            </span>
+            <span className="annot text-mist text-[0.55rem] mt-1">Frameworks for a higher purpose</span>
+          </span>
         </a>
 
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((link) => (
             <a
               key={link.name}
               href={link.href}
-              onClick={() => setActiveLink(link.name)}
-              className={cn(
-                "relative px-4.5 py-2 text-[0.78rem] font-medium tracking-[0.1em] uppercase transition-colors no-underline",
-                activeLink === link.name ? "text-gold" : "text-gray-400 hover:text-gray-100",
-                "after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:h-[1.5px] after:bg-gold after:transition-[width] after:duration-300 after:ease-out-expo",
-                activeLink === link.name ? "after:w-[18px]" : "after:w-0"
-              )}
+              className="px-3.5 py-2 text-[0.85rem] font-medium text-graphite hover:text-ink transition-colors no-underline"
             >
               {link.name}
             </a>
           ))}
           <a
             href="#contact"
-            className="ml-4 px-5.5 py-2.5 font-body text-[0.78rem] font-semibold text-gray-950 bg-gold rounded-md tracking-[0.06em] uppercase transition-all duration-300 ease-out-expo hover:bg-gold-light hover:-translate-y-[1px] hover:shadow-[0_6px_20px_rgba(205,162,70,0.3)] no-underline"
+            className="ml-3 px-4 py-2 text-[0.85rem] font-semibold text-sheet bg-ink rounded-lg hover:bg-ink-soft transition-colors no-underline"
           >
-            Get in Touch
+            Talk to us
           </a>
         </div>
 
         <button
-          className="md:hidden relative w-8 h-8 flex items-center justify-center bg-none border-none text-gray-300"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          type="button"
+          className="md:hidden w-10 h-10 -mr-2 flex items-center justify-center text-ink cursor-pointer"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-menu"
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
         >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </nav>
 
-      {/* Mobile Menu */}
       <div
+        id="mobile-menu"
         className={cn(
-          "fixed top-[72px] left-0 right-0 bottom-0 bg-gray-950/98 backdrop-blur-[30px] z-50 flex flex-col p-8 transition-all duration-400 ease-out-expo md:hidden",
-          isMenuOpen ? "opacity-100 pointer-events-auto translate-y-0" : "opacity-0 pointer-events-none -translate-y-[10px]"
+          "fixed top-[var(--nav-height)] inset-x-0 bottom-0 z-40 bg-paper flex flex-col px-5 py-6 md:hidden transition-[opacity,transform] duration-300",
+          isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
         )}
+        inert={!isMenuOpen}
       >
         {NAV_LINKS.map((link) => (
           <a
             key={link.name}
             href={link.href}
-            onClick={() => {
-              setActiveLink(link.name);
-              setIsMenuOpen(false);
-            }}
-            className={cn(
-              "block py-4.5 text-[1.1rem] font-medium border-b border-solid border-gray-800 transition-colors no-underline",
-              activeLink === link.name ? "text-gold" : "text-gray-400 hover:text-gold"
-            )}
+            onClick={() => setIsMenuOpen(false)}
+            className="py-4 font-display text-[1.6rem] font-semibold text-ink border-b border-rule no-underline"
           >
             {link.name}
           </a>
@@ -124,9 +93,9 @@ export function Navbar() {
         <a
           href="#contact"
           onClick={() => setIsMenuOpen(false)}
-          className="mt-6 text-center py-4 bg-gold text-gray-950 font-semibold rounded-lg no-underline"
+          className="mt-6 text-center py-3.5 bg-ink text-sheet font-semibold rounded-lg no-underline"
         >
-          Get in Touch
+          Talk to us
         </a>
       </div>
     </>

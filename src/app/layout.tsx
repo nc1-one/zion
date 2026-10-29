@@ -23,7 +23,8 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: "Zion Systems and Build — Frameworks for a Higher Purpose",
-  description: "IT development and servicing for organizations building awesome things for the Kingdom.",
+  description:
+    "Scope your next website, app, or system with the Zion Agent: paste your website, answer a few questions, and get a roadmap, deliverables, timeline, and cost. IT development and servicing for organizations building awesome things for the Kingdom.",
 };
 
 export default function RootLayout({
@@ -32,12 +33,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body
-        className={`${outfit.variable} ${jetbrains.variable} ${cormorant.variable} antialiased selection:bg-gold/30 selection:text-white`}
-      >
-        {children}
-      </body>
+    <html lang="en" className={`${outfit.variable} ${jetbrains.variable} ${cormorant.variable} scroll-smooth`}>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

@@ -29,63 +29,47 @@ const VALUES = [
 
 export function About() {
   return (
-    <section id="about" className="bg-gray-900 py-16 md:py-28 px-6 md:px-12">
-      <div className="max-w-[1180px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:sticky lg:top-32"
-          >
-            <div className="font-mono text-[0.72rem] font-medium text-gold tracking-[0.14em] uppercase mb-3.5 flex items-center gap-2.5">
-              <span className="w-6 h-[1.5px] bg-gold rounded-sm" />
-              Who We Are
-            </div>
-            <h2 className="font-display text-[clamp(2.2rem,4vw,3rem)] font-semibold text-white leading-[1.15] mb-4">
-              Driven by Values, Guided by Vision.
-            </h2>
-            <p className="text-[1rem] leading-[1.7] text-gray-400 font-light mb-8">
-              Zion Systems & Build was founded on the belief that the organizations doing the most important work in the world should have access to the best technology. We aren&apos;t just a service provider — we are a partner in your mission.
-            </p>
-            
-            <div className="p-7 bg-gold/4 border-l-4 border-solid border-gold rounded-r-xl">
-              <p className="font-display text-[1.15rem] italic text-gray-200 leading-[1.55]">
-                &ldquo;Our goal is to remove the technical barriers that hinder Kingdom-focused organizations from reaching their full potential. We build the frameworks so you can focus on the fruit.&rdquo;
-              </p>
-              <cite className="block mt-3 text-[0.78rem] font-medium text-gold not-italic uppercase tracking-wide">
-                — Founding Vision, Zion Systems
-              </cite>
-            </div>
-          </motion.div>
+    <section id="about" className="py-20 md:py-28 px-5 md:px-10 border-t border-rule">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16 items-start">
+        <div className="lg:sticky lg:top-[calc(var(--nav-height)+2.5rem)]">
+          <div className="annot text-gold-deep mb-4">Who we are</div>
+          <h2 className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink">
+            Driven by values, guided by vision.
+          </h2>
+          <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
+            Zion Systems &amp; Build was founded on the belief that the organizations doing the most important work in the world
+            should have access to the best technology. We aren&apos;t just a service provider — we are a partner in your mission.
+          </p>
+          <figure className="mt-8 p-6 bg-sheet border border-rule rounded-[10px] max-w-[32rem]">
+            <blockquote className="font-display text-[1.25rem] italic leading-[1.5] text-ink">
+              &ldquo;Our goal is to remove the technical barriers that hinder Kingdom-focused organizations from reaching their full
+              potential. We build the frameworks so you can focus on the fruit.&rdquo;
+            </blockquote>
+            <figcaption className="annot text-gold-deep mt-4">Founding vision, Zion Systems</figcaption>
+          </figure>
+        </div>
 
-          <div className="flex flex-col gap-10">
-            <div>
-              <h3 className="font-display text-[1.3rem] font-semibold text-white mb-1.5">Our Core Values</h3>
-              <p className="text-[0.88rem] text-gray-400 font-light mb-6">The non-negotiables that guide every line of code we write.</p>
-              <div className="flex flex-col gap-5">
-                {VALUES.map((value, idx) => (
-                  <motion.div
-                    key={value.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                    className="flex gap-4"
-                  >
-                    <div className="w-10 h-10 shrink-0 bg-gold/12 border border-solid border-gold/12 rounded-lg flex items-center justify-center">
-                      <value.icon size={18} className="text-gold" />
-                    </div>
-                    <div>
-                      <h4 className="text-[0.92rem] font-semibold text-white mb-1">{value.title}</h4>
-                      <p className="text-[0.82rem] leading-[1.6] text-gray-400 font-light">{value.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div>
+          <h3 className="font-display text-[1.6rem] font-semibold text-ink">Our core values</h3>
+          <p className="mt-1 text-[0.92rem] text-graphite">The non-negotiables that guide every line of code we write.</p>
+          <ul className="mt-6 border-t border-rule">
+            {VALUES.map((value, idx) => (
+              <motion.li
+                key={value.title}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.45, delay: idx * 0.07 }}
+                className="flex gap-5 py-6 border-b border-rule"
+              >
+                <value.icon size={20} strokeWidth={1.6} className="text-gold-deep shrink-0 mt-1" />
+                <div>
+                  <h4 className="text-[1rem] font-semibold text-ink">{value.title}</h4>
+                  <p className="mt-1 text-[0.9rem] leading-[1.65] text-graphite">{value.desc}</p>
+                </div>
+              </motion.li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
