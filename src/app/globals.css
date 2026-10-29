@@ -8,22 +8,23 @@
   trace  – the Zion Agent's annotations
 */
 @theme {
-  --color-paper: #F3F4F1;
+  /* Text tokens all meet WCAG AA (4.5:1) on paper, sheet, and gold-wash. */
+  --color-paper: #F2F4F3;
   --color-sheet: #FFFFFF;
-  --color-ink: #13202C;
-  --color-ink-soft: #24323F;
-  --color-graphite: #56616D;
-  --color-mist: #8A939C;
-  --color-rule: #D6DADA;
-  --color-rule-soft: #E7EAE9;
+  --color-ink: #0E1A25;
+  --color-ink-soft: #1F2D3A;
+  --color-graphite: #45515D;
+  --color-mist: #5F6B76;
+  --color-rule: #C9D0D0;
+  --color-rule-soft: #E2E6E5;
 
   --color-gold: #C9A043;
-  --color-gold-bright: #D9B867;
-  --color-gold-deep: #8A681D;
-  --color-gold-wash: #F7F0DD;
+  --color-gold-bright: #E3C374;
+  --color-gold-deep: #765811;
+  --color-gold-wash: #F6EDD3;
 
-  --color-trace: #2E5C8A;
-  --color-trace-wash: #E8EFF6;
+  --color-trace: #1F4C7A;
+  --color-trace-wash: #E4ECF5;
 
   --font-display: var(--font-cormorant), "Cormorant Garamond", serif;
   --font-body: var(--font-outfit), system-ui, sans-serif;
@@ -36,46 +37,75 @@
   --nav-height: 68px;
 }
 
-html {
-  scroll-padding-top: calc(var(--nav-height) + 12px);
+/* Global styles live in layers so Tailwind utilities can override them. */
+@layer base {
+  html {
+    scroll-padding-top: calc(var(--nav-height) + 12px);
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-gold-wash);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-trace);
+    outline-offset: 2px;
+  }
 }
 
-body {
-  background: var(--color-paper);
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-feature-settings: "kern" 1, "liga" 1;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+@layer components {
+  /* Hairline drafting grid used behind the assessment */
+  .drafting-grid {
+    background-image:
+      linear-gradient(var(--color-rule-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-rule-soft) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, black 30%, transparent 75%);
+  }
+
+  /* Small caps label used for sheet annotations */
+  .annot {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
 }
 
-::selection {
-  background: var(--color-gold-wash);
-  color: var(--color-ink);
+/* Zion Agent mascot */
+@keyframes agent-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
 }
-
-:focus-visible {
-  outline: 2px solid var(--color-trace);
-  outline-offset: 2px;
-  border-radius: 4px;
+@keyframes agent-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
-
-/* Hairline drafting grid used behind the assessment */
-.drafting-grid {
-  background-image:
-    linear-gradient(var(--color-rule-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-rule-soft) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, black 30%, transparent 75%);
+@keyframes agent-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
-
-/* Small caps label used for sheet annotations */
-.annot {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.agent-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: agent-blink 4.5s infinite;
+}
+.agent-node-pulse {
+  animation: agent-pulse 1.1s ease-in-out infinite;
+}
+.agent-bob {
+  animation: agent-bob 3s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

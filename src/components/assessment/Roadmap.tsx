@@ -101,7 +101,7 @@ export function RoadmapPlaceholder({ drafting }: { drafting: boolean }) {
       {PHASES.map((p, i) => (
         <div key={p.key} className="contents">
           <div className={cn(ROW, "flex items-center gap-2")}>
-            <span className="font-display text-[1rem] font-semibold text-rule w-5 shrink-0">{p.numeral}</span>
+            <span className="font-display text-[1rem] font-semibold text-mist w-5 shrink-0">{p.numeral}</span>
             <span className="text-[0.78rem] text-mist truncate">{p.name}</span>
           </div>
           <div className={cn(ROW, "relative")}>
