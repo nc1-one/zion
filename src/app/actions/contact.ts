@@ -68,6 +68,7 @@ function quoteHtml(q: Quote): string {
     <h2 style="color: #8A681D; margin: 0 0 4px;">Quote ${escapeHtml(q.ref)}: ${escapeHtml(q.title)}</h2>
     <p style="margin: 0 0 12px; color: #56616D; font-size: 13px;">${q.cadence === "monthly" ? "Monthly plan" : "One-time project"} · ${formatDate(q.createdAt)}</p>
     <p><strong>Initial quote:</strong> ${money(q.totalCost)}${per} (${hoursLabel(q.totalHours)}${per} at ${money(q.hourlyRate)}/hour)${q.weeks ? ` · about ${weeksLabel(q.weeks)}` : ""}</p>
+    ${q.term ? `<p><strong>Contract:</strong> ${escapeHtml(q.term)}${q.contractTotal ? ` · ${money(q.contractTotal)} total` : ""}</p>` : ""}
     ${q.options.length ? `<p><strong>Options:</strong> ${q.options.map(escapeHtml).join(" · ")}</p>` : ""}
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
       ${q.lines

@@ -1,105 +1,122 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { Button } from "@/components/ui/Button";
 import { CountUp, Reveal } from "@/components/ui/motion";
-import { SERVICES } from "@/lib/assessment/services";
-import { HOURLY_RATE } from "@/lib/assessment/pricing";
 import { money } from "@/lib/assessment/format";
-import { MANAGED_IT_OPTIONS, managedItEstimate, managedItQuote } from "@/lib/quotes";
+import {
+  IT_SERVICES,
+  IT_SIZES,
+  IT_TERMS,
+  managedItEstimate,
+  managedItQuote,
+  type ItServiceId,
+  type ItSizeId,
+  type ItTermId,
+} from "@/lib/quotes";
 import { cn } from "@/lib/utils";
 
-const managed = SERVICES.find((s) => s.id === "managed")!;
-
-// "Your IT team": the managed IT plan with a live monthly estimate.
+// "Your IT team": a monthly plan priced from size, services, and term.
 export function ManagedIT() {
   const { sendQuote } = useAssessment();
-  const [staff, setStaff] = useState(15);
-  const [options, setOptions] = useState<string[]>([]);
-  const preview = managedItEstimate(staff, options);
+  const [size, setSize] = useState<ItSizeId>("s");
+  const [services, setServices] = useState<ItServiceId[]>(["helpdesk", "devices", "workspace", "security"]);
+  const [term, setTerm] = useState<ItTermId>("12m");
+  const estimate = managedItEstimate(size, services, term);
 
-  const toggle = (id: string) => setOptions((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+  const toggle = (id: ItServiceId) => setServices((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
 
   return (
-    <Reveal className="mt-16 rounded-[14px] border border-gold/40 overflow-hidden grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+    <Reveal className="mt-16 rounded-[16px] border border-gold/40 overflow-hidden grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
       <div className="bg-gold-wash p-7 md:p-10">
-        <div className="annot text-gold-deep">{managed.title}</div>
-        <h3 className="mt-3 font-display text-[clamp(1.9rem,3.4vw,2.6rem)] leading-[1.08] font-semibold text-ink">{managed.tagline}</h3>
-        <p className="mt-4 text-[0.98rem] leading-[1.7] text-ink-soft max-w-[36rem]">{managed.desc}</p>
-        <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
-          {managed.includes.map((item) => (
-            <li key={item} className="flex gap-2.5 text-[0.9rem] leading-[1.45] text-ink">
-              <Check size={16} strokeWidth={2.5} className="text-gold shrink-0 mt-0.5" />
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
+        <div className="annot text-gold-bright">Managed IT</div>
+        <h3 className="mt-2 font-display text-[clamp(1.9rem,3.4vw,2.6rem)] leading-[1.08] font-semibold text-ink">
+          No need to build an IT team. We&apos;ll be your IT team.
+        </h3>
 
-      <div className="bg-sheet p-7 md:p-10 lg:border-l border-t lg:border-t-0 border-gold/40 flex flex-col">
-        <div className="annot text-mist">Monthly estimate</div>
-        <label htmlFor="it-staff" className="mt-4 flex items-baseline justify-between gap-3 text-[0.92rem] text-ink">
-          People who use IT at your organization
-          <span className="font-display text-[1.6rem] font-semibold text-gold-bright tabular-nums">{staff}</span>
-        </label>
-        <input
-          id="it-staff"
-          type="range"
-          min={1}
-          max={100}
-          value={staff}
-          onChange={(e) => setStaff(Number(e.target.value))}
-          className="mt-3 w-full accent-[var(--color-gold)] cursor-pointer"
-        />
-        <div className="mt-1 flex justify-between font-mono text-[0.65rem] text-mist">
-          <span>1</span>
-          <span>100</span>
+        <div className="mt-8 annot text-graphite">How many people work with you?</div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {IT_SIZES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              aria-pressed={size === s.id}
+              onClick={() => setSize(s.id)}
+              className={cn(
+                "relative px-3.5 py-2 rounded-lg border text-[0.85rem] transition-colors cursor-pointer",
+                size === s.id ? "border-gold text-paper font-semibold" : "border-rule text-ink-soft hover:border-graphite",
+              )}
+            >
+              {size === s.id && <motion.span layoutId="it-size" className="absolute inset-0 rounded-lg bg-gold" transition={{ type: "spring", stiffness: 480, damping: 36 }} />}
+              <span className="relative">{s.label}</span>
+            </button>
+          ))}
         </div>
 
-        <div className="mt-5 flex flex-col gap-2">
-          {MANAGED_IT_OPTIONS.map((o) => {
-            const on = options.includes(o.id);
+        <div className="mt-6 annot text-graphite">What do you need covered?</div>
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {IT_SERVICES.map((sv) => {
+            const on = services.includes(sv.id);
             return (
               <button
-                key={o.id}
+                key={sv.id}
                 type="button"
                 aria-pressed={on}
-                onClick={() => toggle(o.id)}
+                onClick={() => toggle(sv.id)}
                 className={cn(
-                  "flex items-center gap-3 w-full text-left px-3.5 py-2.5 rounded-lg border text-[0.88rem] transition-colors cursor-pointer",
-                  on ? "border-gold bg-gold-wash text-ink" : "border-rule text-ink-soft hover:border-graphite",
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left text-[0.85rem] transition-colors cursor-pointer",
+                  on ? "border-gold bg-night/40 text-ink" : "border-rule text-ink-soft hover:border-graphite",
                 )}
               >
                 <span
-                  className={cn(
-                    "w-[18px] h-[18px] rounded-[5px] border-[1.5px] flex items-center justify-center shrink-0",
-                    on ? "bg-gold border-gold text-paper" : "border-mist",
-                  )}
+                  className={cn("w-[17px] h-[17px] rounded-[5px] border-[1.5px] flex items-center justify-center shrink-0 transition-colors", on ? "bg-gold border-gold text-paper" : "border-mist")}
                   aria-hidden
                 >
-                  {on && <Check size={12} strokeWidth={3} />}
+                  {on && <Check size={11} strokeWidth={3} />}
                 </span>
-                {o.label}
+                {sv.label}
               </button>
             );
           })}
         </div>
+      </div>
 
-        <div className="mt-6 pt-5 border-t border-rule" aria-live="polite">
-          <div className="font-display text-[2.4rem] leading-none font-semibold text-ink">
-            <CountUp value={preview.totalCost} format={money} />
-            <span className="text-[1rem] font-body font-normal text-graphite"> a month</span>
-          </div>
-          <div className="mt-2 font-mono text-[0.7rem] text-graphite">
-            {preview.totalHours} hours a month × {money(HOURLY_RATE)}/hour
-          </div>
+      <div className="bg-sheet p-7 md:p-10 lg:border-l border-t lg:border-t-0 border-gold/40 flex flex-col">
+        <div className="annot text-graphite">Contract</div>
+        <div className="mt-2 flex flex-col gap-1.5">
+          {IT_TERMS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={term === t.id}
+              onClick={() => setTerm(t.id)}
+              className={cn(
+                "flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-lg border text-[0.88rem] transition-colors cursor-pointer",
+                term === t.id ? "border-gold bg-gold-wash text-ink" : "border-rule text-ink-soft hover:border-graphite",
+              )}
+            >
+              {t.label}
+              {t.discount > 0 && <span className="text-[0.78rem] text-gold-bright">Save {Math.round(t.discount * 100)}%</span>}
+            </button>
+          ))}
         </div>
 
-        <Button className="mt-6 self-start" onClick={() => sendQuote(managedItQuote(staff, options))}>
-          Request this plan <ArrowRight size={16} />
-        </Button>
+        <div className="mt-auto pt-8" aria-live="polite">
+          <div className="font-display text-[2.8rem] leading-none font-semibold text-ink">
+            <CountUp value={estimate.monthly} format={money} />
+            <span className="text-[1rem] font-body font-normal text-graphite"> / month</span>
+          </div>
+          <div className="mt-2 text-[0.85rem] text-graphite">
+            {money(estimate.contractTotal)} for {estimate.term.months} months
+            {estimate.savings > 0 && <span className="text-gold-bright"> · you save {money(estimate.savings)}</span>}
+          </div>
+          <Button className="mt-6 w-full justify-center" disabled={services.length === 0} onClick={() => sendQuote(managedItQuote(size, services, term))}>
+            Request this plan <ArrowRight size={16} />
+          </Button>
+        </div>
       </div>
     </Reveal>
   );

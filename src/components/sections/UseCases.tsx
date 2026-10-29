@@ -38,7 +38,7 @@ const USE_CASES: UseCase[] = [
     tab: "Local church",
     title: "Online giving and events for a growing church",
     challenge:
-      "Giving happens by envelope, event sign-ups live in a spreadsheet, and last year's sermons are hard to find. The office spends Mondays catching up.",
+      "Giving by envelope, sign-ups in a spreadsheet, sermons hard to find.",
     builds: ["Refreshed website with a sermon library", "Recurring online giving with receipts", "Event registration with reminders"],
     weeks: 8,
     milestones: [
@@ -56,7 +56,7 @@ const USE_CASES: UseCase[] = [
     tab: "Ministry or NGO",
     title: "A donor portal with impact reporting",
     challenge:
-      "Donors ask what their gifts accomplished, and the answer takes a week of spreadsheets. Field teams report in three different formats.",
+      "Donors ask what their gifts did. The answer takes a week.",
     builds: ["Donor accounts with recurring gifts", "Impact dashboards by program", "One reporting format for field teams"],
     weeks: 14,
     milestones: [
@@ -74,7 +74,7 @@ const USE_CASES: UseCase[] = [
     tab: "Faith-driven business",
     title: "An online store and marketing launch",
     challenge:
-      "Orders come in through chat, inventory lives on paper, and the brand's values don't come through online. Growth has stalled at word of mouth.",
+      "Orders by chat, inventory on paper, growth stuck at word of mouth.",
     builds: ["Online store with payments", "Inventory and accounting sync", "Search, social, and email launch campaign"],
     weeks: 10,
     milestones: [
@@ -92,7 +92,7 @@ const USE_CASES: UseCase[] = [
     tab: "School or training org",
     title: "An enrollment and learning portal",
     challenge:
-      "Applications arrive by email, tuition is tracked by hand, and students hunt through group chats for class materials.",
+      "Applications by email, tuition tracked by hand, materials lost in chats.",
     builds: ["Online applications and tuition payments", "Student dashboard with class materials", "Admin view for registrars"],
     weeks: 12,
     milestones: [
@@ -148,11 +148,10 @@ export function UseCases() {
         <TraceRule className="mb-14 md:mb-16" />
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 mb-10">
           <div>
-            <RevealHeading text="See how a project unfolds, week by week." className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
+            <RevealHeading text="Example projects" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           </div>
           <p className="text-[1rem] leading-[1.7] text-graphite lg:pt-9 max-w-[36rem]">
-            Example engagements for the organizations we serve, from local churches to faith-driven businesses. Timelines are
-            typical for each kind of project; the Zion Agent tailors yours.
+            Typical timelines by organization. Press play.
           </p>
         </div>
 
@@ -166,11 +165,12 @@ export function UseCases() {
               aria-controls="use-case-panel"
               onClick={() => selectCase(u.id)}
               className={cn(
-                "shrink-0 px-4 py-2 rounded-full border text-[0.88rem] font-medium transition-colors cursor-pointer",
-                u.id === caseId ? "bg-gold border-gold text-paper" : "bg-sheet border-rule text-ink-soft hover:border-graphite",
+                "relative shrink-0 px-4 py-2 rounded-full border text-[0.88rem] font-medium transition-colors cursor-pointer",
+                u.id === caseId ? "border-gold text-paper" : "bg-sheet border-rule text-ink-soft hover:border-graphite",
               )}
             >
-              {u.tab}
+              {u.id === caseId && <motion.span layoutId="usecase-tab" className="absolute inset-0 rounded-full bg-gold" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+              <span className="relative">{u.tab}</span>
             </button>
           ))}
         </div>
@@ -218,7 +218,7 @@ export function UseCases() {
                 <Button
                   className="mt-7"
                   onClick={() =>
-                    preset(useCase.preset, `I've filled in answers for a project like "${useCase.title}". Add your website and adjust anything that's different for you.`)
+                    preset(useCase.preset, "Answers filled in. Add your website.")
                   }
                 >
                   Scope something like this <ArrowRight size={16} />

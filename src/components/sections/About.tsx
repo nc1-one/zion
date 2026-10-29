@@ -33,11 +33,9 @@ export function About() {
     <section id="about" className="py-20 md:py-28 px-5 md:px-10 border-t border-rule">
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16 items-start">
         <div className="lg:sticky lg:top-[calc(var(--nav-height)+2.5rem)]">
-          <RevealHeading text="What we hold to." className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
+          <RevealHeading text="About Zion" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
-            Zion Systems &amp; Build is based in Manila and built on a simple belief: churches, ministries, nonprofits, and faith-driven
-            businesses deserve the same quality of technology as anyone else. We stay with you after launch, as a partner in
-            your mission.
+            A Manila studio building technology for churches, ministries, and faith-driven businesses. We stay after launch.
           </p>
           <figure className="mt-8 p-6 bg-sheet border border-rule rounded-[10px] max-w-[32rem]">
             <blockquote className="font-display text-[1.25rem] italic leading-[1.5] text-ink">

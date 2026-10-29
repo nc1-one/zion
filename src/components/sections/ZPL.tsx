@@ -86,8 +86,7 @@ export function ZPL() {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 items-end">
           <RevealHeading text="The Zion Production Line™" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold" />
           <p className="text-[1rem] leading-[1.7] text-graphite max-w-[36rem]">
-            Every project runs through the same five phases, each ending in a quality gate you sign off on. Every scope the
-            Zion Agent drafts follows them, so you know what happens next and what you receive at each step.
+            Five phases. Each ends with a quality gate you sign off.
           </p>
         </div>
 

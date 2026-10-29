@@ -75,11 +75,9 @@ export function Contact() {
     <section id="contact" className="py-20 md:py-28 px-5 md:px-10 border-t border-rule">
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16">
         <div>
-          <RevealHeading key={attachment ?? "none"} text={scope ? "Send us your scope." : attachedQuote ? "Send us your quote." : "Start a conversation."} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
+          <RevealHeading key={attachment ?? "none"} text={scope ? "Send us your scope" : attachedQuote ? "Send us your quote" : "Talk to the team"} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
-            {scope || attachedQuote
-              ? `Your ${scope ? "scope" : "quote"} is attached below. Add anything we should know, and a Zion team member will walk through it with you.`
-              : "Tell us about your mission and what you want to build. If you run the assessment at the top of the page first, we can start from a scope."}
+            {scope || attachedQuote ? `Your ${scope ? "scope" : "quote"} is attached. Add a note and send.` : "Tell us what you want to build."}
           </p>
 
           <ul className="mt-10 flex flex-col gap-5">
@@ -106,7 +104,7 @@ export function Contact() {
             ))}
           </ul>
           <p className="mt-8 text-[0.85rem] text-graphite max-w-[30rem]">
-            We usually reply to new inquiries within one business day.
+            We reply within one business day.
           </p>
         </div>
 
@@ -157,7 +155,7 @@ export function Contact() {
                         {scope
                           ? `${money(scope.totalCost)} · ${hoursLabel(scope.totalHours)} · ${weeksLabel(scope.totalWeeks)}`
                           : attachedQuote!.cadence === "monthly"
-                            ? `${money(attachedQuote!.totalCost)} a month · ${hoursLabel(attachedQuote!.totalHours)} a month`
+                            ? `${money(attachedQuote!.totalCost)} / month · ${attachedQuote!.term ?? ""}${attachedQuote!.contractTotal ? ` · ${money(attachedQuote!.contractTotal)} total` : ""}`
                             : `${money(attachedQuote!.totalCost)} · ${hoursLabel(attachedQuote!.totalHours)}${attachedQuote!.weeks ? ` · about ${weeksLabel(attachedQuote!.weeks)}` : ""}`}
                       </div>
                     </div>

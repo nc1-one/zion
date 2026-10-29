@@ -32,7 +32,7 @@ export function Offerings() {
   const scopeThis = () =>
     preset(
       selected.buildType ? { buildTypes: [selected.buildType] } : {},
-      `I've started a scope with ${selected.title}. Add your website to begin, or start without one.`,
+      `Started a scope with ${selected.title}. Add your website.`,
     );
 
   const onListKey = (e: React.KeyboardEvent, index: number) => {
@@ -50,12 +50,10 @@ export function Offerings() {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 mb-12">
           <div>
             {proposal && <div className="annot text-gold-deep mb-4">In your scope</div>}
-            <RevealHeading key={proposal ? "scope" : "all"} text={proposal ? "The Zion teams behind your build." : "Build it, run it, grow it."} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
+            <RevealHeading key={proposal ? "scope" : "all"} text={proposal ? "Services in your scope" : "Services"} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           </div>
           <p className="text-[1rem] leading-[1.7] text-graphite lg:pt-9 max-w-[36rem]">
-            {proposal
-              ? `Your scope draws on ${inScope.size} of our ${SERVICES.length} offerings, marked below. The same team stays with you from discovery through launch.`
-              : "Seven offerings for churches, ministries, and faith-driven businesses, from your first website to the marketing that grows it and the IT that keeps it running. Pick one to see what's included."}
+            {proposal ? `Your scope uses ${inScope.size} of these.` : "From your first website to the IT that keeps it running."}
           </p>
         </div>
 
@@ -86,18 +84,14 @@ export function Offerings() {
                         onKeyDown={(e) => onListKey(e, index)}
                         className={cn(
                           "group relative flex items-center gap-3.5 w-full text-left px-3 py-3.5 border-b border-rule transition-colors cursor-pointer",
-                          active ? "bg-paper" : "hover:bg-paper/60",
+                          !active && "hover:bg-paper/60",
                         )}
                       >
-                        <span
-                          className={cn(
-                            "absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-colors",
-                            active ? "bg-gold" : "bg-transparent",
-                          )}
-                          aria-hidden
-                        />
-                        <Icon size={19} strokeWidth={1.7} className={active ? "text-gold-deep" : "text-graphite"} />
-                        <span className={cn("flex-1 text-[0.98rem]", active ? "font-semibold text-ink" : "font-medium text-ink-soft")}>
+                        {active && (
+                          <motion.span layoutId="offering-active" className="absolute inset-0 bg-paper border-l-[3px] border-gold" transition={{ type: "spring", stiffness: 420, damping: 38 }} aria-hidden />
+                        )}
+                        <Icon size={19} strokeWidth={1.7} className={cn("relative", active ? "text-gold-bright" : "text-graphite")} />
+                        <span className={cn("relative flex-1 text-[0.98rem]", active ? "font-semibold text-ink" : "font-medium text-ink-soft")}>
                           {svc.title}
                         </span>
                         {inScope.has(svc.id) && (

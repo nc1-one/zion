@@ -11,25 +11,25 @@ const SECTIONS = ["assessment", "offerings", "products", "use-cases", "process",
 type SectionId = (typeof SECTIONS)[number];
 
 const STAGE_TIPS: Record<Stage, string> = {
-  intro: "Hi, I'm the Zion Agent. Paste your website and I'll draft a scope for you in about three minutes.",
-  questions: "I'm filling in your scope sheet as you answer. Press a number key to pick an option.",
-  drafting: "Drafting your roadmap and costs now. This usually takes under a minute.",
-  done: "Your scope is ready. Send it to the team, or scroll on to see who'd build it.",
+  intro: "Hi, I'm the Zion Agent. Paste your website to start.",
+  questions: "Number keys pick options. Enter continues.",
+  drafting: "Drafting your scope.",
+  done: "Your scope is ready. Send it when you're happy.",
 };
 
 const SECTION_TIPS: Record<Exclude<SectionId, "assessment">, { tip: string; withScope?: string }> = {
   offerings: {
-    tip: "These are the Zion teams. Pick one and I'll start a scope with it.",
-    withScope: "The highlighted teams are the ones your scope needs.",
+    tip: "Pick a service to see what's included.",
+    withScope: "Highlighted services are in your scope.",
   },
-  products: { tip: "Click around a prototype, pick the modules you need, and I'll price it at $8 an hour." },
-  "use-cases": { tip: "Press play to see how a project like yours unfolds, week by week." },
-  process: { tip: "Every scope I draft follows these five phases. Select one to see what happens." },
-  work: { tip: "A few of the organizations Zion has built for." },
+  products: { tip: "Pick a problem. The prototype is clickable." },
+  "use-cases": { tip: "Press play to watch a project unfold." },
+  process: { tip: "Select a phase to see what you get." },
+  work: { tip: "Some of our past work." },
   about: { tip: "The values behind every build." },
   contact: {
-    tip: "Have a question first? Send a message. The team replies within one business day.",
-    withScope: "Whatever you attached is ready. Add a note and send it to the team.",
+    tip: "We reply within one business day.",
+    withScope: "Your attachment is ready to send.",
   },
 };
 
