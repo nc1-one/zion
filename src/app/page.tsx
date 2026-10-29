@@ -3,6 +3,8 @@ import { AssessmentProvider } from "@/components/assessment/AssessmentProvider";
 import { Assessment } from "@/components/assessment/Assessment";
 import { Offerings } from "@/components/sections/Offerings";
 import { UseCases } from "@/components/sections/UseCases";
+import { Products } from "@/components/sections/Products";
+import { ScrollProgress } from "@/components/ui/motion";
 import { AgentGuide } from "@/components/agent/AgentGuide";
 import { ZPL } from "@/components/sections/ZPL";
 import { Portfolio } from "@/components/sections/Portfolio";
@@ -14,9 +16,11 @@ export default function Home() {
   return (
     <AssessmentProvider>
       <Navbar />
+      <ScrollProgress />
       <main className="min-h-screen">
         <Assessment />
         <Offerings />
+        <Products />
         <UseCases />
         <ZPL />
         <Portfolio />

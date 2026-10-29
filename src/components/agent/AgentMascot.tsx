@@ -37,7 +37,7 @@ export function AgentMascot({
       <circle cx="60" cy="34" r="2.4" className="fill-gold" />
 
       {/* head */}
-      <rect x="10" y="16" width="44" height="36" rx="14" className="fill-ink stroke-gold" strokeWidth="2.5" />
+      <rect x="10" y="16" width="44" height="36" rx="14" className="fill-night stroke-gold" strokeWidth="2.5" />
 
       {/* eyes */}
       <g transform={eyeShift}>

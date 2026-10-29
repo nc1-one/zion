@@ -1,14 +1,13 @@
-// Server-only pricing. The hourly rate and effort figures stay here: the browser
-// only ever receives computed costs.
+// Server-side estimating: effort guide, fallback estimator, and turning effort
+// into a priced proposal at Zion's published hourly rate.
 
 import { randomBytes } from "node:crypto";
 import type { BuildTypeId, FeatureId, TimelineId } from "./questions";
 import { BUILD_TYPES, FEATURES, labelOf } from "./questions";
+import { HOURLY_RATE } from "./pricing";
 import { surveyNotes } from "./survey";
 import type { Answers, PhaseKey, Proposal, ScanResult, ServiceId } from "./types";
 import { PHASES, PHASE_KEYS } from "./types";
-
-const HOURLY_RATE = 5; // USD, never displayed
 
 // Build-phase effort for each kind of project and feature, in hours.
 export const BUILD_HOURS: Record<BuildTypeId, number> = {
@@ -133,7 +132,8 @@ export function finalizeProposal(
       startWeek: week,
       weeks,
       cost,
-      deliverables: deliverables.map((d) => ({ name: d.name, description: d.description, cost: d.cost })),
+      hours,
+      deliverables,
     });
     week += weeks;
     totalCost += cost;
@@ -149,7 +149,9 @@ export function finalizeProposal(
     siteFindings: draft.siteFindings.slice(0, 6).map((f) => f.slice(0, 300)),
     phases,
     totalWeeks: Math.max(1, week - 1),
+    totalHours: phases.reduce((sum, p) => sum + p.hours, 0),
     totalCost,
+    hourlyRate: HOURLY_RATE,
     assumptions: draft.assumptions.slice(0, 6).map((a) => a.slice(0, 300)),
     recommendedServices: [...new Set(draft.recommendedServices)].slice(0, 7),
     answers,

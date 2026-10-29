@@ -4,12 +4,14 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, X, ExternalLink, Apple } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RevealHeading } from "@/components/ui/motion";
 import Image from "next/image";
 
 const CATEGORIES = ["All", "Ministry", "Web & Mobile", "Enterprise"];
 
 interface ProjectType {
   title: string;
+  kind: string;
   desc: string;
   tags: string[];
   monogram: string;
@@ -22,7 +24,8 @@ interface ProjectType {
 
 const PROJECTS: ProjectType[] = [
   {
-    title: "Jesus.Net Philippines — Digital Ministry Portal",
+    title: "Jesus.Net Philippines",
+    kind: "Digital ministry portal",
     desc: "A full-scale digital missions portal featuring pathway-based navigation for individuals, churches, and Bible study leaders. Reach millions across 160+ countries.",
     tags: ["Web Platform", "Ministry Tech", "Multi-Tool"],
     monogram: "J.NET",
@@ -32,8 +35,9 @@ const PROJECTS: ProjectType[] = [
     image: "/images/jesus-site.jpg",
   },
   {
-    title: "Turn Vertical — Digital Evangelism Platform",
-    desc: "Website and mobile app empowering believers to record testimonies and share Gospel videos via QR codes and links.",
+    title: "Turn Vertical",
+    kind: "Digital evangelism platform",
+    desc: "Website and mobile app that helps believers record testimonies and share Gospel videos via QR codes and links.",
     tags: ["Web App", "Mobile App", "Video Platform"],
     monogram: "TV",
     appStore: "https://apps.apple.com/my/app/turn-vertical/id6758944157",
@@ -41,7 +45,8 @@ const PROJECTS: ProjectType[] = [
     image: "/images/turn-vertical-siteB.jpg",
   },
   {
-    title: "HopeBegins.Today — Faith-Based Mental Health",
+    title: "HopeBegins.Today",
+    kind: "Faith-based mental health",
     desc: "A ministry website for a faith-driven mental health coaching program combining Christian principles with technology.",
     tags: ["Ministry Website", "Booking System"],
     monogram: "HB",
@@ -50,7 +55,8 @@ const PROJECTS: ProjectType[] = [
     image: "/images/hope-begins-site.jpg",
   },
   {
-    title: "Glassbox Philippines — Systems Integration",
+    title: "Glassbox Philippines",
+    kind: "Systems integration",
     desc: "End-to-end systems integration for an architectural finishes company, connecting inventory and ordering workflows.",
     tags: ["Systems Integration", "Enterprise"],
     monogram: "GB",
@@ -58,7 +64,8 @@ const PROJECTS: ProjectType[] = [
     image: "/images/glassbox-site.png",
   },
   {
-    title: "Himala Every Day — Devotional Landing Page",
+    title: "Himala Every Day",
+    kind: "Devotional landing page",
     desc: "A beautifully crafted landing page for a daily devotional ministry reaching readers in 25+ languages.",
     tags: ["Landing Page", "UI/UX"],
     monogram: "HED",
@@ -67,7 +74,8 @@ const PROJECTS: ProjectType[] = [
     image: "/images/himala-site.jpg",
   },
   {
-    title: "eSTAR Foundation — Ministry Impact Reporting",
+    title: "eSTAR Foundation",
+    kind: "Ministry impact reporting",
     desc: "A missions-focused reporting platform featuring the Harvest database that maps churches and unreached communities.",
     tags: ["Impact Reporting", "Missions Data"],
     monogram: "eSF",
@@ -108,10 +116,7 @@ export function Portfolio() {
       <div className="max-w-[1200px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
           <div>
-            <div className="annot text-gold-deep mb-4">Our work</div>
-            <h2 className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink">
-              Projects built on purpose.
-            </h2>
+            <RevealHeading text="Projects built on purpose." className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
             <p className="mt-4 text-[1rem] leading-[1.7] text-graphite max-w-[34rem]">
               Systems we&apos;ve built for organizations doing Kingdom work across multiple sectors.
             </p>
@@ -128,7 +133,7 @@ export function Portfolio() {
                   onClick={() => setActiveCategory(category)}
                   className={cn(
                     "px-3.5 py-1.5 rounded-full border text-[0.82rem] font-medium transition-colors cursor-pointer",
-                    isActive ? "bg-ink text-sheet border-ink" : "bg-transparent text-graphite border-rule hover:border-ink hover:text-ink",
+                    isActive ? "bg-gold text-paper border-gold" : "bg-transparent text-graphite border-rule hover:border-graphite hover:text-ink",
                   )}
                 >
                   {category}
@@ -149,7 +154,7 @@ export function Portfolio() {
                 exit={{ opacity: 0, y: 12 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 className={cn(
-                  "group bg-sheet border border-rule rounded-[10px] overflow-hidden flex flex-col transition-shadow duration-300 hover:shadow-[0_24px_60px_-30px_rgba(19,32,44,0.35)]",
+                  "group bg-sheet border border-rule rounded-[10px] overflow-hidden flex flex-col transition-[border-color,transform] duration-300 hover:border-graphite hover:-translate-y-1",
                   project.featured && "md:col-span-2 md:grid md:grid-cols-[1.35fr_1fr]",
                 )}
               >
@@ -180,6 +185,7 @@ export function Portfolio() {
                 <div className="p-6 md:p-7 flex flex-col flex-1">
                   <div className="annot text-mist mb-3">{project.tags.join("  ·  ")}</div>
                   <h3 className="font-display text-[1.45rem] leading-[1.15] font-semibold text-ink">{project.title}</h3>
+                  <p className="mt-1 text-[0.88rem] font-medium text-gold-deep">{project.kind}</p>
                   <p className="mt-2.5 text-[0.88rem] leading-[1.65] text-graphite">{project.desc}</p>
                   <div className="mt-auto pt-5 flex flex-wrap items-center gap-5">
                     {project.link && (
@@ -223,7 +229,7 @@ export function Portfolio() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-6 bg-ink/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-6 bg-night/85"
             onClick={() => setSelectedProject(null)}
           >
             <motion.div
@@ -263,6 +269,7 @@ export function Portfolio() {
                   <h3 id="project-dialog-title" className="font-display text-[1.6rem] leading-[1.15] font-semibold text-ink mt-3">
                     {selectedProject.title}
                   </h3>
+                  <p className="mt-1 text-[0.9rem] font-medium text-gold-deep">{selectedProject.kind}</p>
                   <div className="annot text-mist mt-3">{selectedProject.tags.join("  ·  ")}</div>
                   <p className="mt-5 text-[0.9rem] leading-[1.7] text-graphite">{selectedProject.desc}</p>
                 </div>
@@ -283,7 +290,7 @@ export function Portfolio() {
                       href={selectedProject.appStore}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-ink hover:bg-ink-soft text-sheet font-semibold rounded-lg text-[0.88rem] no-underline transition-colors"
+                      className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-raised hover:bg-rule text-ink border border-rule font-semibold rounded-lg text-[0.88rem] no-underline transition-colors"
                     >
                       <Apple size={14} className="fill-current" /> Download on the App Store
                     </a>
@@ -291,7 +298,7 @@ export function Portfolio() {
                   <button
                     type="button"
                     onClick={() => setSelectedProject(null)}
-                    className="w-full py-3 px-4 border border-rule hover:border-ink text-ink rounded-lg text-[0.88rem] transition-colors cursor-pointer"
+                    className="w-full py-3 px-4 border border-rule hover:border-graphite text-ink rounded-lg text-[0.88rem] transition-colors cursor-pointer"
                   >
                     Close
                   </button>

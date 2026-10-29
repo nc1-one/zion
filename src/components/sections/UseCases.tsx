@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import type { Answers, PhaseKey } from "@/lib/assessment/types";
 import { PHASES } from "@/lib/assessment/types";
 import { cn } from "@/lib/utils";
+import { RevealHeading, TraceRule } from "@/components/ui/motion";
 
 interface Milestone {
   start: number;
@@ -144,12 +145,10 @@ export function UseCases() {
   return (
     <section id="use-cases" className="py-20 md:py-28 px-5 md:px-10">
       <div className="max-w-[1200px] mx-auto">
+        <TraceRule className="mb-14 md:mb-16" />
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 mb-10">
           <div>
-            <div className="annot text-gold-deep mb-4">Use cases</div>
-            <h2 className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink">
-              See how a project unfolds, week by week.
-            </h2>
+            <RevealHeading text="See how a project unfolds, week by week." className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           </div>
           <p className="text-[1rem] leading-[1.7] text-graphite lg:pt-9 max-w-[36rem]">
             Example engagements for the organizations we serve, from local churches to faith-driven businesses. Timelines are
@@ -168,7 +167,7 @@ export function UseCases() {
               onClick={() => selectCase(u.id)}
               className={cn(
                 "shrink-0 px-4 py-2 rounded-full border text-[0.88rem] font-medium transition-colors cursor-pointer",
-                u.id === caseId ? "bg-ink border-ink text-sheet" : "bg-sheet border-rule text-ink-soft hover:border-ink",
+                u.id === caseId ? "bg-gold border-gold text-paper" : "bg-sheet border-rule text-ink-soft hover:border-graphite",
               )}
             >
               {u.tab}
@@ -265,9 +264,9 @@ export function UseCases() {
                       aria-current={state === "active" ? "step" : undefined}
                       className={cn(
                         "absolute top-5 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center font-display font-semibold transition-all cursor-pointer",
-                        state === "active" && "w-10 h-10 text-[1rem] bg-ink text-gold-bright ring-4 ring-gold-wash",
-                        state === "done" && "w-8 h-8 text-[0.85rem] bg-gold text-ink",
-                        state === "upcoming" && "w-8 h-8 text-[0.85rem] bg-sheet border-2 border-rule text-graphite hover:border-ink",
+                        state === "active" && "w-10 h-10 text-[1rem] bg-gold text-paper ring-4 ring-gold/25",
+                        state === "done" && "w-8 h-8 text-[0.85rem] bg-raised border-2 border-gold text-gold-bright",
+                        state === "upcoming" && "w-8 h-8 text-[0.85rem] bg-sheet border-2 border-rule text-graphite hover:border-graphite",
                       )}
                       style={{ left: center }}
                     >

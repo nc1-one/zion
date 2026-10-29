@@ -1,5 +1,6 @@
 "use client";
 
+import { RevealHeading } from "@/components/ui/motion";
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, FileText, Loader2, Mail, MapPin, Phone, Send, X } from "lucide-react";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { sendContactEmail } from "@/app/actions/contact";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { ORG_TYPES, labelOf } from "@/lib/assessment/questions";
-import { hostOf, money, weeksLabel } from "@/lib/assessment/format";
+import { hostOf, hoursLabel, money, weeksLabel } from "@/lib/assessment/format";
 
 const ORG_OPTIONS = [...ORG_TYPES.map((o) => o.label), "Individual project"];
 
@@ -16,8 +17,10 @@ const fieldClass =
 const labelClass = "annot text-graphite";
 
 export function Contact() {
-  const { proposal, attachToContact, setAttachToContact } = useAssessment();
-  const attached = attachToContact && proposal ? proposal : null;
+  const { proposal, quote, attachment, setAttachment } = useAssessment();
+  const scope = attachment === "scope" ? proposal : null;
+  const attachedQuote = attachment === "quote" ? quote : null;
+  const attachedRef = scope?.ref ?? attachedQuote?.ref ?? null;
 
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -28,16 +31,16 @@ export function Contact() {
     message: "",
   });
 
-  // When a new scope is attached, start the message and organization type for them.
+  // When something new is attached, start the message (and organization type) for them.
   const [prefilledFor, setPrefilledFor] = useState<string | null>(null);
-  if (attached && prefilledFor !== attached.ref) {
-    setPrefilledFor(attached.ref);
+  if (attachedRef && prefilledFor !== attachedRef) {
+    setPrefilledFor(attachedRef);
     setFormData((prev) => ({
       ...prev,
-      organizationType: labelOf(ORG_TYPES, attached.answers.orgType),
-      message:
-        prev.message ||
-        `Hi Zion team, I'd like to talk through the scope the Zion Agent drafted for ${hostOf(attached.website) ?? "our organization"}.`,
+      organizationType: scope ? labelOf(ORG_TYPES, scope.answers.orgType) : prev.organizationType,
+      message: scope
+        ? `Hi Zion team, I'd like to talk through the scope the Zion Agent drafted for ${hostOf(scope.website) ?? "our organization"}.`
+        : `Hi Zion team, I'd like to talk about the ${attachedQuote!.title} quote.`,
     }));
     if (status === "success") setStatus("idle");
   }
@@ -53,7 +56,7 @@ export function Contact() {
     setErrorMessage("");
 
     try {
-      const result = await sendContactEmail({ ...formData, proposal: attached });
+      const result = await sendContactEmail({ ...formData, proposal: scope, quote: attachedQuote });
       if (result.success) {
         setStatus("success");
         setFormData({ fullName: "", email: "", organizationType: ORG_OPTIONS[0], message: "" });
@@ -72,14 +75,11 @@ export function Contact() {
     <section id="contact" className="py-20 md:py-28 px-5 md:px-10 border-t border-rule">
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16">
         <div>
-          <div className="annot text-gold-deep mb-4">Get in touch</div>
-          <h2 className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink">
-            {attached ? "Send us your scope." : "Start a conversation."}
-          </h2>
+          <RevealHeading key={attachment ?? "none"} text={scope ? "Send us your scope." : attachedQuote ? "Send us your quote." : "Start a conversation."} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
-            {attached
-              ? "Your scope is attached below. Add anything we should know, and a Zion team member will walk through it with you."
-              : "Ready to build something with purpose? Tell us about your mission, or run the assessment at the top of the page first so we start with a scope."}
+            {scope || attachedQuote
+              ? `Your ${scope ? "scope" : "quote"} is attached below. Add anything we should know, and a Zion team member will walk through it with you.`
+              : "Tell us about your mission and what you want to build. If you run the assessment at the top of the page first, we can start from a scope."}
           </p>
 
           <ul className="mt-10 flex flex-col gap-5">
@@ -139,40 +139,54 @@ export function Contact() {
                 onSubmit={handleSubmit}
               >
                 {status === "error" && (
-                  <div role="alert" className="p-4 bg-[#FBEAE7] rounded-lg flex items-center gap-3 text-[#8E2F22] text-[0.85rem]">
+                  <div role="alert" className="p-4 bg-danger-wash rounded-lg flex items-center gap-3 text-danger text-[0.85rem]">
                     <AlertCircle size={18} className="shrink-0" />
                     <p>{errorMessage}</p>
                   </div>
                 )}
 
-                {attached && (
+                {(scope || attachedQuote) && (
                   <div className="flex items-start gap-3 p-4 rounded-lg border border-gold/50 bg-gold-wash">
                     <FileText size={18} className="text-gold-deep shrink-0 mt-0.5" />
                     <div className="min-w-0 flex-1">
-                      <div className="annot text-gold-deep">Attached · Scope {attached.ref}</div>
-                      <div className="text-[0.92rem] font-medium text-ink mt-1 truncate">{attached.projectTitle}</div>
+                      <div className="annot text-gold-deep">
+                        Attached · {scope ? "Scope" : "Quote"} {attachedRef}
+                      </div>
+                      <div className="text-[0.92rem] font-medium text-ink mt-1 truncate">{scope ? scope.projectTitle : attachedQuote!.title}</div>
                       <div className="text-[0.8rem] text-graphite mt-0.5">
-                        {money(attached.totalCost)} · {weeksLabel(attached.totalWeeks)} ·{" "}
-                        {attached.phases.reduce((n, p) => n + p.deliverables.length, 0)} deliverables
+                        {scope
+                          ? `${money(scope.totalCost)} · ${hoursLabel(scope.totalHours)} · ${weeksLabel(scope.totalWeeks)}`
+                          : attachedQuote!.cadence === "monthly"
+                            ? `${money(attachedQuote!.totalCost)} a month · ${hoursLabel(attachedQuote!.totalHours)} a month`
+                            : `${money(attachedQuote!.totalCost)} · ${hoursLabel(attachedQuote!.totalHours)}${attachedQuote!.weeks ? ` · about ${weeksLabel(attachedQuote!.weeks)}` : ""}`}
                       </div>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAttachToContact(false)}
+                      onClick={() => setAttachment(null)}
                       className="p-1 -m-1 text-graphite hover:text-ink cursor-pointer"
-                      aria-label="Remove attached scope"
+                      aria-label={`Remove attached ${scope ? "scope" : "quote"}`}
                     >
                       <X size={16} />
                     </button>
                   </div>
                 )}
-                {!attached && proposal && (
+                {!scope && proposal && (
                   <button
                     type="button"
-                    onClick={() => setAttachToContact(true)}
+                    onClick={() => setAttachment("scope")}
                     className="self-start inline-flex items-center gap-2 text-[0.85rem] text-gold-deep hover:text-ink cursor-pointer"
                   >
-                    <FileText size={15} /> Attach scope {proposal.ref}
+                    <FileText size={15} /> Attach scope {proposal.ref}{attachedQuote ? " instead" : ""}
+                  </button>
+                )}
+                {!attachedQuote && quote && (
+                  <button
+                    type="button"
+                    onClick={() => setAttachment("quote")}
+                    className="self-start inline-flex items-center gap-2 text-[0.85rem] text-gold-deep hover:text-ink cursor-pointer"
+                  >
+                    <FileText size={15} /> Attach quote {quote.ref}{scope ? " instead" : ""}
                   </button>
                 )}
 
@@ -205,7 +219,7 @@ export function Contact() {
                   {status === "submitting" ? (
                     <>Sending <Loader2 size={16} className="animate-spin" /></>
                   ) : (
-                    <>{attached ? "Send scope and message" : "Send message"} <Send size={15} /></>
+                    <>{scope ? "Send scope and message" : attachedQuote ? "Send quote and message" : "Send message"} <Send size={15} /></>
                   )}
                 </Button>
               </motion.form>

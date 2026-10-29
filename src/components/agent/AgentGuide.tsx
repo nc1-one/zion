@@ -7,7 +7,7 @@ import { AgentMascot, type AgentMood } from "./AgentMascot";
 import { useAssessment, type Stage } from "@/components/assessment/AssessmentProvider";
 import { cn } from "@/lib/utils";
 
-const SECTIONS = ["assessment", "offerings", "use-cases", "process", "work", "about", "contact"] as const;
+const SECTIONS = ["assessment", "offerings", "products", "use-cases", "process", "work", "about", "contact"] as const;
 type SectionId = (typeof SECTIONS)[number];
 
 const STAGE_TIPS: Record<Stage, string> = {
@@ -22,19 +22,21 @@ const SECTION_TIPS: Record<Exclude<SectionId, "assessment">, { tip: string; with
     tip: "These are the Zion teams. Pick one and I'll start a scope with it.",
     withScope: "The highlighted teams are the ones your scope needs.",
   },
+  products: { tip: "Click around a prototype, pick the modules you need, and I'll price it at $8 an hour." },
   "use-cases": { tip: "Press play to see how a project like yours unfolds, week by week." },
   process: { tip: "Every scope I draft follows these five phases. Select one to see what happens." },
   work: { tip: "A few of the organizations Zion has built for." },
   about: { tip: "The values behind every build." },
   contact: {
     tip: "Have a question first? Send a message. The team replies within one business day.",
-    withScope: "Your scope is attached. Add a note and send it to the team.",
+    withScope: "Whatever you attached is ready. Add a note and send it to the team.",
   },
 };
 
 const TOUR = [
   { id: "assessment", label: "Scope my project" },
   { id: "offerings", label: "What Zion offers" },
+  { id: "products", label: "Digital products" },
   { id: "use-cases", label: "Example projects" },
   { id: "process", label: "How we work" },
   { id: "work", label: "Our work" },
@@ -155,7 +157,7 @@ export function AgentGuide() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-[min(19rem,calc(100vw-2rem))] bg-sheet border border-rule rounded-xl rounded-br-sm shadow-[0_18px_40px_-18px_rgba(14,26,37,0.45)] pl-4 pr-9 py-3"
+            className="relative w-[min(19rem,calc(100vw-2rem))] bg-sheet border border-rule rounded-xl rounded-br-sm shadow-[0_16px_40px_-20px_rgba(0,0,0,0.7)] pl-4 pr-9 py-3"
           >
             <div className="annot text-trace mb-1">Zion Agent</div>
             <p className="text-[0.88rem] leading-[1.5] text-ink">{message}</p>
@@ -178,7 +180,7 @@ export function AgentGuide() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.2 }}
-            className="w-[min(17rem,calc(100vw-2rem))] bg-sheet border border-rule rounded-xl shadow-[0_18px_40px_-18px_rgba(14,26,37,0.45)] p-2"
+            className="w-[min(17rem,calc(100vw-2rem))] bg-sheet border border-rule rounded-xl shadow-[0_16px_40px_-20px_rgba(0,0,0,0.7)] p-2"
           >
             <p className="px-3 pt-2 pb-3 text-[0.85rem] leading-[1.5] text-ink border-b border-rule-soft">{sectionTip}</p>
             <div className="annot text-mist px-3 pt-3 pb-1.5">Take me to</div>
@@ -190,7 +192,7 @@ export function AgentGuide() {
                     onClick={() => go(item.id)}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-[0.88rem] cursor-pointer transition-colors",
-                      section === item.id ? "bg-gold-wash text-ink font-medium" : "text-ink-soft hover:bg-rule-soft",
+                      section === item.id ? "bg-gold-wash text-gold-bright font-medium" : "text-ink-soft hover:bg-rule-soft",
                     )}
                   >
                     {item.label}
@@ -215,9 +217,11 @@ export function AgentGuide() {
         aria-expanded={menuOpen}
         aria-controls="agent-menu"
         aria-label="Zion Agent guide"
-        className="agent-bob w-14 h-14 rounded-full bg-sheet border border-rule shadow-[0_10px_30px_-10px_rgba(14,26,37,0.5)] flex items-center justify-center cursor-pointer hover:border-gold transition-colors"
+        className="agent-bob w-14 h-14 rounded-full bg-sheet border border-rule shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)] flex items-center justify-center cursor-pointer hover:border-gold transition-colors"
       >
-        <AgentMascot size={40} mood={mood} />
+        <motion.span key={notice?.id ?? 0} initial={{ y: 0 }} animate={notice ? { y: [0, -9, 0, -4, 0] } : { y: 0 }} transition={{ duration: 0.7 }}>
+          <AgentMascot size={40} mood={mood} />
+        </motion.span>
       </button>
     </div>
   );

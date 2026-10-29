@@ -13,9 +13,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "inline-flex items-center gap-2 px-5 py-3 font-body text-[0.9rem] font-semibold rounded-lg cursor-pointer transition-[background-color,border-color,color,transform] duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-px",
           {
-            "bg-gold text-ink hover:bg-gold-bright": variant === "gold",
-            "bg-transparent text-ink border border-rule hover:border-ink": variant === "ghost",
-            "bg-transparent text-sheet border border-sheet/30 hover:border-sheet/70": variant === "outline",
+            "bg-gold text-paper hover:bg-gold-bright": variant === "gold",
+            "bg-transparent text-ink border border-rule hover:border-graphite hover:bg-sheet": variant === "ghost",
+            "bg-transparent text-gold-bright border border-gold/50 hover:border-gold": variant === "outline",
           },
           className,
         )}
