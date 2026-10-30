@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, ChevronLeft, ChevronRight, Lock, Pause, Play, Smartphone } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
-import { ProtoDriveProvider, type ProtoDrive, type StackEntry } from "@/components/products/ProtoKit";
+import { ProtoDriveProvider, type ProtoDrive, type StackEntry } from "@/components/products/drive";
 import { SHOWCASE, type TourStep } from "@/components/products/showcase";
 import { Button } from "@/components/ui/Button";
 import { CountUp, RevealHeading } from "@/components/ui/motion";
@@ -40,6 +40,14 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const pathOf = (stack: StackEntry[]) => `/${stack[0].screen}${stack.length > 1 ? `/${stack[stack.length - 1].id ?? stack[stack.length - 1].screen}` : ""}`;
 const firstStack = (id: Product["id"]): StackEntry[] => [{ screen: SHOWCASE[id].tour.find((t) => t.screen)!.screen! }];
+
+// Phones get the mobile app first; the full web app is one tap away.
+const SMALL = "(max-width: 639px)";
+const subscribeSmall = (onChange: () => void) => {
+  const query = window.matchMedia(SMALL);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
 
 // ---- Finding things in the live demo --------------------------------------------
 
@@ -98,22 +106,24 @@ export function Products() {
   const runRef = useRef(0);
   const startedRef = useRef(false);
   const inView = useInView(playerRef, { amount: 0.4 });
+  const small = useSyncExternalStore(subscribeSmall, () => window.matchMedia(SMALL).matches, () => false);
+  const [mobileView, setMobileView] = useState<"phone" | "web">("phone");
+  const phoneFirst = small && mobileView === "phone";
 
   const product = PRODUCTS.find((p) => p.id === productId)!;
   const show = SHOWCASE[product.id];
   const current = show.tour[step];
-  const running = playing && inView && !reduce;
+  const running = playing && inView && !reduce && !phoneFirst;
   const selected = modules[product.id];
   const tierId = tiers[product.id] ?? product.tiers.options[0].id;
   const estimate = productEstimate(product, selected, tierId);
   const Prototype = PROTOTYPES[product.id];
-  const Mark = show.icon;
 
   const onPath = useCallback((p: string) => {
     pathRef.current = p;
     setPath(p);
   }, []);
-  const drive = useMemo<ProtoDrive>(() => ({ target, brand: { accent: show.accent, icon: show.icon }, framed: true, onPath }), [target, show, onPath]);
+  const drive = useMemo<ProtoDrive>(() => ({ target, brand: { accent: show.accent }, framed: true, onPath }), [target, show, onPath]);
 
   // ---- The cursor plays a step on the live demo ----
 
@@ -239,11 +249,11 @@ export function Products() {
 
   // Start the tour the first time the demo scrolls into view.
   useEffect(() => {
-    if (!inView || startedRef.current || reduce) return;
+    if (!inView || startedRef.current || reduce || phoneFirst) return;
     startedRef.current = true;
     const timer = window.setTimeout(() => void play(SHOWCASE[productId].tour[0]), 400);
     return () => window.clearTimeout(timer);
-  }, [inView, reduce, play, productId]);
+  }, [inView, reduce, phoneFirst, play, productId]);
 
   const toggle = (id: string) =>
     setModules((all) => ({
@@ -255,19 +265,18 @@ export function Products() {
     <section id="products" className="py-24 md:py-32 px-5 md:px-10">
       <div className="max-w-[1240px] mx-auto">
         <div className="max-w-[40rem]">
-          <RevealHeading text="Products" className="heading-section text-ink" />
-          <p className="mt-4 text-[1.1rem] leading-relaxed text-graphite">Seven apps, ready to run. Every demo below is live.</p>
+          <RevealHeading text="Software built for ministry, priced for the mission." className="heading-section text-ink" />
+          <p className="mt-5 text-[1.1rem] leading-relaxed text-graphite">Seven apps, ready to run. Every demo below is live.</p>
         </div>
 
         {/* Suite switcher */}
-        <div role="tablist" aria-label="Products" className="mt-12 flex gap-8 overflow-x-auto -mx-5 px-5 scroll-px-5 md:mx-0 md:px-0 md:scroll-px-0 pb-2 snap-x">
+        <div role="tablist" aria-label="Products" className="mt-12 flex gap-12 overflow-x-auto -mx-5 px-5 scroll-px-5 md:mx-0 md:px-0 md:scroll-px-0 border-b border-rule snap-x">
           {PRODUCT_GROUPS.map((group) => (
             <div key={group.id} className="shrink-0">
-              <div className="annot text-mist mb-2.5">{group.label}</div>
-              <div className="flex gap-1">
+              <div className="annot text-mist mb-3">{group.label}</div>
+              <div className="flex gap-6">
                 {PRODUCTS.filter((p) => p.group === group.id).map((p) => {
                   const on = p.id === productId;
-                  const s = SHOWCASE[p.id];
                   return (
                     <button
                       key={p.id}
@@ -276,13 +285,13 @@ export function Products() {
                       aria-selected={on}
                       aria-controls="product-stage"
                       onClick={() => pickProduct(p.id)}
-                      className={cn("relative snap-start flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-xl text-left transition-colors cursor-pointer", !on && "hover:bg-sheet")}
+                      className={cn(
+                        "relative snap-start pb-3 text-[0.95rem] whitespace-nowrap transition-colors cursor-pointer",
+                        on ? "font-semibold text-ink" : "font-medium text-graphite hover:text-ink",
+                      )}
                     >
-                      {on && <motion.span layoutId="product-pick" className="absolute inset-0 rounded-xl bg-sheet ring-1 ring-rule" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
-                      <span className={cn("relative w-8 h-8 rounded-lg flex items-center justify-center text-white transition-opacity", !on && "opacity-75")} style={{ backgroundColor: s.accent }}>
-                        <s.icon size={16} strokeWidth={2} />
-                      </span>
-                      <span className={cn("relative text-[0.9rem] whitespace-nowrap", on ? "font-semibold text-ink" : "font-medium text-graphite")}>{p.name}</span>
+                      {p.name}
+                      {on && <motion.span layoutId="product-pick" className="absolute left-0 right-0 bottom-0 h-[2px] rounded-full bg-gold" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
                     </button>
                   );
                 })}
@@ -304,189 +313,208 @@ export function Products() {
           >
             {/* Product header */}
             <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 mb-6">
-              <div className="flex items-center gap-4">
-                <span className="w-12 h-12 rounded-[14px] flex items-center justify-center text-white shrink-0" style={{ backgroundColor: show.accent }}>
-                  <Mark size={24} strokeWidth={2} />
-                </span>
-                <div>
-                  <h3 className="font-display text-[1.75rem] leading-none font-semibold tracking-[-0.03em] text-ink">{product.name}</h3>
-                  <p className="mt-1.5 text-[0.95rem] text-graphite">{product.hook}</p>
-                </div>
+              <div>
+                <h3 className="font-display text-[1.9rem] leading-none font-semibold tracking-[-0.03em] text-ink">{product.name}</h3>
+                <p className="mt-2 text-[0.98rem] text-graphite">{product.hook}</p>
               </div>
               <span className="font-mono text-[0.75rem] text-mist">{product.platforms}</span>
             </div>
 
-            {/* The player: live demo in a browser, a cursor that walks the tour, chapters below */}
-            <div ref={playerRef} className="rounded-[20px] bg-[#05070A] ring-1 ring-white/10 p-1.5 shadow-[0_60px_120px_-50px_rgba(0,0,0,0.95)]">
-              <div
-                ref={frameRef}
-                className="relative rounded-[15px] overflow-hidden bg-[#E9ECF1]"
-                onPointerDown={(e) => e.isTrusted && stop()}
-                onWheel={() => running && stop()}
-              >
-                <div className="h-10 px-3 flex items-center gap-3 bg-[#EEF0F3] border-b border-[#D9DDE3]">
-                  <span className="flex gap-1.5 shrink-0" aria-hidden>
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#D0D5DD]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#D0D5DD]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#D0D5DD]" />
-                  </span>
-                  <div className="flex-1 min-w-0 flex justify-center">
-                    <div className="flex items-center justify-center gap-1.5 h-6 px-3 w-full max-w-[28rem] rounded-md bg-white ring-1 ring-[#E4E7EC] text-[0.72rem] text-[#344054]">
-                      <Lock size={10} className="shrink-0 text-[#667085]" />
-                      <span className="truncate">
-                        {show.host}
-                        <span className="text-[#98A2B3]">{path}</span>
-                      </span>
-                    </div>
-                  </div>
+            {small && (
+              <div className="flex gap-1 p-1 mb-3 rounded-xl bg-sheet ring-1 ring-rule w-max" role="group" aria-label="Demo view">
+                {(["phone", "web"] as const).map((v) => (
                   <button
+                    key={v}
                     type="button"
-                    data-phone-toggle
-                    aria-pressed={phoneOpen}
-                    onClick={() => setPhoneOpen((o) => !o)}
-                    className={cn(
-                      "shrink-0 flex items-center gap-1.5 h-6 px-2 rounded-md text-[0.72rem] font-medium transition-colors cursor-pointer",
-                      phoneOpen ? "bg-[#101828] text-white" : "text-[#344054] hover:bg-white",
-                    )}
+                    aria-pressed={mobileView === v}
+                    onClick={() => setMobileView(v)}
+                    className={cn("px-3.5 py-1.5 rounded-lg text-[0.82rem] cursor-pointer", mobileView === v ? "bg-ink text-night font-semibold" : "text-graphite")}
                   >
-                    <Smartphone size={12} />
-                    <span className="hidden sm:inline">{show.mobile}</span>
+                    {v === "phone" ? show.mobile : "Web app"}
                   </button>
-                </div>
-
-                <div className="relative">
-                  <ProtoDriveProvider value={drive}>
-                    <Prototype />
-                  </ProtoDriveProvider>
-                  <AnimatePresence>
-                    {phoneOpen && (
-                      <motion.button
-                        type="button"
-                        aria-label={`Close ${show.mobile}`}
-                        onClick={() => setPhoneOpen(false)}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-10 bg-[#101828]/40 cursor-pointer"
-                      />
-                    )}
-                  </AnimatePresence>
-                  <AnimatePresence>
-                    {phoneOpen && (
-                      <div className="absolute inset-0 z-20 flex items-center justify-center sm:justify-end sm:pr-12 pointer-events-none">
-                        <motion.div
-                          initial={{ opacity: 0, y: 70 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 50 }}
-                          transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                          className="pointer-events-auto scale-[0.9] sm:scale-100 origin-center"
-                        >
-                          <ProductPhone id={product.id} accent={show.accent} />
-                        </motion.div>
-                      </div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Highlight and cursor */}
-                <motion.div
-                  aria-hidden
-                  className="absolute left-0 top-0 z-30 pointer-events-none rounded-[10px]"
-                  style={{ boxShadow: `0 0 0 2px ${show.accent}, 0 0 0 7px ${show.accent}26` }}
-                  initial={false}
-                  animate={{ x: ring.x, y: ring.y, width: ring.w, height: ring.h, opacity: ring.shown ? 1 : 0 }}
-                  transition={{ duration: reduce ? 0 : 0.45, ease: EASE }}
-                />
-                <motion.div
-                  aria-hidden
-                  className="absolute left-0 top-0 z-40 pointer-events-none"
-                  initial={false}
-                  animate={{ x: cursor.x, y: cursor.y, opacity: cursor.shown ? 1 : 0 }}
-                  transition={{ duration: reduce ? 0 : 0.6, ease: [0.45, 0, 0.2, 1] }}
-                >
-                  <AnimatePresence>
-                    {cursor.tap > 0 && (
-                      <motion.span
-                        key={cursor.tap}
-                        className="absolute -left-4 -top-4 w-8 h-8 rounded-full"
-                        style={{ backgroundColor: `${show.accent}55` }}
-                        initial={{ scale: 0.3, opacity: 1 }}
-                        animate={{ scale: 1.4, opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                      />
-                    )}
-                  </AnimatePresence>
-                  <svg width="22" height="22" viewBox="0 0 24 24" className="drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
-                    <path d="M4 2.5 19.5 13l-7 1.2 4 7.3-2.9 1.5-4-7.4L4 20.5Z" fill="#101828" stroke="white" strokeWidth="1.6" strokeLinejoin="round" />
-                  </svg>
-                </motion.div>
+                ))}
               </div>
+            )}
 
-              {/* Tour controls */}
-              <div className="px-3 sm:px-4 pt-4 pb-3">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (running) return stop();
-                      setPlaying(true);
-                      goTo(step, true);
-                    }}
-                    aria-label={running ? "Pause tour" : "Play tour"}
-                    className="w-9 h-9 shrink-0 rounded-full bg-ink text-night flex items-center justify-center cursor-pointer hover:bg-white transition-colors"
-                  >
-                    {running ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" className="ml-0.5" />}
-                  </button>
-                  <div className="flex-1 min-w-0 pt-0.5" aria-live="polite">
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.div key={`${product.id}-${step}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
-                        <div className="text-[0.95rem] font-semibold text-ink leading-snug">{current.title}</div>
-                        <div className="text-[0.85rem] text-graphite leading-snug mt-0.5">{current.detail}</div>
-                      </motion.div>
+            {/* The player: live demo in a browser, a cursor that walks the tour, chapters below */}
+            {phoneFirst ? (
+              <div className="rounded-[20px] bg-[#E9ECF1] ring-1 ring-white/10 py-8 flex justify-center">
+                <ProductPhone id={product.id} accent={show.accent} />
+              </div>
+            ) : (
+              <div ref={playerRef} className="rounded-[20px] bg-[#05070A] ring-1 ring-white/10 p-1.5 shadow-[0_60px_120px_-50px_rgba(0,0,0,0.95)]">
+                <div
+                  ref={frameRef}
+                  className="relative rounded-[15px] overflow-hidden bg-[#E9ECF1]"
+                  onPointerDown={(e) => e.isTrusted && stop()}
+                  onWheel={() => running && stop()}
+                >
+                  <div className="h-10 px-3 flex items-center gap-3 bg-[#EEF0F3] border-b border-[#D9DDE3]">
+                    <span className="flex gap-1.5 shrink-0" aria-hidden>
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D0D5DD]" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D0D5DD]" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D0D5DD]" />
+                    </span>
+                    <div className="flex-1 min-w-0 flex justify-center">
+                      <div className="flex items-center justify-center gap-1.5 h-6 px-3 w-full max-w-[28rem] rounded-md bg-white ring-1 ring-[#E4E7EC] text-[0.72rem] text-[#344054]">
+                        <Lock size={10} className="shrink-0 text-[#667085]" />
+                        <span className="truncate">
+                          {show.host}
+                          <span className="text-[#667085]">{path}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-phone-toggle
+                      aria-pressed={phoneOpen}
+                      aria-label={show.mobile}
+                      onClick={() => setPhoneOpen((o) => !o)}
+                      className={cn(
+                        "shrink-0 flex items-center gap-1.5 h-6 px-2 rounded-md text-[0.72rem] font-medium transition-colors cursor-pointer",
+                        phoneOpen ? "bg-[#101828] text-white" : "text-[#344054] hover:bg-white",
+                      )}
+                    >
+                      <Smartphone size={12} />
+                      <span className="hidden sm:inline">{show.mobile}</span>
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <ProtoDriveProvider value={drive}>
+                      <Prototype />
+                    </ProtoDriveProvider>
+                    <AnimatePresence>
+                      {phoneOpen && (
+                        <motion.button
+                          type="button"
+                          aria-label={`Close ${show.mobile}`}
+                          onClick={() => setPhoneOpen(false)}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute inset-0 z-10 bg-[#101828]/40 cursor-pointer"
+                        />
+                      )}
+                    </AnimatePresence>
+                    <AnimatePresence>
+                      {phoneOpen && (
+                        <div className="absolute inset-0 z-20 flex items-center justify-center sm:justify-end sm:pr-12 pointer-events-none">
+                          <motion.div
+                            initial={{ opacity: 0, y: 70 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 50 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                            className="pointer-events-auto scale-[0.9] sm:scale-100 origin-center"
+                          >
+                            <ProductPhone id={product.id} accent={show.accent} />
+                          </motion.div>
+                        </div>
+                      )}
                     </AnimatePresence>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1 shrink-0">
-                    <span className="font-mono text-[0.72rem] text-mist mr-2">
-                      {step + 1} / {show.tour.length}
-                    </span>
-                    <button type="button" aria-label="Previous step" onClick={() => goTo((step - 1 + show.tour.length) % show.tour.length)} className="w-8 h-8 rounded-lg text-graphite hover:text-ink hover:bg-white/5 flex items-center justify-center cursor-pointer">
-                      <ChevronLeft size={16} />
-                    </button>
-                    <button type="button" aria-label="Next step" onClick={() => goTo((step + 1) % show.tour.length)} className="w-8 h-8 rounded-lg text-graphite hover:text-ink hover:bg-white/5 flex items-center justify-center cursor-pointer">
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
+
+                  {/* Highlight and cursor */}
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-0 top-0 z-30 pointer-events-none rounded-[10px]"
+                    style={{ boxShadow: `0 0 0 2px ${show.accent}, 0 0 0 7px ${show.accent}26` }}
+                    initial={false}
+                    animate={{ x: ring.x, y: ring.y, width: ring.w, height: ring.h, opacity: ring.shown ? 1 : 0 }}
+                    transition={{ duration: reduce ? 0 : 0.45, ease: EASE }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-0 top-0 z-40 pointer-events-none"
+                    initial={false}
+                    animate={{ x: cursor.x, y: cursor.y, opacity: cursor.shown ? 1 : 0 }}
+                    transition={{ duration: reduce ? 0 : 0.6, ease: [0.45, 0, 0.2, 1] }}
+                  >
+                    <AnimatePresence>
+                      {cursor.tap > 0 && (
+                        <motion.span
+                          key={cursor.tap}
+                          className="absolute -left-4 -top-4 w-8 h-8 rounded-full"
+                          style={{ backgroundColor: `${show.accent}55` }}
+                          initial={{ scale: 0.3, opacity: 1 }}
+                          animate={{ scale: 1.4, opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      )}
+                    </AnimatePresence>
+                    <svg width="22" height="22" viewBox="0 0 24 24" className="drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]">
+                      <path d="M4 2.5 19.5 13l-7 1.2 4 7.3-2.9 1.5-4-7.4L4 20.5Z" fill="#101828" stroke="white" strokeWidth="1.6" strokeLinejoin="round" />
+                    </svg>
+                  </motion.div>
                 </div>
-                <ol aria-label="Tour steps" className="mt-4 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${show.tour.length}, minmax(0, 1fr))` }}>
-                  {show.tour.map((t, i) => (
-                    <li key={t.title}>
-                      <button type="button" onClick={() => goTo(i)} aria-current={i === step ? "step" : undefined} className="group w-full text-left cursor-pointer pt-1.5 pb-1">
-                        <span className="block h-[3px] rounded-full bg-white/10 overflow-hidden">
-                          {i < step && <span className="block h-full bg-ink/60" />}
-                          {i === step &&
-                            (running ? (
-                              <motion.span
-                                key={`${product.id}-${step}-${target.key}`}
-                                className="block h-full bg-gold"
-                                initial={{ width: "0%" }}
-                                animate={{ width: "100%" }}
-                                transition={{ duration: STEP_SECONDS, ease: "linear" }}
-                                onAnimationComplete={() => goTo((step + 1) % show.tour.length, true)}
-                              />
-                            ) : (
-                              <span className="block h-full bg-gold" />
-                            ))}
-                        </span>
-                        <span className={cn("hidden md:flex items-center gap-1 mt-2 text-[0.75rem] truncate transition-colors", i === step ? "text-ink font-medium" : "text-mist group-hover:text-graphite")}>
-                          {t.phone && <Smartphone size={11} className="shrink-0" />}
-                          {t.short}
-                        </span>
+
+                {/* Tour controls */}
+                <div className="px-3 sm:px-4 pt-4 pb-3">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (running) return stop();
+                        setPlaying(true);
+                        goTo(step, true);
+                      }}
+                      aria-label={running ? "Pause tour" : "Play tour"}
+                      className="w-9 h-9 shrink-0 rounded-full bg-ink text-night flex items-center justify-center cursor-pointer hover:bg-white transition-colors"
+                    >
+                      {running ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" className="ml-0.5" />}
+                    </button>
+                    <div className="flex-1 min-w-0 pt-0.5" aria-live="polite">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div key={`${product.id}-${step}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
+                          <div className="text-[0.95rem] font-semibold text-ink leading-snug">{current.title}</div>
+                          <div className="text-[0.85rem] text-graphite leading-snug mt-0.5">{current.detail}</div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1 shrink-0">
+                      <span className="font-mono text-[0.72rem] text-mist mr-2">
+                        {step + 1} / {show.tour.length}
+                      </span>
+                      <button type="button" aria-label="Previous step" onClick={() => goTo((step - 1 + show.tour.length) % show.tour.length)} className="w-8 h-8 rounded-lg text-graphite hover:text-ink hover:bg-white/5 flex items-center justify-center cursor-pointer">
+                        <ChevronLeft size={16} />
                       </button>
-                    </li>
-                  ))}
-                </ol>
+                      <button type="button" aria-label="Next step" onClick={() => goTo((step + 1) % show.tour.length)} className="w-8 h-8 rounded-lg text-graphite hover:text-ink hover:bg-white/5 flex items-center justify-center cursor-pointer">
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <ol aria-label="Tour steps" className="mt-4 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${show.tour.length}, minmax(0, 1fr))` }}>
+                    {show.tour.map((t, i) => (
+                      <li key={t.title}>
+                        <button type="button" onClick={() => goTo(i)} aria-current={i === step ? "step" : undefined} aria-label={t.title} className="group w-full text-left cursor-pointer pt-1.5 pb-1">
+                          <span className="block h-[3px] rounded-full bg-white/10 overflow-hidden">
+                            {i < step && <span className="block h-full bg-ink/60" />}
+                            {i === step &&
+                              (running ? (
+                                <motion.span
+                                  key={`${product.id}-${step}-${target.key}`}
+                                  className="block h-full bg-gold"
+                                  initial={{ width: "0%" }}
+                                  animate={{ width: "100%" }}
+                                  transition={{ duration: STEP_SECONDS, ease: "linear" }}
+                                  onAnimationComplete={() => goTo((step + 1) % show.tour.length, true)}
+                                />
+                              ) : (
+                                <span className="block h-full bg-gold" />
+                              ))}
+                          </span>
+                          <span className={cn("hidden md:flex items-center gap-1 mt-2 text-[0.75rem] truncate transition-colors", i === step ? "text-ink font-medium" : "text-mist group-hover:text-graphite")}>
+                            {t.phone && <Smartphone size={11} className="shrink-0" />}
+                            {t.short}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
-            </div>
+
+            )}
 
             {/* Plan builder and price */}
             <div className="mt-12 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_23rem] gap-10 lg:gap-14 items-start">
@@ -556,12 +584,7 @@ export function Products() {
               </div>
 
               <aside className="lg:sticky lg:top-[calc(var(--nav-height)+1.5rem)] rounded-[18px] bg-sheet ring-1 ring-rule p-6" aria-live="polite">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: show.accent }}>
-                    <Mark size={14} strokeWidth={2} />
-                  </span>
-                  <span className="text-[0.9rem] font-semibold text-ink">{product.name}</span>
-                </div>
+                <div className="text-[0.95rem] font-semibold text-ink">{product.name}</div>
                 <dl className="mt-6 flex flex-col gap-5">
                   <div>
                     <dt className="text-[0.78rem] text-mist">Setup, one-time</dt>

@@ -7,7 +7,7 @@ import { useAssessment } from "./AssessmentProvider";
 import { ScopeSheet } from "./ScopeSheet";
 import { AgentMascot, type AgentMood } from "@/components/agent/AgentMascot";
 import { Button } from "@/components/ui/Button";
-import { CountUp, RevealHeading } from "@/components/ui/motion";
+import { CountUp } from "@/components/ui/motion";
 import {
   AUDIENCE_SIZES,
   BUILD_TYPES,
@@ -61,7 +61,8 @@ export function Assessment() {
     <section ref={sectionRef} id="assessment" className="relative pt-[calc(var(--nav-height)+3rem)] md:pt-[calc(var(--nav-height)+5rem)] pb-24 md:pb-32 px-5 md:px-10 overflow-clip">
       <div className="relative max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-10 lg:gap-16 items-start">
         <div className="lg:sticky lg:top-[calc(var(--nav-height)+2rem)]">
-          <AnimatePresence mode="wait">
+          {/* No entrance animation on first paint: the headline is the page's largest element. */}
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={stage}
               initial={{ opacity: 0, y: 10 }}
@@ -76,7 +77,7 @@ export function Assessment() {
             </motion.div>
           </AnimatePresence>
         </div>
-        <motion.div style={{ y: stage === "intro" ? sheetY : 0 }} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}>
+        <motion.div style={{ y: stage === "intro" ? sheetY : 0 }}>
           <ScopeSheet />
         </motion.div>
       </div>
@@ -84,11 +85,11 @@ export function Assessment() {
   );
 }
 
-// The agent "speaking": mascot, name, and a short status line.
+// The agent "speaking": status light, name, and a short status line.
 function AgentHeader({ mood = "idle", children }: { mood?: AgentMood; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 mb-8">
-      <AgentMascot size={30} mood={mood} />
+      <AgentMascot mood={mood} />
       <div className="text-[0.88rem] leading-tight">
         <span className="font-semibold text-ink">Zion Agent</span>
         <span className="text-graphite"> · {children}</span>
@@ -118,11 +119,7 @@ function IntroPanel() {
   return (
     <div>
       <AgentHeader>Free scoping assessment</AgentHeader>
-      <RevealHeading
-        as="h1"
-        text="Know what to build before you build it."
-        className="heading-hero text-ink"
-      />
+      <h1 className="heading-hero text-ink">Know what to build before you build it.</h1>
       <p className="mt-7 text-[1.15rem] leading-[1.6] text-ink-soft max-w-[32rem]">
         Paste your website. Answer seven questions. Get a roadmap, timeline, and cost.
       </p>
@@ -133,7 +130,7 @@ function IntroPanel() {
         </label>
         <div
           className={cn(
-            "mt-2 flex items-center gap-2 p-1.5 bg-sheet border rounded-xl transition-[border-color,box-shadow] focus-within:border-trace focus-within:shadow-[0_0_0_4px_var(--color-trace-wash)]",
+            "mt-2 flex items-center gap-2 p-1.5 bg-sheet border rounded-xl transition-[border-color,box-shadow] focus-within:border-gold focus-within:shadow-[0_0_0_4px_var(--color-gold-wash)]",
             error ? "border-danger" : "border-rule",
           )}
         >

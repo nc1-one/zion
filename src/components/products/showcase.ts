@@ -1,5 +1,4 @@
-import { BookOpen, Boxes, Church, HeartHandshake, IdCard, NotebookPen, Route, type LucideIcon } from "lucide-react";
-import type { StackEntry } from "./ProtoKit";
+import type { StackEntry } from "./drive";
 import type { Product } from "@/lib/quotes";
 
 // One step of a product's guided tour. A cursor plays it out on the live demo:
@@ -17,7 +16,6 @@ export interface TourStep {
 
 export interface Showcase {
   accent: string;
-  icon: LucideIcon;
   host: string;
   mobile: string; // what the phone shows
   tour: TourStep[];
@@ -26,7 +24,6 @@ export interface Showcase {
 export const SHOWCASE: Record<Product["id"], Showcase> = {
   "church-os": {
     accent: "#3446A8",
-    icon: Church,
     host: "churchos.zionsystems.dev",
     mobile: "Member app",
     tour: [
@@ -47,7 +44,6 @@ export const SHOWCASE: Record<Product["id"], Showcase> = {
   },
   pipeline: {
     accent: "#0F766E",
-    icon: Route,
     host: "pipeline.zionsystems.dev",
     mobile: "Care team app",
     tour: [
@@ -75,7 +71,6 @@ export const SHOWCASE: Record<Product["id"], Showcase> = {
   },
   sermon: {
     accent: "#9F1239",
-    icon: NotebookPen,
     host: "sermons.zionsystems.dev",
     mobile: "Sunday notes",
     tour: [
@@ -103,7 +98,6 @@ export const SHOWCASE: Record<Product["id"], Showcase> = {
   },
   "bible-study": {
     accent: "#4D7C0F",
-    icon: BookOpen,
     host: "groups.zionsystems.dev",
     mobile: "Leader app",
     tour: [
@@ -131,7 +125,6 @@ export const SHOWCASE: Record<Product["id"], Showcase> = {
   },
   hris: {
     accent: "#6D28D9",
-    icon: IdCard,
     host: "hris.zionsystems.dev",
     mobile: "Staff app",
     tour: [
@@ -152,7 +145,6 @@ export const SHOWCASE: Record<Product["id"], Showcase> = {
   },
   hubspot: {
     accent: "#C2410C",
-    icon: HeartHandshake,
     host: "hope-ph.zionsystems.dev",
     mobile: "Donation page",
     tour: [
@@ -180,7 +172,6 @@ export const SHOWCASE: Record<Product["id"], Showcase> = {
   },
   erp: {
     accent: "#0369A1",
-    icon: Boxes,
     host: "erp.zionsystems.dev",
     mobile: "Driver app",
     tour: [

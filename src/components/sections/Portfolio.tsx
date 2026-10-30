@@ -33,7 +33,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           src={project.image}
           alt=""
           fill
-          sizes={project.featured ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"}
+          sizes={project.featured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
           className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
       </span>
@@ -57,7 +57,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.55, delay: (index % 4) * 0.06, ease: [0.16, 1, 0.3, 1] }}
-      className={project.featured ? "md:col-span-2" : undefined}
+      className={project.featured ? "lg:col-span-2" : undefined}
     >
       {project.href ? (
         <a href={project.href} target="_blank" rel="noopener noreferrer" className="group block no-underline">
@@ -78,7 +78,7 @@ export function Portfolio() {
           <RevealHeading text="Selected work" className="heading-section text-ink" />
           <p className="text-[1.05rem] text-graphite">Live and in use.</p>
         </div>
-        <ul className="mt-14 grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-12">
+        <ul className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
           {PROJECTS.map((project, i) => (
             <ProjectCard key={project.title} project={project} index={i} />
           ))}

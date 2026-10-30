@@ -142,17 +142,6 @@
   }
 }
 
-/* Zion Agent mark: nodes pulse in turn while it works */
-@keyframes agent-node {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
-}
-.agent-working circle {
-  animation: agent-node 1.2s ease-in-out infinite;
-}
-.agent-working circle:nth-of-type(2) { animation-delay: 0.2s; }
-.agent-working circle:nth-of-type(3) { animation-delay: 0.4s; }
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
