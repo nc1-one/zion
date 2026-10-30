@@ -79,6 +79,11 @@ export function Contact() {
           <p className="mt-6 text-[1.1rem] leading-[1.6] text-graphite max-w-[32rem]">
             {scope || attachedQuote ? `Your ${scope ? "scope" : "quote"} is attached.` : "Tell us what you want to build."}
           </p>
+          {!scope && !attachedQuote && (
+            <a href="#assessment" className="mt-3 inline-flex items-center gap-1.5 text-[0.95rem] font-medium text-gold-bright no-underline hover:text-ink transition-colors">
+              Or start with a free scope <span aria-hidden>→</span>
+            </a>
+          )}
 
           <dl className="mt-12 max-w-[26rem] border-t border-rule">
             {[

@@ -107,7 +107,7 @@ export async function sendContactEmail(data: ContactInput) {
   const ADMIN_EMAILS = process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim()).filter(Boolean) : [];
 
   if (!BREVO_API_KEY) {
-    console.error("❌ BREVO_API_KEY is not configured in environment variables.");
+    console.error("BREVO_API_KEY is not configured in environment variables.");
     if (process.env.NODE_ENV === "development") {
       // Simulate a successful send in development mode
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -161,7 +161,7 @@ export async function sendContactEmail(data: ContactInput) {
     if (response.ok) {
       return { success: true };
     }
-    console.error("❌ Brevo API Error:", response.status, await response.text().catch(() => ""));
+    console.error("Brevo API error:", response.status, await response.text().catch(() => ""));
     return { success: false, error: "We couldn't send your message. Try again, or email support@zionsystems.dev." };
   } catch (error) {
     console.error("Contact form error:", error);

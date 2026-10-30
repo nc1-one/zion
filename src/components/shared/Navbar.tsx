@@ -8,6 +8,15 @@ import { cn } from "@/lib/utils";
 import { NAV_LINKS } from "./nav-links";
 import { ScrollProgress } from "@/components/ui/motion";
 
+// Jump to the assessment and put the cursor in the website field.
+function focusAssessment(e: React.MouseEvent) {
+  const input = document.getElementById("site-url");
+  if (!input) return;
+  e.preventDefault();
+  document.getElementById("assessment")?.scrollIntoView({ behavior: "smooth" });
+  window.setTimeout(() => input.focus({ preventScroll: true }), 500);
+}
+
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,8 +30,9 @@ export function Navbar() {
       },
       { rootMargin: "-45% 0px -50% 0px" },
     );
-    for (const link of NAV_LINKS) {
-      const el = document.querySelector(link.href);
+    // The hero and Why Zion have no nav link; watching them clears the underline there.
+    for (const href of ["#assessment", "#why", ...NAV_LINKS.map((link) => link.href)]) {
+      const el = document.querySelector(href);
       if (el) observer.observe(el);
     }
     return () => observer.disconnect();
@@ -88,10 +98,11 @@ export function Navbar() {
             </a>
           ))}
           <a
-            href="#contact"
+            href="#assessment"
+            onClick={focusAssessment}
             className="ml-4 px-4 py-2 text-[0.88rem] font-semibold text-night bg-gold rounded-lg hover:bg-gold-bright transition-colors no-underline"
           >
-            Talk to us
+            Get a free scope
           </a>
         </div>
 
@@ -126,11 +137,14 @@ export function Navbar() {
           </a>
         ))}
         <a
-          href="#contact"
-          onClick={() => setIsMenuOpen(false)}
+          href="#assessment"
+          onClick={(e) => {
+            setIsMenuOpen(false);
+            focusAssessment(e);
+          }}
           className="mt-6 text-center py-3.5 bg-gold text-night font-semibold rounded-lg no-underline"
         >
-          Talk to us
+          Get a free scope
         </a>
       </div>
     </>

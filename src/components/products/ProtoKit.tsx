@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { DriveContext, type StackEntry } from "./drive";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCircle2, ChevronLeft, ChevronRight, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,23 +16,8 @@ export interface ProtoNavItem {
   badge?: number;
 }
 
-export interface StackEntry {
-  screen: string;
-  id?: string;
-  label?: string;
-}
-
-// The product showcase drives a prototype from outside (the guided tour),
-// brands it, and listens for where the visitor is.
-export interface ProtoDrive {
-  target?: { key: number; stack: StackEntry[] };
-  brand?: { accent: string; icon: LucideIcon };
-  framed?: boolean;
-  onPath?: (path: string) => void;
-}
-
-const DriveContext = createContext<ProtoDrive>({});
-export const ProtoDriveProvider = DriveContext.Provider;
+export type { ProtoDrive, StackEntry } from "./drive";
+export { ProtoDriveProvider } from "./drive";
 
 export { brandStyle } from "@/lib/brand";
 
@@ -102,7 +88,6 @@ export function ProtoApp({
   const crumbs = [root?.label ?? "", ...app.stack.slice(1).map((s) => s.label ?? "")];
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { brand, framed, onPath } = useContext(DriveContext);
-  const Mark = brand?.icon;
   const top = app.stack[app.stack.length - 1];
   const path = `/${app.stack[0].screen}${app.stack.length > 1 ? `/${top.id ?? top.screen}` : ""}`;
 
@@ -125,7 +110,7 @@ export function ProtoApp({
       <div className="flex items-center gap-3 px-3 sm:px-4 h-12 border-b border-rule bg-sheet shrink-0">
         <div className="flex items-center gap-2 min-w-0 sm:w-[10.5rem] shrink-0">
           <span className="w-6 h-6 rounded-md bg-gold text-sheet text-[0.7rem] font-bold flex items-center justify-center shrink-0" aria-hidden>
-            {Mark ? <Mark size={14} strokeWidth={2.2} /> : product.slice(0, 1)}
+            {product.slice(0, 1)}
           </span>
           <span className="min-w-0 leading-tight">
             <span className="block text-[0.8rem] font-semibold text-ink truncate">{product}</span>
@@ -423,7 +408,7 @@ export function Bars({ data, format = (n: number) => String(n), height = "h-32" 
       <div className={cn("flex items-end gap-2", height)}>
         {data.map((d, i) => (
           <div key={d.label} className="group flex-1 flex flex-col items-center justify-end h-full gap-1">
-            <span className="font-mono text-[0.6rem] text-mist tabular-nums opacity-70 group-hover:opacity-100 transition-opacity">{format(d.value)}</span>
+            <span className="font-mono text-[0.62rem] text-mist tabular-nums">{format(d.value)}</span>
             <motion.div
               className={cn("w-full rounded-t-[3px] transition-colors", i === data.length - 1 ? "bg-gold" : "bg-gold/25 group-hover:bg-gold/45")}
               initial={{ height: 0 }}
