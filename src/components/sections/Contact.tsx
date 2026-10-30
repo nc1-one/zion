@@ -17,7 +17,7 @@ const fieldClass =
 const labelClass = "annot text-graphite";
 
 export function Contact() {
-  const { proposal, quote, attachment, setAttachment } = useAssessment();
+  const { proposal, quote, attachment, setAttachment, contactDraft } = useAssessment();
   const scope = attachment === "scope" ? proposal : null;
   const attachedQuote = attachment === "quote" ? quote : null;
   const attachedRef = scope?.ref ?? attachedQuote?.ref ?? null;
@@ -28,8 +28,23 @@ export function Contact() {
     fullName: "",
     email: "",
     organizationType: ORG_OPTIONS[0],
+    referredBy: "",
     message: "",
   });
+
+  // Details the Zion Agent collected fill the form; the visitor reviews and sends.
+  const [draftSeen, setDraftSeen] = useState(0);
+  if (contactDraft && contactDraft.id !== draftSeen) {
+    setDraftSeen(contactDraft.id);
+    setFormData((prev) => ({
+      fullName: contactDraft.fullName || prev.fullName,
+      email: contactDraft.email || prev.email,
+      organizationType: contactDraft.organizationType && ORG_OPTIONS.includes(contactDraft.organizationType) ? contactDraft.organizationType : prev.organizationType,
+      referredBy: contactDraft.referredBy || prev.referredBy,
+      message: contactDraft.message || prev.message,
+    }));
+    if (status === "success") setStatus("idle");
+  }
 
   // When something new is attached, start the message (and organization type) for them.
   const [prefilledFor, setPrefilledFor] = useState<string | null>(null);
@@ -59,7 +74,7 @@ export function Contact() {
       const result = await sendContactEmail({ ...formData, proposal: scope, quote: attachedQuote });
       if (result.success) {
         setStatus("success");
-        setFormData({ fullName: "", email: "", organizationType: ORG_OPTIONS[0], message: "" });
+        setFormData({ fullName: "", email: "", organizationType: ORG_OPTIONS[0], referredBy: "", message: "" });
       } else {
         setStatus("error");
         setErrorMessage(result.error || "Something went wrong. Please try again.");
@@ -84,6 +99,13 @@ export function Contact() {
               Or start with a free scope <span aria-hidden>→</span>
             </a>
           )}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("zion:open-agent"))}
+            className="mt-2 flex items-center gap-1.5 text-[0.95rem] font-medium text-graphite hover:text-ink transition-colors cursor-pointer"
+          >
+            Questions first? Ask the Zion Agent <span aria-hidden>→</span>
+          </button>
 
           <dl className="mt-12 max-w-[26rem] border-t border-rule">
             {[
@@ -199,13 +221,19 @@ export function Contact() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="organizationType" className={labelClass}>Organization type</label>
-                  <select id="organizationType" name="organizationType" value={formData.organizationType} onChange={handleChange} className={`${fieldClass} cursor-pointer`}>
-                    {ORG_OPTIONS.map((o) => (
-                      <option key={o} value={o}>{o}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="organizationType" className={labelClass}>Organization type</label>
+                    <select id="organizationType" name="organizationType" value={formData.organizationType} onChange={handleChange} className={`${fieldClass} cursor-pointer`}>
+                      {ORG_OPTIONS.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="referredBy" className={labelClass}>Referred by <span className="text-mist font-normal">(optional)</span></label>
+                    <input id="referredBy" type="text" name="referredBy" autoComplete="off" value={formData.referredBy} onChange={handleChange} placeholder="A person, church, or event" className={fieldClass} />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2">

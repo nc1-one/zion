@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { Button } from "@/components/ui/Button";
+import { RegionSelect, useRegion } from "@/components/ui/RegionSelect";
 import { CountUp, Reveal } from "@/components/ui/motion";
 import { money } from "@/lib/assessment/format";
 import {
@@ -32,7 +33,8 @@ export function ManagedIT() {
   const [services, setServices] = useState<ItServiceId[]>(["helpdesk", "devices", "workspace", "security"]);
   const [dev, setDev] = useState<DevTeamId>("none");
   const [term, setTerm] = useState<ItTermId>("12m");
-  const estimate = managedItEstimate(size, services, dev, term);
+  const [region] = useRegion();
+  const estimate = managedItEstimate(size, services, dev, term, region);
 
   const toggle = (id: ItServiceId) => setServices((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
 
@@ -117,6 +119,9 @@ export function ManagedIT() {
         </div>
 
         <div className="bg-sheet p-6 md:p-8 border-t lg:border-t-0 lg:border-l border-rule flex flex-col">
+          <div className="mb-6">
+            <RegionSelect id="it-region" />
+          </div>
           <Label>Contract</Label>
           <div className="flex flex-col gap-1.5">
             {IT_TERMS.map((t) => (
@@ -146,7 +151,7 @@ export function ManagedIT() {
             <div className="mt-2 text-[0.85rem] text-graphite">
               {money(estimate.contractTotal)} for {estimate.term.months} months
             </div>
-            <Button className="mt-6 w-full justify-center" disabled={services.length === 0 && dev === "none"} onClick={() => sendQuote(managedItQuote(size, services, dev, term))}>
+            <Button className="mt-6 w-full justify-center" disabled={services.length === 0 && dev === "none"} onClick={() => sendQuote(managedItQuote(size, services, dev, term, region))}>
               Request this plan <ArrowRight size={16} />
             </Button>
           </div>

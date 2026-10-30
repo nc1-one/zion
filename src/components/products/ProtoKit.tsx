@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DriveContext, type StackEntry } from "./drive";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCircle2, ChevronLeft, ChevronRight, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
@@ -59,6 +60,10 @@ export function useProtoApp(home: string) {
 
 export type ProtoAppState = ReturnType<typeof useProtoApp>;
 
+// Slide-overs render into a layer over the whole app, not inside the scrolling
+// screen, so they always open in view.
+const ModalHost = createContext<HTMLElement | null>(null);
+
 // ---- App shell -------------------------------------------------------------------
 
 // Screens slide forward when opened and back when closed.
@@ -87,6 +92,7 @@ export function ProtoApp({
   const root = nav.find((n) => n.id === app.stack[0].screen);
   const crumbs = [root?.label ?? "", ...app.stack.slice(1).map((s) => s.label ?? "")];
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [modalHost, setModalHost] = useState<HTMLDivElement | null>(null);
   const { brand, framed, onPath } = useContext(DriveContext);
   const top = app.stack[app.stack.length - 1];
   const path = `/${app.stack[0].screen}${app.stack.length > 1 ? `/${top.id ?? top.screen}` : ""}`;
@@ -201,13 +207,14 @@ export function ProtoApp({
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 className="p-4 sm:p-5"
               >
-                {children}
+                <ModalHost.Provider value={modalHost}>{children}</ModalHost.Provider>
               </motion.div>
             </AnimatePresence>
           </div>
         </div>
       </div>
 
+      <div ref={setModalHost} className="absolute inset-0 z-20 pointer-events-none [&>*]:pointer-events-auto" />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} nav={nav} onGo={(id) => app.section(id)} />
 
       <AnimatePresence>
@@ -325,7 +332,8 @@ export function ProtoModal({
     };
   }, [open, onClose]);
 
-  return (
+  const host = useContext(ModalHost);
+  const panel = (
     <AnimatePresence>
       {open && (
         <motion.div className="absolute inset-0 z-20 bg-ink/25 flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
@@ -355,6 +363,7 @@ export function ProtoModal({
       )}
     </AnimatePresence>
   );
+  return host ? createPortal(panel, host) : panel;
 }
 
 // ---- Building blocks ----------------------------------------------------------------

@@ -1,10 +1,10 @@
 // Server-side estimating: effort guide, fallback estimator, and turning effort
-// into a priced proposal at Zion's internal hourly rate.
+// into a priced proposal at Zion's internal rate for the client's region.
 
 import { randomBytes } from "node:crypto";
-import type { BuildTypeId, FeatureId, TimelineId } from "./questions";
+import type { BuildTypeId, FeatureId, TimelineId, WorkRegionId } from "./questions";
 import { BUILD_TYPES, FEATURES, labelOf } from "./questions";
-import { HOURLY_RATE } from "./pricing";
+import { rateFor } from "./pricing";
 import { surveyNotes } from "./survey";
 import type { Answers, PhaseKey, Proposal, ScanResult, ServiceId } from "./types";
 import { PHASES, PHASE_KEYS } from "./types";
@@ -97,6 +97,21 @@ type InternalPhase = Omit<PublicPhase, "deliverables"> & {
 };
 export type InternalProposal = Omit<Proposal, "phases"> & { phases: InternalPhase[]; totalHours: number };
 
+// Assumptions the server always adds, whatever the agent wrote: when Zion
+// works, and the limits of an automated estimate.
+const REGION_ASSUMPTION: Record<WorkRegionId, string> = {
+  manila: "Zion works Manila business hours (GMT+8). Meetings are scheduled in that window.",
+  australia: "Zion covers Australian and New Zealand business hours, with a named lead for your meetings.",
+  americas: "Zion covers your North or South American business hours, with a named lead for your meetings.",
+  uk: "Zion covers UK and European business hours, with a named lead for your meetings.",
+};
+const ESTIMATE_GUARDRAIL = "This is an estimate, valid for 30 days and confirmed after a discovery call. Changes after sign-off are re-estimated.";
+
+// Prices are shown in round numbers so they never reveal the effort behind them.
+const roundPrice = (usd: number) => Math.max(50, Math.round(usd / 50) * 50);
+
+// What the browser receives: phase and total prices only. Deliverable prices
+// and hours stay on the server.
 export function publicProposal(p: InternalProposal): Proposal {
   const copy: Partial<InternalProposal> = { ...p };
   delete copy.totalHours;
@@ -109,7 +124,7 @@ export function publicProposal(p: InternalProposal): Proposal {
       startWeek: ph.startWeek,
       weeks: ph.weeks,
       cost: ph.cost,
-      deliverables: ph.deliverables.map((d) => ({ name: d.name, description: d.description, cost: d.cost })),
+      deliverables: ph.deliverables.map((d) => ({ name: d.name, description: d.description, cost: 0 })),
     })),
   };
 }
@@ -121,6 +136,7 @@ export function finalizeProposal(
   source: Proposal["source"],
 ): InternalProposal {
   const capacity = WEEKLY_CAPACITY[answers.timeline];
+  const rate = rateFor(answers.region);
 
   // Keep one entry per ZPL phase, in ZPL order.
   const byKey = new Map<PhaseKey, DraftPhase>();
@@ -141,14 +157,14 @@ export function finalizeProposal(
       return {
         name: d.name.slice(0, 120),
         description: d.description.slice(0, 400),
-        cost: hours * HOURLY_RATE,
+        cost: hours * rate,
         hours,
       };
     });
     const hours = deliverables.reduce((sum, d) => sum + d.hours, 0);
     const minWeeks = Math.ceil(hours / capacity);
     const weeks = clamp(Math.round(phase.weeks) || minWeeks, Math.max(1, minWeeks), 26);
-    const cost = hours * HOURLY_RATE;
+    const cost = roundPrice(hours * rate);
 
     phases.push({
       key,
@@ -176,7 +192,9 @@ export function finalizeProposal(
     totalWeeks: Math.max(1, week - 1),
     totalHours: phases.reduce((sum, p) => sum + p.hours, 0),
     totalCost,
-    assumptions: draft.assumptions.slice(0, 6).map((a) => a.slice(0, 300)),
+    assumptions: [
+      ...new Set([...draft.assumptions.slice(0, 4).map((a) => a.slice(0, 300)), REGION_ASSUMPTION[answers.region], ESTIMATE_GUARDRAIL]),
+    ],
     recommendedServices: [...new Set(draft.recommendedServices)].slice(0, 7),
     answers,
   };

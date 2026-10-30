@@ -8,6 +8,7 @@ import { Portfolio } from "@/components/sections/Portfolio";
 import { About } from "@/components/sections/About";
 import { Contact } from "@/components/sections/Contact";
 import { Footer } from "@/components/shared/Footer";
+import { ZionAgent } from "@/components/agent/ZionAgent";
 
 // Structured data so search engines know who Zion is and what it offers.
 const ORGANIZATION = {
@@ -39,6 +40,7 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
+      <ZionAgent />
     </AssessmentProvider>
   );
 }

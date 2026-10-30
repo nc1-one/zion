@@ -15,6 +15,7 @@ import {
   FEATURES,
   ORG_TYPES,
   TIMELINES,
+  WORK_REGIONS,
 } from "@/lib/assessment/questions";
 import type { Answers } from "@/lib/assessment/types";
 import { money, weeksLabel } from "@/lib/assessment/format";
@@ -24,12 +25,13 @@ import { cn } from "@/lib/utils";
 type Option = { id: string; label: string; hint?: string };
 type Step =
   | { key: "buildTypes" | "features"; kind: "multi"; label: string; title: string; hint: string; options: readonly Option[]; optional?: boolean }
-  | { key: "orgType" | "audience" | "content" | "timeline"; kind: "single"; label: string; title: string; hint?: string; options: readonly Option[] }
+  | { key: "orgType" | "region" | "audience" | "content" | "timeline"; kind: "single"; label: string; title: string; hint?: string; options: readonly Option[] }
   | { key: "goal"; kind: "text"; label: string; title: string; hint: string };
 
 const STEPS: Step[] = [
   { key: "buildTypes", kind: "multi", label: "Project", title: "What would you like to build?", hint: "Choose all that apply.", options: BUILD_TYPES },
   { key: "orgType", kind: "single", label: "Organization", title: "What kind of organization are you?", options: ORG_TYPES },
+  { key: "region", kind: "single", label: "Location", title: "Where is your team based?", hint: "We're in Manila and also work Australian, American, and UK hours.", options: WORK_REGIONS },
   {
     key: "features",
     kind: "multi",
@@ -121,7 +123,7 @@ function IntroPanel() {
       <AgentHeader>Free scoping assessment</AgentHeader>
       <h1 className="heading-hero text-ink">Know what to build before you build it.</h1>
       <p className="mt-7 text-[1.15rem] leading-[1.6] text-ink-soft max-w-[32rem]">
-        Paste your website. Answer seven questions. Get a roadmap, timeline, and cost.
+        Paste your website. Answer eight questions. Get a roadmap, timeline, and cost.
       </p>
 
       <form onSubmit={submit} className="mt-8 max-w-[34rem]" noValidate>

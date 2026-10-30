@@ -16,5 +16,5 @@ export const SAMPLE_SCOPE = {
   ].map((p) => ({ ...p, objective: "", cost: 0, deliverables: [] })) as PhasePlan[],
   deliverables: ["Online giving", "Event registration", "Sermon and news pages", "Accessibility and speed testing", "Team training"],
   totalWeeks: 9,
-  totalCost: 1680,
+  totalCost: 1700,
 };
