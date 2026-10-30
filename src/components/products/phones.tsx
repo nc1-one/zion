@@ -12,7 +12,6 @@ import {
   Kanban,
   ListChecks,
   ScanLine,
-  Sparkles,
   Truck,
   User,
   Users,
@@ -80,7 +79,7 @@ function PipelinePhone() {
           <Header title={task.name} sub={`${task.stage} · ${task.due}`} onBack={() => setOpenId(null)} />
           <Body>
             <div className="flex items-center gap-1.5 text-[0.66rem] font-semibold text-gold">
-              <Sparkles size={12} /> Suggested text
+              Suggested text
             </div>
             <textarea
               value={drafts[task.id]}

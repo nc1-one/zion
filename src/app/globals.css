@@ -110,6 +110,21 @@
     color-scheme: light;
   }
 
+  /* Dark sidebars and colored top bars inside a product demo */
+  .proto-dark {
+    --color-night: transparent;
+    --color-paper: rgba(255, 255, 255, 0.07);
+    --color-sheet: rgba(255, 255, 255, 0.1);
+    --color-raised: rgba(255, 255, 255, 0.08);
+    --color-ink: #ffffff;
+    --color-ink-soft: rgba(255, 255, 255, 0.86);
+    --color-graphite: rgba(255, 255, 255, 0.72);
+    --color-mist: rgba(255, 255, 255, 0.58);
+    --color-rule: rgba(255, 255, 255, 0.14);
+    background-color: var(--proto-dark-bg, #111827);
+    color: var(--color-ink);
+  }
+
   /* Small label above values and fields: sentence case, body face */
   .annot {
     font-family: var(--font-body);

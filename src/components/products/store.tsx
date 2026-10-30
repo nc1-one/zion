@@ -46,6 +46,7 @@ import {
   useProtoApp,
 } from "./ProtoKit";
 import { cn } from "@/lib/utils";
+import { ProductArt, artFor } from "./store-art";
 
 const peso = (n: number) => `₱${Math.round(n).toLocaleString("en-US")}`;
 const count = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString("en-US")} ${n === 1 ? one : many}`;
@@ -348,7 +349,6 @@ const CHANNEL_SPLIT: [string, number][] = [["Online store", 0.68], ["Social shop
 
 // ---- Helpers -----------------------------------------------------------------------
 
-const TONES = ["bg-gold-wash text-gold", "bg-trace-wash text-trace", "bg-raised text-graphite", "bg-good/10 text-good", "bg-warn/10 text-warn", "bg-danger-wash text-danger"];
 
 const ruleText = (r: Rule) => (r.field === "Tag" ? `Product tag is ${r.value}` : r.field === "Type" ? `Product type is ${r.value}` : `Price is less than ${peso(Number(r.value))}`);
 const minPrice = (p: Product) => Math.min(...p.variants.map((x) => x.price));
@@ -407,10 +407,12 @@ const daysUntil = (date: string) => {
   return m === 0 ? Number(d) - 29 : m === 1 ? Number(d) + 2 : 32 + Number(d);
 };
 
+// Product image: the drawn packaging for that product.
 function Thumb({ tone, label, size = 32 }: { tone: number; label: string; size?: number }) {
+  const type = PRODUCTS.find((p) => p.title === label)?.type ?? "Whole bean";
   return (
-    <span className={cn("inline-flex items-center justify-center rounded-md shrink-0 text-[0.66rem] font-semibold", TONES[tone % TONES.length])} style={{ width: size, height: size }} aria-hidden>
-      {label.slice(0, 1)}
+    <span className="inline-flex rounded-md overflow-hidden shrink-0 ring-1 ring-rule" style={{ width: size, height: size }} aria-hidden>
+      <ProductArt kind={artFor(type)} tone={tone} className="w-full h-full" />
     </span>
   );
 }
@@ -1552,8 +1554,9 @@ export function StorePrototype() {
               >
                 <div className="grid grid-cols-4 gap-2">
                   {product.media.map((m, i) => (
-                    <div key={`${m}-${i}`} className={cn("aspect-square rounded-lg flex items-end p-2 text-[0.66rem] font-medium", TONES[(product.tone + i) % TONES.length], i === 0 && "col-span-2 row-span-2")}>
-                      {m}
+                    <div key={`${m}-${i}`} className={cn("relative aspect-square rounded-lg overflow-hidden ring-1 ring-rule", i === 0 && "col-span-2 row-span-2")}>
+                      <ProductArt kind={i === 0 ? artFor(product.type) : artFor(product.type, m)} tone={product.tone} className="w-full h-full" />
+                      <span className="sr-only">{m}</span>
                     </div>
                   ))}
                 </div>

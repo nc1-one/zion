@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, Reorder, motion, useDragControls } from "framer-motion";
-import { AArrowDown, AArrowUp, CalendarCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, GripVertical, Layers, Library, Lightbulb, MessageSquare, MessagesSquare, Minus, Pause, PenLine, Play, Plus, Presentation, RefreshCw, RotateCcw, Search, Send, Sparkles, Trash2, X } from "lucide-react";
+import { AArrowDown, AArrowUp, CalendarCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, GripVertical, Layers, Library, Lightbulb, MessageSquare, MessagesSquare, Minus, Pause, PenLine, Play, Plus, Presentation, RefreshCw, RotateCcw, Search, Send, Trash2, X } from "lucide-react";
 import { Avatar, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
@@ -1355,7 +1355,7 @@ export function SermonMakerPrototype() {
                         <SmallButton onClick={() => update(cur.id, (s) => ({ ...s, questions: [...s.questions, { id: `q${Date.now()}`, text: "", draft: false }] }))}><Plus size={12} /> Add question</SmallButton>
                       </>
                     ) : (
-                      <PrimaryButton onClick={() => draft(cur, "questions")} disabled={!!drafting || !pointsOf(cur).length}><Sparkles size={13} /> Draft questions</PrimaryButton>
+                      <PrimaryButton onClick={() => draft(cur, "questions")} disabled={!!drafting || !pointsOf(cur).length}>Draft questions</PrimaryButton>
                     )}
                   </div>
                 </Panel>

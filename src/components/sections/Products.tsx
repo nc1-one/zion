@@ -7,6 +7,7 @@ import { ArrowRight, Check, ChevronLeft, ChevronRight, Lock, Pause, Play, Smartp
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { ProtoDriveProvider, type ProtoDrive, type StackEntry } from "@/components/products/drive";
 import { SHOWCASE, type TourStep } from "@/components/products/showcase";
+import { BRANDS } from "@/components/products/brands";
 import { Button } from "@/components/ui/Button";
 import { RegionSelect, useRegion } from "@/components/ui/RegionSelect";
 import { CountUp, RevealHeading } from "@/components/ui/motion";
@@ -127,7 +128,7 @@ export function Products() {
     pathRef.current = p;
     setPath(p);
   }, []);
-  const drive = useMemo<ProtoDrive>(() => ({ target, brand: { accent: show.accent }, framed: true, onPath }), [target, show, onPath]);
+  const drive = useMemo<ProtoDrive>(() => ({ target, brand: { accent: show.accent, ...BRANDS[productId] }, framed: true, onPath }), [target, show, productId, onPath]);
 
   // ---- The cursor plays a step on the live demo ----
 
@@ -379,6 +380,7 @@ export function Products() {
                           {show.host}
                           <span className="text-[#667085]">{path}</span>
                         </span>
+                        <span className="ml-1 px-1.5 py-px rounded bg-[#F2F4F7] text-[0.62rem] font-medium text-[#475467] shrink-0">Sample data</span>
                       </div>
                     </div>
                     <button
@@ -630,7 +632,7 @@ export function Products() {
                 <Button className="mt-6 w-full justify-center" onClick={() => sendQuote(productQuote(product, selected, tierId, region))}>
                   Request a quote <ArrowRight size={16} />
                 </Button>
-                <p className="mt-4 pt-4 border-t border-rule text-[0.8rem] text-gold-bright">45% less than typical commercial software</p>
+                <p className="mt-4 pt-4 border-t border-rule text-[0.8rem] text-gold-bright">About 45% less than a typical agency or commercial product</p>
               </aside>
             </div>
           </motion.div>
