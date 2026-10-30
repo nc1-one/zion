@@ -2,9 +2,9 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { DriveContext, type StackEntry } from "./drive";
+import { DriveContext, type ProtoShell, type StackEntry } from "./drive";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, CheckCircle2, ChevronLeft, ChevronRight, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
+import { Bell, CheckCircle2, ChevronLeft, ChevronRight, ChevronsUpDown, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { brandStyle } from "@/lib/brand";
 
@@ -64,6 +64,49 @@ export type ProtoAppState = ReturnType<typeof useProtoApp>;
 // screen, so they always open in view.
 const ModalHost = createContext<HTMLElement | null>(null);
 
+// ---- Brand -------------------------------------------------------------------------
+
+const FONTS = { serif: "var(--font-cormorant), Georgia, serif", grotesk: "var(--font-schibsted), system-ui, sans-serif" };
+
+// Surface colors for shells that change the whole app's feel.
+const SHELL_VARS: Partial<Record<ProtoShell, Record<string, string>>> = {
+  paper: { "--color-paper": "#FBF8F3", "--color-night": "#F4EEE4", "--color-raised": "#F0E9DE", "--color-rule": "#E6DDCF", "--color-rule-soft": "#F0E9DE" },
+  commerce: { "--color-paper": "#F1F2F4", "--color-night": "#E9EBEE", "--color-rule": "#E1E3E7", "--color-rule-soft": "#EDEFF2" },
+};
+
+const SIDEBAR: Record<ProtoShell, string> = {
+  classic: "bg-sheet sm:border-r border-rule",
+  tinted: "bg-gold-wash sm:border-r border-rule",
+  dark: "proto-dark",
+  paper: "bg-night sm:border-r border-rule",
+  commerce: "bg-night",
+  brandbar: "bg-sheet sm:border-r border-rule",
+  topnav: "",
+};
+
+const ACTIVE: Record<ProtoShell, string> = {
+  classic: "bg-gold-wash",
+  tinted: "bg-sheet border border-rule shadow-[0_1px_2px_rgba(16,24,40,0.06)]",
+  dark: "bg-sheet",
+  paper: "bg-sheet border border-rule",
+  commerce: "bg-sheet shadow-[0_1px_2px_rgba(16,24,40,0.08)]",
+  brandbar: "bg-gold-wash",
+  topnav: "",
+};
+
+const initials = (text: string) =>
+  text
+    .split(/\s+/)
+    .filter((w) => /^[A-Z]/.test(w))
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("");
+
+// The brand the showcase passed in, for components that adapt their shape.
+function useBrand() {
+  return useContext(DriveContext).brand;
+}
+
 // ---- App shell -------------------------------------------------------------------
 
 // Screens slide forward when opened and back when closed.
@@ -107,22 +150,46 @@ export function ProtoApp({
     return () => window.clearTimeout(timer);
   }, [app.toast, app.clearToast]);
 
+  const shell = brand?.shell ?? "classic";
+  const isDark = shell === "dark";
+  const isTop = shell === "topnav";
+  const isBar = shell === "brandbar";
+  const darkStyle = { "--proto-dark-bg": brand?.barColor ?? brand?.accent } as React.CSSProperties;
+  const style = {
+    ...(brand ? brandStyle(brand.accent) : {}),
+    ...(brand?.font && brand.font !== "inter" ? { "--font-display": FONTS[brand.font] } : {}),
+    ...(SHELL_VARS[shell] ?? {}),
+  } as React.CSSProperties;
+
+  const logo = (
+    <div className={cn("flex items-center gap-2.5 min-w-0 shrink-0", !isTop && "sm:w-[10.5rem]")}>
+      {brand?.mark ?? (
+        <span className="w-6 h-6 rounded-md bg-gold text-sheet text-[0.7rem] font-bold flex items-center justify-center shrink-0" aria-hidden>
+          {product.slice(0, 1)}
+        </span>
+      )}
+      <span className={cn("text-[0.92rem] font-semibold tracking-[-0.015em] text-ink truncate", brand?.font && brand.font !== "inter" && "font-display", brand?.font === "serif" && "text-[1.2rem]")}>
+        {product}
+      </span>
+    </div>
+  );
+
+  const workspace = org && (
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="w-6 h-6 rounded-md bg-raised text-[0.6rem] font-bold text-graphite flex items-center justify-center shrink-0" aria-hidden>
+        {initials(org)}
+      </span>
+      <span className="min-w-0 flex-1 text-[0.74rem] font-medium text-ink-soft truncate">{org}</span>
+      <ChevronsUpDown size={13} className="text-mist shrink-0" aria-hidden />
+    </div>
+  );
+
   return (
-    <div
-      className={cn("proto-light relative bg-paper overflow-hidden flex flex-col h-[660px] text-left", !framed && "rounded-xl border border-rule")}
-      style={brand ? brandStyle(brand.accent) : undefined}
-    >
+    <div className={cn("proto-light relative bg-paper overflow-hidden flex flex-col h-[660px] text-left", !framed && "rounded-xl border border-rule")} style={style}>
       {/* top bar */}
-      <div className="flex items-center gap-3 px-3 sm:px-4 h-12 border-b border-rule bg-sheet shrink-0">
-        <div className="flex items-center gap-2 min-w-0 sm:w-[10.5rem] shrink-0">
-          <span className="w-6 h-6 rounded-md bg-gold text-sheet text-[0.7rem] font-bold flex items-center justify-center shrink-0" aria-hidden>
-            {product.slice(0, 1)}
-          </span>
-          <span className="min-w-0 leading-tight">
-            <span className="block text-[0.8rem] font-semibold text-ink truncate">{product}</span>
-            {org && <span className="block text-[0.66rem] text-mist truncate">{org}</span>}
-          </span>
-        </div>
+      <div className={cn("relative flex items-center gap-3 px-3 sm:px-4 h-12 shrink-0", isBar || isDark ? "proto-dark border-b border-rule" : "bg-sheet border-b border-rule")} style={isBar || isDark ? darkStyle : undefined}>
+        {logo}
+        {isTop && <div className="hidden md:block w-44">{workspace}</div>}
         <button
           type="button"
           onClick={() => setPaletteOpen(true)}
@@ -139,7 +206,7 @@ export function ProtoApp({
           <span className="relative text-graphite" aria-label={`${alerts} alerts`}>
             <Bell size={16} />
             {alerts > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-danger text-sheet text-[0.6rem] font-bold flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[0.6rem] font-bold flex items-center justify-center">
                 {alerts}
               </span>
             )}
@@ -151,9 +218,9 @@ export function ProtoApp({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 grid-rows-[auto_minmax(0,1fr)] sm:grid-rows-1 sm:grid-cols-[11.5rem_minmax(0,1fr)]">
-        {/* sidebar */}
-        <nav aria-label={`${product} navigation`} className="flex sm:flex-col gap-0.5 p-2 sm:p-2.5 border-b sm:border-b-0 sm:border-r border-rule overflow-x-auto sm:overflow-visible bg-night">
+      {/* top navigation, for products laid out without a sidebar */}
+      {isTop && (
+        <nav aria-label={`${product} navigation`} className="flex gap-1 px-2 sm:px-3 h-11 border-b border-rule bg-sheet overflow-x-auto shrink-0">
           {nav.map((item) => {
             const on = item.id === app.stack[0].screen;
             return (
@@ -163,38 +230,62 @@ export function ProtoApp({
                 data-screen={item.id}
                 onClick={() => app.section(item.id)}
                 aria-current={on ? "page" : undefined}
-                className={cn(
-                  "relative flex items-center gap-2.5 shrink-0 px-2.5 py-1.5 rounded-md text-[0.8rem] text-left transition-colors cursor-pointer",
-                  on ? "text-ink font-semibold" : "text-graphite hover:text-ink hover:bg-raised",
-                )}
+                className={cn("relative flex items-center gap-2 shrink-0 px-2.5 text-[0.8rem] transition-colors cursor-pointer", on ? "text-ink font-semibold" : "text-graphite hover:text-ink")}
               >
-                {on && <motion.span layoutId={`${product}-nav`} className="absolute inset-0 rounded-md bg-sheet border border-rule shadow-[0_1px_2px_rgba(16,24,40,0.06)]" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
-                <item.icon size={15} strokeWidth={1.9} className={cn("relative", on ? "text-gold" : "")} />
-                <span className="relative flex-1">{item.label}</span>
-                {item.badge ? <span className="relative min-w-5 px-1.5 rounded-full bg-raised text-[0.66rem] font-medium text-graphite text-center">{item.badge}</span> : null}
+                <item.icon size={14} strokeWidth={1.9} className={on ? "text-gold" : ""} />
+                {item.label}
+                {item.badge ? <span className="min-w-5 px-1.5 rounded-full bg-raised text-[0.66rem] font-medium text-graphite text-center">{item.badge}</span> : null}
+                {on && <motion.span layoutId={`${product}-nav`} className="absolute left-2 right-2 bottom-0 h-[2px] rounded-full bg-gold" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
               </button>
             );
           })}
-          <div className="hidden sm:block mt-auto px-2.5 pt-3 text-[0.66rem] leading-relaxed text-mist border-t border-rule">
-            Demo workspace · sample data
-          </div>
         </nav>
+      )}
+
+      <div className={cn("flex-1 min-h-0 grid grid-cols-1", !isTop && "grid-rows-[auto_minmax(0,1fr)] sm:grid-rows-1 sm:grid-cols-[11.5rem_minmax(0,1fr)]")}>
+        {/* sidebar */}
+        {!isTop && (
+          <nav aria-label={`${product} navigation`} className={cn("flex sm:flex-col gap-0.5 p-2 sm:p-2.5 border-b sm:border-b-0 border-rule overflow-x-auto sm:overflow-visible", SIDEBAR[shell])} style={isDark ? darkStyle : undefined}>
+            {nav.map((item) => {
+              const on = item.id === app.stack[0].screen;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-screen={item.id}
+                  onClick={() => app.section(item.id)}
+                  aria-current={on ? "page" : undefined}
+                  className={cn(
+                    "relative flex items-center gap-2.5 shrink-0 px-2.5 py-1.5 rounded-md text-[0.8rem] text-left transition-colors cursor-pointer",
+                    on ? "text-ink font-semibold" : "text-graphite hover:text-ink hover:bg-raised",
+                  )}
+                >
+                  {on && <motion.span layoutId={`${product}-nav`} className={cn("absolute inset-0 rounded-md", ACTIVE[shell])} transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+                  <item.icon size={15} strokeWidth={1.9} className={cn("relative", on && (isDark ? "text-ink" : "text-gold"))} />
+                  <span className="relative flex-1">{item.label}</span>
+                  {item.badge ? <span className="relative min-w-5 px-1.5 rounded-full bg-raised text-[0.66rem] font-medium text-graphite text-center">{item.badge}</span> : null}
+                </button>
+              );
+            })}
+            {workspace && <div className="hidden sm:block mt-auto px-1.5 pt-3 border-t border-rule">{workspace}</div>}
+          </nav>
+        )}
 
         {/* main */}
         <div data-proto-main className="flex flex-col min-h-0 bg-paper">
-          <div className="flex items-center gap-1.5 h-10 px-4 border-b border-rule bg-sheet shrink-0 text-[0.75rem]">
-            {app.stack.length > 1 && (
+          {app.stack.length > 1 && (
+            <div className="flex items-center gap-1.5 h-10 px-4 border-b border-rule bg-sheet shrink-0 text-[0.75rem]">
               <button type="button" onClick={app.back} className="flex items-center gap-0.5 mr-1.5 pr-2.5 border-r border-rule text-graphite hover:text-ink cursor-pointer">
                 <ChevronLeft size={14} /> Back
               </button>
-            )}
-            {crumbs.map((c, i) => (
-              <React.Fragment key={`${c}-${i}`}>
-                {i > 0 && <ChevronRight size={12} className="text-mist shrink-0" />}
-                <span className={cn("truncate", i === crumbs.length - 1 ? "text-ink font-medium" : "text-mist")}>{c}</span>
-              </React.Fragment>
-            ))}
-          </div>
+              {crumbs.map((c, i) => (
+                <React.Fragment key={`${c}-${i}`}>
+                  {i > 0 && <ChevronRight size={12} className="text-mist shrink-0" />}
+                  <span className={cn("truncate", i === crumbs.length - 1 ? "text-ink font-medium" : "text-mist")}>{c}</span>
+                </React.Fragment>
+              ))}
+            </div>
+          )}
           <div data-proto-scroll className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             <AnimatePresence mode="wait" initial={false} custom={app.dir}>
               <motion.div
@@ -369,10 +460,11 @@ export function ProtoModal({
 // ---- Building blocks ----------------------------------------------------------------
 
 export function ScreenHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
+  const brand = useBrand();
   return (
     <div className="flex items-start justify-between gap-3 mb-4">
       <div className="min-w-0">
-        <h4 className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{title}</h4>
+        <h4 className={cn("font-display leading-tight font-semibold text-ink tracking-[-0.015em]", brand?.font === "serif" ? "text-[1.6rem] leading-none" : "text-[1.2rem]")}>{title}</h4>
         {subtitle && <p className="text-[0.78rem] text-mist mt-0.5">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0 flex flex-wrap justify-end gap-2">{action}</div>}
@@ -383,9 +475,12 @@ export function ScreenHeader({ title, subtitle, action }: { title: string; subti
 // Kept for compatibility with simple screens.
 export const ProtoTitle = ({ title, action }: { title: string; action?: React.ReactNode }) => <ScreenHeader title={title} action={action} />;
 
+const RADIUS = { sharp: "rounded-[4px]", soft: "rounded-xl" };
+
 export function Panel({ title, action, children, className }: { title?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
+  const brand = useBrand();
   return (
-    <section className={cn("bg-sheet border border-rule rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.04)]", className)}>
+    <section className={cn("bg-sheet border border-rule shadow-[0_1px_2px_rgba(16,24,40,0.04)]", brand?.radius ? RADIUS[brand.radius] : "rounded-lg", className)}>
       {title && (
         <div className="flex items-center justify-between gap-3 px-3.5 h-10 border-b border-rule">
           <span className="text-[0.8rem] font-semibold text-ink">{title}</span>
@@ -397,11 +492,20 @@ export function Panel({ title, action, children, className }: { title?: string; 
   );
 }
 
+// Headline numbers, styled to the product: cards, a ruled strip, or plain figures.
 export function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "good" | "bad" }) {
+  const brand = useBrand();
+  const look = brand?.stats ?? "cards";
   return (
-    <div className="bg-sheet border border-rule rounded-lg p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div
+      className={cn(
+        look === "cards" && cn("bg-sheet border border-rule p-3.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]", brand?.radius ? RADIUS[brand.radius] : "rounded-lg"),
+        look === "strip" && "bg-sheet border border-rule border-l-[3px] border-l-gold rounded-[4px] px-3.5 py-2.5",
+        look === "plain" && "py-1",
+      )}
+    >
       <div className="text-[0.74rem] font-medium text-mist">{label}</div>
-      <div className="text-[1.45rem] leading-tight font-semibold text-ink mt-1 tabular-nums tracking-[-0.01em]">{value}</div>
+      <div className={cn("leading-tight font-semibold text-ink mt-1 tabular-nums tracking-[-0.01em]", look === "plain" ? "font-display text-[1.75rem]" : "text-[1.45rem]", look === "strip" && "font-mono text-[1.3rem] tracking-normal")}>{value}</div>
       {sub && <div className={cn("text-[0.72rem] mt-0.5", tone === "good" ? "text-good" : tone === "bad" ? "text-danger" : "text-mist")}>{sub}</div>}
     </div>
   );

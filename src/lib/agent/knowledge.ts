@@ -24,8 +24,8 @@ export function knowledge() {
   return `About Zion
 - Zion Systems & Build is a software studio in Manila, Philippines. Tagline: "Software built with excellence, priced for the mission."
 - It builds software, runs IT, and does marketing for churches, ministries, nonprofits, schools, and faith-driven businesses. One team builds it and supports it after launch.
-- Zion works Manila hours and also covers Australian, American, and UK/European business hours.
-- Typical commercial software costs more: Zion's pricing is about 45% less than the usual commercial products.
+- Zion serves clients worldwide: it works Manila hours and also covers Australian, American, and UK/European business hours.
+- The value: better software for less. Zion costs about 45% less than a typical agency or commercial product, and every release is tested, accessible, and fast before launch. One clear total instead of hourly rates and add-ons; after launch, support comes from the team that built it.
 - Trusted by Jesus.Net Philippines, Turn Vertical, HopeBegins, eSTAR Foundation, and Glassbox PH.
 - Contact: support@zionsystems.dev, +63 908 890 1896. The team replies within one business day.
 - Founding vision: "Remove the technical barriers that hinder Kingdom-focused organizations from reaching their full potential. We build the frameworks so you can focus on the fruit."

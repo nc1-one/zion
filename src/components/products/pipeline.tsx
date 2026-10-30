@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { ArrowRight, BarChart3, Check, ChevronLeft, ChevronRight, Clock, Coffee, Copy, DoorOpen, Flag, GitBranch, IdCard, Inbox, Kanban, ListChecks, Mail, MessageSquare, Pause, Pencil, Phone, Play, Plus, Printer, QrCode, RefreshCw, Search, Send, Sparkles, StickyNote, UserPlus, Users, Workflow, Zap, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, Check, ChevronLeft, ChevronRight, Clock, Coffee, Copy, DoorOpen, Flag, GitBranch, IdCard, Inbox, Kanban, ListChecks, Mail, MessageSquare, Pause, Pencil, Phone, Play, Plus, Printer, QrCode, RefreshCw, Search, Send, StickyNote, UserPlus, Users, Workflow, Zap, type LucideIcon } from "lucide-react";
 import { Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
@@ -583,7 +583,6 @@ const selectSm = "h-8 px-2 rounded-md bg-sheet border border-rule text-[0.75rem]
 function AiTag({ text }: { text: string }) {
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gold-wash text-gold text-[0.66rem] font-medium whitespace-nowrap">
-      <Sparkles size={11} />
       {text}
     </span>
   );
@@ -2124,7 +2123,7 @@ export function AIPipelinePrototype() {
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[0.76rem] font-medium text-ink-soft">{stepDraft.step.kind === "text" ? "Message" : "Body"}</span>
-                  <SmallButton onClick={draftStepWithAi} disabled={drafting === "step"}><Sparkles size={12} /> Draft with AI</SmallButton>
+                  <SmallButton onClick={draftStepWithAi} disabled={drafting === "step"}>Draft with AI</SmallButton>
                 </div>
                 {drafting === "step" ? <span className="text-[0.72rem] text-graphite">Drafting from this journey…</span> : stepDraft.ai && <span><AiTag text="AI draft · edit, then save to approve" /></span>}
                 <textarea aria-label={stepDraft.step.kind === "text" ? "Message" : "Body"} value={stepDraft.step.body ?? ""} onChange={(e) => setStepField({ body: e.target.value })} rows={5} className={cn(textareaClass, stepDraft.ai && "border-dashed border-gold/50")} placeholder="Hi {first}, …" />

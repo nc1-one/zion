@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Home, Minus, Plus, Search, ShoppingBag, User } from "lucide-react";
 import { Body, Button, Chips, Choice, Done, Header, Label, Stepper, TabBar } from "./phone-kit";
+import { ProductArt } from "./store-art";
 
 const peso = (n: number) => `₱${n.toLocaleString("en-US")}`;
 
@@ -70,7 +71,9 @@ export function StorePhone() {
             </button>
           </div>
           <Body>
-            <div className="h-36 rounded-2xl bg-gold-wash text-gold flex items-end p-3 text-[0.66rem] font-semibold">Sagada Heirloom · {size} bag</div>
+            <div className="h-36 rounded-2xl overflow-hidden">
+              <ProductArt kind="bag" tone={2} className="w-full h-full" />
+            </div>
             <div className="mt-1.5 flex justify-center gap-1" aria-hidden>
               <span className="w-4 h-1 rounded-full bg-gold" />
               <span className="w-1.5 h-1 rounded-full bg-rule" />
