@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { animate, motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 // Numbers that count to their new value, used for costs and hours.
 export function CountUp({ value, format = (n) => n.toLocaleString() }: { value: number; format?: (n: number) => string }) {
@@ -50,41 +49,18 @@ export function Reveal({
   );
 }
 
-// Section headings rise in word by word.
-export function RevealHeading({
-  text,
-  className,
-  as = "h2",
-  emphasis,
-}: {
-  text: string;
-  className?: string;
-  as?: "h1" | "h2";
-  emphasis?: string;
-}) {
+// Section headings fade up once as they scroll into view.
+export function RevealHeading({ text, className, as = "h2" }: { text: string; className?: string; as?: "h1" | "h2" }) {
   const Tag = motion[as];
-  const words = text.split(" ");
   return (
     <Tag
       className={className}
-      initial="hidden"
-      whileInView="shown"
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ staggerChildren: 0.05 }}
-      aria-label={text}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
-      {words.map((word, i) => (
-        <span key={i} className="inline-block overflow-hidden align-bottom pb-[0.14em] -mb-[0.14em]" aria-hidden>
-          <motion.span
-            className={cn("inline-block", word === emphasis && "italic text-gold-bright")}
-            variants={{ hidden: { y: "100%" }, shown: { y: 0 } }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {word}
-            {i < words.length - 1 ? " " : ""}
-          </motion.span>
-        </span>
-      ))}
+      {text}
     </Tag>
   );
 }
@@ -95,7 +71,7 @@ export function ScrollProgress() {
   const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.3 });
   return (
     <motion.div
-      className="absolute left-0 right-0 -bottom-px h-[2px] bg-gold origin-left print:hidden"
+      className="absolute left-0 right-0 -bottom-px h-px bg-gold/70 origin-left print:hidden"
       style={{ scaleX }}
       aria-hidden
     />

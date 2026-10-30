@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCircle2, ChevronLeft, ChevronRight, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { brandStyle } from "@/lib/brand";
 
 // ---- App state: screen stack, navigation, toasts -------------------------------
 
@@ -32,14 +33,7 @@ export interface ProtoDrive {
 const DriveContext = createContext<ProtoDrive>({});
 export const ProtoDriveProvider = DriveContext.Provider;
 
-// Re-points the light theme's primary color at a product's brand color.
-export const brandStyle = (accent: string) =>
-  ({
-    "--color-gold": accent,
-    "--color-gold-bright": accent,
-    "--color-gold-deep": accent,
-    "--color-gold-wash": `color-mix(in srgb, ${accent} 9%, white)`,
-  }) as React.CSSProperties;
+export { brandStyle } from "@/lib/brand";
 
 // Each prototype keeps a stack of screens so visitors can open a record, go
 // deeper, and come back, like a real app.
@@ -175,6 +169,7 @@ export function ProtoApp({
               <button
                 key={item.id}
                 type="button"
+                data-screen={item.id}
                 onClick={() => app.section(item.id)}
                 aria-current={on ? "page" : undefined}
                 className={cn(
@@ -195,7 +190,7 @@ export function ProtoApp({
         </nav>
 
         {/* main */}
-        <div className="flex flex-col min-h-0 bg-paper">
+        <div data-proto-main className="flex flex-col min-h-0 bg-paper">
           <div className="flex items-center gap-1.5 h-10 px-4 border-b border-rule bg-sheet shrink-0 text-[0.75rem]">
             {app.stack.length > 1 && (
               <button type="button" onClick={app.back} className="flex items-center gap-0.5 mr-1.5 pr-2.5 border-r border-rule text-graphite hover:text-ink cursor-pointer">
@@ -209,7 +204,7 @@ export function ProtoApp({
               </React.Fragment>
             ))}
           </div>
-          <div className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <div data-proto-scroll className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             <AnimatePresence mode="wait" initial={false} custom={app.dir}>
               <motion.div
                 key={app.stack.map((s) => `${s.screen}:${s.id ?? ""}`).join("/")}

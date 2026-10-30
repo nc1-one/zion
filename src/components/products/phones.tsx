@@ -25,7 +25,7 @@ import {
   Wifi,
   type LucideIcon,
 } from "lucide-react";
-import { brandStyle } from "./ProtoKit";
+import { brandStyle } from "@/lib/brand";
 import type { Product } from "@/lib/quotes";
 import { cn } from "@/lib/utils";
 

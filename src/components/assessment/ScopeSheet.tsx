@@ -19,6 +19,7 @@ import { PHASES } from "@/lib/assessment/types";
 import { serviceTitle } from "@/lib/assessment/services";
 import { cn } from "@/lib/utils";
 import { CountUp } from "@/components/ui/motion";
+import { brandStyle } from "@/lib/brand";
 
 // The scope of work, drawn as a drafting sheet. It fills in live while the
 // visitor answers, then becomes the agent's finished proposal.
@@ -42,7 +43,8 @@ export function ScopeSheet() {
       id="scope-sheet"
       aria-live="polite"
       aria-busy={stage === "drafting"}
-      className="relative bg-sheet border border-rule rounded-[10px]"
+      className="proto-light relative bg-sheet rounded-[14px] shadow-[0_50px_100px_-40px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.06)]"
+      style={brandStyle("#8A6A1F")}
     >
       <header className="flex items-center justify-between gap-4 px-5 sm:px-7 py-3 border-b border-rule">
         <span className="annot text-graphite">Scope of work</span>

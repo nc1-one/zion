@@ -30,6 +30,9 @@ export const PRODUCT_GROUPS = [
   { id: "org", label: "For NGOs and businesses" },
 ] as const;
 
+// What every plan ships with.
+export const EVERY_PLAN = ["Roles and permissions", "Audit log", "Daily backups", "Team training"];
+
 export const PRODUCTS: Product[] = [
   {
     id: "church-os",

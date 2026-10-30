@@ -4,10 +4,10 @@ import { NAV_LINKS } from "./nav-links";
 export function Footer() {
   return (
     <footer className="bg-night text-ink py-12 px-5 md:px-10 border-t border-rule">
-      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-8">
+      <div className="max-w-[1240px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="" width={30} height={30} className="w-[30px] h-[30px] object-contain" />
-          <span className="font-display text-[1.05rem] font-bold">
+          <span className="font-brand text-[1.15rem] font-bold">
             Zion <span className="text-gold-bright">Systems &amp; Build</span>
           </span>
         </div>

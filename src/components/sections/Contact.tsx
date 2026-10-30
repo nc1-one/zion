@@ -3,7 +3,7 @@
 import { RevealHeading } from "@/components/ui/motion";
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, CheckCircle2, FileText, Loader2, Mail, MapPin, Phone, Send, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, Loader2, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { sendContactEmail } from "@/app/actions/contact";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
@@ -13,7 +13,7 @@ import { hostOf, money, weeksLabel } from "@/lib/assessment/format";
 const ORG_OPTIONS = [...ORG_TYPES.map((o) => o.label), "Individual project"];
 
 const fieldClass =
-  "w-full px-4 py-3 bg-sheet border border-rule rounded-lg text-ink text-[0.92rem] outline-none transition-[border-color,box-shadow] focus:border-trace focus:shadow-[0_0_0_3px_var(--color-trace-wash)] placeholder:text-mist";
+  "w-full px-4 py-3 bg-night border border-rule rounded-xl text-ink text-[0.95rem] outline-none transition-[border-color,box-shadow] focus:border-gold focus:shadow-[0_0_0_3px_var(--color-gold-wash)] placeholder:text-mist";
 const labelClass = "annot text-graphite";
 
 export function Contact() {
@@ -72,40 +72,35 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="py-20 md:py-28 px-5 md:px-10 border-t border-rule">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16">
+    <section id="contact" className="py-24 md:py-32 px-5 md:px-10 bg-paper border-t border-rule">
+      <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16">
         <div>
-          <RevealHeading key={attachment ?? "none"} text={scope ? "Send us your scope" : attachedQuote ? "Send us your quote" : "Talk to the team"} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
-          <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
+          <RevealHeading key={attachment ?? "none"} text={scope ? "Send us your scope" : attachedQuote ? "Send us your quote" : "Talk to the team"} className="heading-section text-ink" />
+          <p className="mt-6 text-[1.1rem] leading-[1.6] text-graphite max-w-[32rem]">
             {scope || attachedQuote ? `Your ${scope ? "scope" : "quote"} is attached.` : "Tell us what you want to build."}
           </p>
 
-          <ul className="mt-10 flex flex-col gap-5">
+          <dl className="mt-12 max-w-[26rem] border-t border-rule">
             {[
-              { icon: Mail, label: "Email", val: "support@zionsystems.dev", href: "mailto:support@zionsystems.dev" },
-              { icon: Phone, label: "Phone", val: "+63 (908) 890 1896", href: "tel:+639088901896" },
-              { icon: MapPin, label: "Office", val: "Manila, Philippines" },
+              { label: "Email", val: "support@zionsystems.dev", href: "mailto:support@zionsystems.dev" },
+              { label: "Phone", val: "+63 908 890 1896", href: "tel:+639088901896" },
+              { label: "Office", val: "Manila, Philippines" },
+              { label: "Reply", val: "Within one business day" },
             ].map((item) => (
-              <li key={item.label} className="flex gap-4 items-center">
-                <span className="w-10 h-10 shrink-0 rounded-full border border-rule bg-sheet flex items-center justify-center">
-                  <item.icon size={16} className="text-gold-deep" />
-                </span>
-                <span>
-                  <span className="block annot text-mist">{item.label}</span>
+              <div key={item.label} className="grid grid-cols-[5.5rem_1fr] gap-4 py-3.5 border-b border-rule text-[0.95rem]">
+                <dt className="text-mist">{item.label}</dt>
+                <dd>
                   {item.href ? (
-                    <a href={item.href} className="text-[0.95rem] text-ink no-underline hover:text-gold-deep">
+                    <a href={item.href} className="text-ink no-underline hover:text-gold-bright transition-colors">
                       {item.val}
                     </a>
                   ) : (
-                    <span className="text-[0.95rem] text-ink">{item.val}</span>
+                    <span className="text-ink-soft">{item.val}</span>
                   )}
-                </span>
-              </li>
+                </dd>
+              </div>
             ))}
-          </ul>
-          <p className="mt-8 text-[0.85rem] text-graphite max-w-[30rem]">
-            We reply within one business day.
-          </p>
+          </dl>
         </div>
 
         <div>
@@ -116,10 +111,10 @@ export function Contact() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="bg-sheet border border-rule rounded-[10px] p-10 flex flex-col items-center justify-center text-center min-h-[420px]"
+                className="bg-sheet ring-1 ring-rule rounded-[20px] p-10 flex flex-col items-center justify-center text-center min-h-[420px]"
               >
                 <CheckCircle2 size={36} className="text-gold-deep mb-5" />
-                <h3 className="font-display text-[2rem] font-semibold text-ink mb-3">Message sent</h3>
+                <h3 className="font-display text-[2rem] font-semibold tracking-[-0.03em] text-ink mb-3">Message sent</h3>
                 <p className="text-graphite max-w-sm mb-8">
                   Thank you for reaching out. We&apos;ll reply to the email you gave us, usually within one business day.
                 </p>
@@ -133,7 +128,7 @@ export function Contact() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="bg-sheet border border-rule rounded-[10px] p-6 sm:p-8 flex flex-col gap-5"
+                className="bg-sheet ring-1 ring-rule rounded-[20px] p-6 sm:p-8 flex flex-col gap-5"
                 onSubmit={handleSubmit}
               >
                 {status === "error" && (
@@ -144,7 +139,7 @@ export function Contact() {
                 )}
 
                 {(scope || attachedQuote) && (
-                  <div className="flex items-start gap-3 p-4 rounded-lg border border-gold/50 bg-gold-wash">
+                  <div className="flex items-start gap-3 p-4 rounded-xl ring-1 ring-gold/50 bg-night">
                     <FileText size={18} className="text-gold-deep shrink-0 mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="annot text-gold-deep">
