@@ -77,7 +77,7 @@ export function Contact() {
         <div>
           <RevealHeading key={attachment ?? "none"} text={scope ? "Send us your scope" : attachedQuote ? "Send us your quote" : "Talk to the team"} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           <p className="mt-5 text-[1rem] leading-[1.7] text-graphite max-w-[32rem]">
-            {scope || attachedQuote ? `Your ${scope ? "scope" : "quote"} is attached. Add a note and send.` : "Tell us what you want to build."}
+            {scope || attachedQuote ? `Your ${scope ? "scope" : "quote"} is attached.` : "Tell us what you want to build."}
           </p>
 
           <ul className="mt-10 flex flex-col gap-5">
@@ -210,7 +210,7 @@ export function Contact() {
 
                 <div className="flex flex-col gap-2">
                   <label htmlFor="message" className={labelClass}>Message</label>
-                  <textarea id="message" name="message" required value={formData.message} onChange={handleChange} placeholder="Tell us about your mission and what you're looking to build." className={`${fieldClass} min-h-[140px] resize-y leading-[1.6]`} />
+                  <textarea id="message" name="message" required value={formData.message} onChange={handleChange} placeholder="What do you want to build?" className={`${fieldClass} min-h-[140px] resize-y leading-[1.6]`} />
                 </div>
 
                 <Button type="submit" className="self-start mt-1" disabled={status === "submitting"}>

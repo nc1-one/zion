@@ -1,22 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Lock } from "lucide-react";
+import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
+import { ArrowRight, Check, Lock, Pause, Play, Smartphone } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
+import { ProtoDriveProvider, type ProtoDrive, type StackEntry } from "@/components/products/ProtoKit";
+import { SHOWCASE } from "@/components/products/showcase";
 import { Button } from "@/components/ui/Button";
 import { CountUp, RevealHeading } from "@/components/ui/motion";
 import { money, weeksLabel } from "@/lib/assessment/format";
-import { EVERY_PRODUCT, PRODUCTS, PRODUCT_GROUPS, productEstimate, productQuote, type Product } from "@/lib/quotes";
+import { PRODUCTS, PRODUCT_GROUPS, productEstimate, productQuote, type Product } from "@/lib/quotes";
 import { cn } from "@/lib/utils";
 
 function PrototypeLoading() {
-  return (
-    <div className="h-[660px] rounded-xl bg-[#F6F7F9] flex items-center justify-center text-[0.85rem] text-[#6B7280]">
-      Loading prototype…
-    </div>
-  );
+  return <div className="h-[660px] bg-[#F6F7F9] flex items-center justify-center text-[0.85rem] text-[#667085]">Loading demo…</div>;
 }
 
 // Each prototype loads only when its product is picked.
@@ -30,22 +28,62 @@ const PROTOTYPES: Record<Product["id"], React.ComponentType> = {
   erp: dynamic(() => import("@/components/products/erp").then((m) => m.ErpPrototype), { ssr: false, loading: PrototypeLoading }),
 };
 
+const ProductPhone = dynamic(() => import("@/components/products/phones").then((m) => m.ProductPhone), { ssr: false });
+
 // Start each product with its first two optional modules selected.
 const DEFAULT_MODULES = Object.fromEntries(
   PRODUCTS.map((p) => [p.id, p.modules.filter((m) => !m.included).slice(0, 2).map((m) => m.id)]),
 ) as Record<Product["id"], string[]>;
 
+const STEP_SECONDS = 6;
+const EASE = [0.16, 1, 0.3, 1] as const;
+const firstStack = (id: Product["id"]) => SHOWCASE[id].tour.find((t) => t.stack)!.stack!;
+
 export function Products() {
   const { sendQuote } = useAssessment();
+  const reduce = useReducedMotion();
   const [productId, setProductId] = useState<Product["id"]>(PRODUCTS[0].id);
   const [modules, setModules] = useState(DEFAULT_MODULES);
   const [tiers, setTiers] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const [phoneOverride, setPhoneOverride] = useState<boolean | null>(null);
+  const [target, setTarget] = useState(() => ({ key: 1, stack: firstStack(PRODUCTS[0].id) }));
+  const [path, setPath] = useState("/");
+  const stageRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(stageRef, { amount: 0.35 });
 
   const product = PRODUCTS.find((p) => p.id === productId)!;
+  const show = SHOWCASE[product.id];
+  const current = show.tour[step];
+  const running = playing && inView && !reduce;
+  const phoneOpen = phoneOverride ?? Boolean(current.phone);
   const selected = modules[product.id];
   const tierId = tiers[product.id] ?? product.tiers.options[0].id;
   const estimate = productEstimate(product, selected, tierId);
   const Prototype = PROTOTYPES[product.id];
+  const Mark = show.icon;
+
+  const drive = useMemo<ProtoDrive>(() => ({ target, brand: { accent: show.accent, icon: show.icon }, framed: true, onPath: setPath }), [target, show]);
+
+  const push = (stack?: StackEntry[]) => stack && setTarget((t) => ({ key: t.key + 1, stack }));
+
+  const goTo = (i: number, keepPlaying = false) => {
+    setStep(i);
+    setPhoneOverride(null);
+    push(show.tour[i].stack);
+    if (!keepPlaying) setPlaying(false);
+  };
+
+  const pickProduct = (id: Product["id"]) => {
+    if (id === productId) return;
+    setProductId(id);
+    setStep(0);
+    setPhoneOverride(null);
+    setPlaying(true);
+    setPath("/");
+    push(firstStack(id));
+  };
 
   const toggle = (id: string) =>
     setModules((all) => ({
@@ -56,42 +94,39 @@ export function Products() {
   return (
     <section id="products" className="py-20 md:py-28 px-5 md:px-10">
       <div className="max-w-[1200px] mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-          <RevealHeading text="Digital products" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
-          <p className="text-[1rem] text-graphite">Pick your problem. Try the product.</p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-8">
+          <RevealHeading text="Products" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
+          <p className="text-[1rem] text-graphite">Live demos with sample data. Click anything.</p>
         </div>
 
-        {/* Problem-first picker */}
-        <div className="flex flex-col gap-6 mb-10" role="tablist" aria-label="Digital products">
+        {/* Product switcher */}
+        <div role="tablist" aria-label="Products" className="flex gap-6 overflow-x-auto -mx-5 px-5 scroll-px-5 md:mx-0 md:px-0 md:scroll-px-0 pb-1 mb-10 snap-x">
           {PRODUCT_GROUPS.map((group) => (
-            <div key={group.id}>
-              <div className="annot text-mist mb-2.5">{group.label}</div>
-              <div className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1 -mx-5 px-5 sm:mx-0 sm:px-0 sm:pb-0 sm:overflow-visible sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {PRODUCTS.filter((p) => p.group === group.id).map((p, i) => {
+            <div key={group.id} className="shrink-0">
+              <div className="annot text-mist mb-2">{group.label}</div>
+              <div className="flex gap-1.5">
+                {PRODUCTS.filter((p) => p.group === group.id).map((p) => {
                   const on = p.id === productId;
+                  const Icon = SHOWCASE[p.id].icon;
                   return (
-                    <motion.button
+                    <button
                       key={p.id}
                       type="button"
                       role="tab"
                       aria-selected={on}
-                      aria-controls="product-panel"
-                      onClick={() => setProductId(p.id)}
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                      aria-controls="product-stage"
+                      onClick={() => pickProduct(p.id)}
                       className={cn(
-                        "group relative shrink-0 w-[78%] sm:w-auto snap-start text-left p-4 rounded-xl border transition-[border-color,transform] duration-200 cursor-pointer hover:-translate-y-0.5",
-                        on ? "border-gold" : "border-rule bg-sheet hover:border-graphite",
+                        "group relative snap-start flex items-center gap-2.5 pl-2 pr-3.5 py-2 rounded-xl border text-left transition-colors cursor-pointer",
+                        on ? "border-gold" : "border-rule hover:border-graphite",
                       )}
                     >
-                      {on && <motion.span layoutId="product-pick" className="absolute inset-0 rounded-xl bg-gold-wash" transition={{ type: "spring", stiffness: 380, damping: 34 }} />}
-                      <span className="relative block text-[0.95rem] leading-snug font-semibold text-ink">{p.hook}</span>
-                      <span className={cn("relative mt-2 flex items-center gap-1.5 text-[0.8rem] font-medium", on ? "text-gold-bright" : "text-graphite group-hover:text-gold-bright")}>
-                        {p.name} <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+                      {on && <motion.span layoutId="product-pick" className="absolute inset-0 rounded-xl bg-gold-wash" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
+                      <span className={cn("relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors", on ? "bg-gold text-paper" : "bg-raised text-gold-bright group-hover:bg-rule")}>
+                        <Icon size={16} strokeWidth={2} />
                       </span>
-                    </motion.button>
+                      <span className={cn("relative text-[0.88rem] whitespace-nowrap", on ? "font-semibold text-ink" : "font-medium text-ink-soft")}>{p.name}</span>
+                    </button>
                   );
                 })}
               </div>
@@ -99,154 +134,244 @@ export function Products() {
           ))}
         </div>
 
-        <div id="product-panel" role="tabpanel">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {/* Name and before/after */}
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-6 lg:gap-12 items-start mb-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={product.id}
+            id="product-stage"
+            role="tabpanel"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35, ease: EASE }}
+            className="grid grid-cols-1 lg:grid-cols-[19rem_minmax(0,1fr)] gap-8 lg:gap-10 items-start"
+          >
+            {/* Name, problem, and the guided tour */}
+            <div className="lg:pt-1">
+              <div className="flex items-center gap-3">
+                <span className="w-11 h-11 rounded-xl bg-gold text-paper flex items-center justify-center shrink-0">
+                  <Mark size={22} strokeWidth={2} />
+                </span>
                 <div>
-                  <h3 className="font-display text-[clamp(1.9rem,3vw,2.5rem)] leading-[1.08] font-semibold text-ink">{product.name}</h3>
-                  <p className="mt-2 text-[0.85rem] text-graphite">{product.platforms}</p>
-                </div>
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-x-4 text-[0.9rem]">
-                  <span className="annot text-mist pb-2">Today</span>
-                  <span />
-                  <span className="annot text-gold-bright pb-2">With {product.name}</span>
-                  {product.pains.map((row, i) => (
-                    <React.Fragment key={row.pain}>
-                      <motion.span initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.07 }} className="py-2.5 border-t border-rule text-graphite">
-                        {row.pain}
-                      </motion.span>
-                      <ArrowRight size={14} className="mt-3 text-gold" aria-hidden />
-                      <motion.span initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18 + i * 0.07 }} className="py-2.5 border-t border-rule text-ink font-medium">
-                        {row.fix}
-                      </motion.span>
-                    </React.Fragment>
-                  ))}
+                  <h3 className="font-display text-[1.9rem] leading-none font-semibold text-ink">{product.name}</h3>
+                  <p className="mt-1 text-[0.8rem] text-graphite">{product.platforms}</p>
                 </div>
               </div>
+              <p className="mt-4 text-[0.95rem] text-ink-soft">{product.hook}</p>
 
-              {/* The product itself, framed in light so it reads as a real app */}
-              <motion.div
-                className="rounded-2xl p-2 sm:p-3 bg-[#E9ECF1] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]"
-                initial={{ opacity: 0, y: 24, scale: 0.985 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Prototype />
-              </motion.div>
-
-              {/* Features and pricing */}
-              <div className="mt-8 grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] gap-6 items-start">
-                <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    {product.features.map((f) => (
-                      <div key={f.title}>
-                        <div className="text-[0.9rem] font-semibold text-ink">{f.title}</div>
-                        <ul className="mt-2 flex flex-col gap-1.5">
-                          {f.items.map((item) => (
-                            <li key={item} className="text-[0.85rem] text-ink-soft">
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                  <dl className="mt-8 pt-5 border-t border-rule grid grid-cols-1 sm:grid-cols-[8rem_1fr] gap-x-4 gap-y-2 text-[0.85rem]">
-                    <dt className="text-mist">Connects with</dt>
-                    <dd className="text-ink-soft">{product.integrations.join(" · ")}</dd>
-                    <dt className="text-mist">Always included</dt>
-                    <dd className="text-ink-soft">{EVERY_PRODUCT.join(" · ")}</dd>
-                  </dl>
-                </div>
-
-                <div className="bg-sheet border border-rule rounded-[14px] p-6">
-                  <div className="annot text-graphite">{product.tiers.label}</div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {product.tiers.options.map((o) => (
+              <div className="mt-7 flex items-center justify-between">
+                <span className="annot text-graphite">Guided tour</span>
+                <button
+                  type="button"
+                  onClick={() => setPlaying((p) => !p)}
+                  className="flex items-center gap-1.5 text-[0.8rem] font-medium text-gold-bright hover:text-ink transition-colors cursor-pointer"
+                >
+                  {running ? <Pause size={13} /> : <Play size={13} />}
+                  {running ? "Pause" : "Play"}
+                </button>
+              </div>
+              <ol className="mt-2 border-t border-rule">
+                {show.tour.map((t, i) => {
+                  const on = i === step;
+                  return (
+                    <li key={t.title}>
                       <button
-                        key={o.id}
                         type="button"
-                        aria-pressed={o.id === tierId}
-                        onClick={() => setTiers((s) => ({ ...s, [product.id]: o.id }))}
-                        className={cn(
-                          "relative px-3 py-1.5 rounded-lg border text-[0.82rem] transition-colors cursor-pointer",
-                          o.id === tierId ? "border-gold text-paper font-semibold" : "border-rule text-ink-soft hover:border-graphite",
-                        )}
+                        onClick={() => goTo(i)}
+                        aria-current={on ? "step" : undefined}
+                        className="relative w-full flex gap-3 py-3 border-b border-rule text-left cursor-pointer group"
                       >
-                        {o.id === tierId && <motion.span layoutId={`tier-${product.id}`} className="absolute inset-0 rounded-lg bg-gold" transition={{ type: "spring", stiffness: 480, damping: 36 }} />}
-                        <span className="relative">{o.label}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 annot text-graphite">Modules</div>
-                  <ul className="mt-2 flex flex-col">
-                    {product.modules.map((m) => {
-                      const on = m.included || selected.includes(m.id);
-                      return (
-                        <li key={m.id}>
-                          <button
-                            type="button"
-                            disabled={m.included}
-                            aria-pressed={on}
-                            onClick={() => toggle(m.id)}
-                            className={cn(
-                              "w-full flex items-center gap-2.5 py-2 text-left text-[0.86rem] border-b border-rule-soft last:border-0 transition-colors",
-                              m.included ? "text-ink-soft cursor-default" : "cursor-pointer text-ink hover:text-gold-bright",
+                        <span className={cn("font-mono text-[0.72rem] w-4 pt-[3px] shrink-0 transition-colors", on ? "text-gold-bright" : "text-mist")}>{i + 1}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className={cn("flex items-center gap-1.5 text-[0.92rem] transition-colors", on ? "text-ink font-semibold" : "text-ink-soft group-hover:text-ink")}>
+                            {t.title}
+                            {t.phone && <Smartphone size={13} className="text-mist" aria-label="Mobile app" />}
+                          </span>
+                          <AnimatePresence initial={false}>
+                            {on && (
+                              <motion.span
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.25, ease: EASE }}
+                                className="block overflow-hidden"
+                              >
+                                <span className="block pt-1 text-[0.82rem] leading-snug text-graphite">{t.detail}</span>
+                              </motion.span>
                             )}
-                          >
-                            <span
-                              className={cn("w-[17px] h-[17px] rounded-[5px] border-[1.5px] flex items-center justify-center shrink-0 transition-colors", on ? "bg-gold border-gold text-paper" : "border-mist")}
-                              aria-hidden
-                            >
-                              {m.included ? <Lock size={10} strokeWidth={3} /> : on && <Check size={11} strokeWidth={3} />}
-                            </span>
-                            <span className="flex-1">{m.label}</span>
-                            {m.included && <span className="text-[0.75rem] text-mist">Included</span>}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-
-                  <div className="mt-5 pt-5 border-t border-rule grid grid-cols-2 gap-4" aria-live="polite">
-                    <div>
-                      <div className="text-[0.75rem] text-mist">Setup, one-time</div>
-                      <div className="font-display text-[2rem] leading-none font-semibold text-ink mt-1">
-                        <CountUp value={estimate.setupTotal} format={money} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.75rem] text-mist">{product.id === "hubspot" ? "Support" : "Subscription"}</div>
-                      <div className="font-display text-[2rem] leading-none font-semibold text-ink mt-1">
-                        {estimate.monthlyTotal ? (
-                          <>
-                            <CountUp value={estimate.monthlyTotal} format={money} />
-                            <span className="text-[0.85rem] font-body font-normal text-graphite">/mo</span>
-                          </>
-                        ) : (
-                          <span className="text-[1.1rem] font-body font-medium text-graphite">None</span>
+                          </AnimatePresence>
+                        </span>
+                        {on && running && (
+                          <motion.span
+                            key={`${target.key}-${step}`}
+                            className="absolute left-0 -bottom-px h-[2px] bg-gold"
+                            initial={{ width: "0%" }}
+                            animate={{ width: "100%" }}
+                            transition={{ duration: STEP_SECONDS, ease: "linear" }}
+                            onAnimationComplete={() => goTo((step + 1) % show.tour.length, true)}
+                          />
                         )}
-                      </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="mt-4 text-[0.8rem] leading-relaxed text-graphite">
+                <span className="text-mist">Works with </span>
+                {product.integrations.join(", ")}
+              </p>
+            </div>
+
+            {/* The product, in a browser, with its mobile app alongside */}
+            <div ref={stageRef} className="relative" onPointerDown={() => setPlaying(false)}>
+              <div className="rounded-2xl overflow-hidden border border-[#3A4B5C] bg-[#E9ECF1] shadow-[0_50px_100px_-40px_rgba(0,0,0,0.9)]">
+                <div className="h-10 px-3 flex items-center gap-3 bg-[#E4E7EC] border-b border-[#D0D5DD]">
+                  <span className="flex gap-1.5 shrink-0" aria-hidden>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#C4CAD3]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#C4CAD3]" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#C4CAD3]" />
+                  </span>
+                  <div className="flex-1 min-w-0 flex justify-center">
+                    <div className="flex items-center justify-center gap-1.5 h-6 px-3 w-full max-w-[26rem] rounded-md bg-white text-[0.72rem] text-[#344054]">
+                      <Lock size={10} className="shrink-0 text-[#667085]" />
+                      <span className="truncate">
+                        {show.host}
+                        <span className="text-[#98A2B3]">{path}</span>
+                      </span>
                     </div>
                   </div>
-                  <p className="mt-3 text-[0.8rem] text-graphite">Live in about {weeksLabel(estimate.weeks)}.</p>
-                  <Button className="mt-5 w-full justify-center" onClick={() => sendQuote(productQuote(product, selected, tierId))}>
-                    Request a quote <ArrowRight size={16} />
-                  </Button>
-                  {product.note && <p className="mt-3 text-[0.75rem] leading-[1.5] text-mist">{product.note}</p>}
+                  {show.mobile && (
+                    <button
+                      type="button"
+                      aria-pressed={phoneOpen}
+                      onClick={() => setPhoneOverride(!phoneOpen)}
+                      className={cn(
+                        "shrink-0 flex items-center gap-1.5 h-6 px-2 rounded-md text-[0.72rem] font-medium transition-colors cursor-pointer",
+                        phoneOpen ? "bg-[#101828] text-white" : "text-[#344054] hover:bg-white",
+                      )}
+                    >
+                      <Smartphone size={12} />
+                      <span className="hidden sm:inline">{show.mobile}</span>
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <ProtoDriveProvider value={drive}>
+                    <Prototype />
+                  </ProtoDriveProvider>
+                  <AnimatePresence>
+                    {phoneOpen && (
+                      <motion.button
+                        type="button"
+                        aria-label={`Close ${show.mobile}`}
+                        onClick={() => setPhoneOverride(false)}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-[#101828]/35 cursor-pointer"
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
-            </motion.div>
-          </AnimatePresence>
+
+              <AnimatePresence>
+                {phoneOpen && (
+                  <div className="absolute inset-x-0 -bottom-7 flex justify-center sm:justify-end sm:pr-8 lg:-mr-6 pointer-events-none">
+                    <motion.div
+                      initial={{ opacity: 0, y: 60, rotate: 4 }}
+                      animate={{ opacity: 1, y: 0, rotate: 0 }}
+                      exit={{ opacity: 0, y: 40, rotate: 2 }}
+                      transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                      className="pointer-events-auto"
+                    >
+                      <ProductPhone id={product.id} accent={show.accent} />
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Pricing */}
+        <div className="mt-16 rounded-[16px] border border-rule bg-sheet p-5 md:p-7">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-7 lg:gap-12 items-end">
+            <div>
+              <div className="annot text-graphite">{product.tiers.label}</div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {product.tiers.options.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    aria-pressed={o.id === tierId}
+                    onClick={() => setTiers((s) => ({ ...s, [product.id]: o.id }))}
+                    className={cn(
+                      "relative px-3 py-1.5 rounded-lg border text-[0.82rem] transition-colors cursor-pointer",
+                      o.id === tierId ? "border-gold text-paper font-semibold" : "border-rule text-ink-soft hover:border-graphite",
+                    )}
+                  >
+                    {o.id === tierId && <motion.span layoutId={`tier-${product.id}`} className="absolute inset-0 rounded-lg bg-gold" transition={{ type: "spring", stiffness: 480, damping: 36 }} />}
+                    <span className="relative">{o.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-5 annot text-graphite">Modules</div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {product.modules.map((m) => {
+                  const on = m.included || selected.includes(m.id);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={m.included}
+                      aria-pressed={on}
+                      onClick={() => toggle(m.id)}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[0.82rem] transition-colors",
+                        m.included ? "border-rule text-graphite cursor-default" : on ? "border-gold bg-gold-wash text-ink cursor-pointer" : "border-rule text-ink-soft hover:border-graphite cursor-pointer",
+                      )}
+                    >
+                      {m.included ? <Lock size={12} /> : on ? <Check size={13} strokeWidth={2.6} className="text-gold-bright" /> : <span className="w-[13px]" />}
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-x-9 gap-y-5" aria-live="polite">
+              <div>
+                <div className="text-[0.75rem] text-mist">Setup, one-time</div>
+                <div className="mt-1 font-display text-[2.2rem] leading-none font-semibold text-ink">
+                  <CountUp value={estimate.setupTotal} format={money} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[0.75rem] text-mist">{product.id === "hubspot" ? "Support" : "Subscription"}</div>
+                <div className="mt-1 font-display text-[2.2rem] leading-none font-semibold text-ink">
+                  {estimate.monthlyTotal ? (
+                    <>
+                      <CountUp value={estimate.monthlyTotal} format={money} />
+                      <span className="text-[0.9rem] font-body font-normal text-graphite">/mo</span>
+                    </>
+                  ) : (
+                    <span className="text-[1.1rem] font-body font-medium text-graphite">None</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Button onClick={() => sendQuote(productQuote(product, selected, tierId))}>
+                  Request a quote <ArrowRight size={16} />
+                </Button>
+                <div className="mt-1.5 text-[0.75rem] text-mist">Live in about {weeksLabel(estimate.weeks)}</div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t border-rule flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[0.8rem]">
+            <span className="font-medium text-gold-bright">45% less than typical commercial software</span>
+            {product.note && <span className="text-mist">{product.note}</span>}
+          </div>
         </div>
       </div>
     </section>

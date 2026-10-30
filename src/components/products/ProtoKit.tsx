@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCircle2, ChevronLeft, ChevronRight, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,19 +14,49 @@ export interface ProtoNavItem {
   badge?: number;
 }
 
-interface StackEntry {
+export interface StackEntry {
   screen: string;
   id?: string;
   label?: string;
 }
 
+// The product showcase drives a prototype from outside (the guided tour),
+// brands it, and listens for where the visitor is.
+export interface ProtoDrive {
+  target?: { key: number; stack: StackEntry[] };
+  brand?: { accent: string; icon: LucideIcon };
+  framed?: boolean;
+  onPath?: (path: string) => void;
+}
+
+const DriveContext = createContext<ProtoDrive>({});
+export const ProtoDriveProvider = DriveContext.Provider;
+
+// Re-points the light theme's primary color at a product's brand color.
+export const brandStyle = (accent: string) =>
+  ({
+    "--color-gold": accent,
+    "--color-gold-bright": accent,
+    "--color-gold-deep": accent,
+    "--color-gold-wash": `color-mix(in srgb, ${accent} 9%, white)`,
+  }) as React.CSSProperties;
+
 // Each prototype keeps a stack of screens so visitors can open a record, go
 // deeper, and come back, like a real app.
 export function useProtoApp(home: string) {
-  const [stack, setStack] = useState<StackEntry[]>([{ screen: home }]);
+  const { target } = useContext(DriveContext);
+  const [stack, setStack] = useState<StackEntry[]>(() => target?.stack ?? [{ screen: home }]);
   const [dir, setDir] = useState(1);
   const [toast, setToast] = useState<{ key: number; text: string } | null>(null);
+  const [seenTarget, setSeenTarget] = useState(target?.key);
   const top = stack[stack.length - 1];
+
+  // A new tour step moves the app to that screen.
+  if (target && target.key !== seenTarget) {
+    setSeenTarget(target.key);
+    setDir(1);
+    setStack(target.stack);
+  }
 
   // Stable callbacks so effects that depend on them don't restart each render.
   const open = useCallback((screen: string, id?: string, label?: string) => {
@@ -77,6 +107,14 @@ export function ProtoApp({
   const root = nav.find((n) => n.id === app.stack[0].screen);
   const crumbs = [root?.label ?? "", ...app.stack.slice(1).map((s) => s.label ?? "")];
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const { brand, framed, onPath } = useContext(DriveContext);
+  const Mark = brand?.icon;
+  const top = app.stack[app.stack.length - 1];
+  const path = `/${app.stack[0].screen}${app.stack.length > 1 ? `/${top.id ?? top.screen}` : ""}`;
+
+  useEffect(() => {
+    onPath?.(path);
+  }, [path, onPath]);
 
   useEffect(() => {
     if (!app.toast) return;
@@ -85,12 +123,15 @@ export function ProtoApp({
   }, [app.toast, app.clearToast]);
 
   return (
-    <div className="proto-light relative rounded-xl border border-rule bg-paper overflow-hidden flex flex-col h-[660px] text-left">
+    <div
+      className={cn("proto-light relative bg-paper overflow-hidden flex flex-col h-[660px] text-left", !framed && "rounded-xl border border-rule")}
+      style={brand ? brandStyle(brand.accent) : undefined}
+    >
       {/* top bar */}
       <div className="flex items-center gap-3 px-3 sm:px-4 h-12 border-b border-rule bg-sheet shrink-0">
         <div className="flex items-center gap-2 min-w-0 sm:w-[10.5rem] shrink-0">
           <span className="w-6 h-6 rounded-md bg-gold text-sheet text-[0.7rem] font-bold flex items-center justify-center shrink-0" aria-hidden>
-            {product.slice(0, 1)}
+            {Mark ? <Mark size={14} strokeWidth={2.2} /> : product.slice(0, 1)}
           </span>
           <span className="min-w-0 leading-tight">
             <span className="block text-[0.8rem] font-semibold text-ink truncate">{product}</span>
@@ -149,7 +190,7 @@ export function ProtoApp({
             );
           })}
           <div className="hidden sm:block mt-auto px-2.5 pt-3 text-[0.66rem] leading-relaxed text-mist border-t border-rule">
-            Prototype with sample data
+            Demo workspace · sample data
           </div>
         </nav>
 

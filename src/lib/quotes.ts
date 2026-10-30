@@ -18,8 +18,6 @@ export interface Product {
   group: "church" | "org";
   name: string;
   hook: string; // the problem visitors recognise
-  pains: { pain: string; fix: string }[];
-  features: { title: string; items: string[] }[];
   integrations: string[];
   platforms: string;
   modules: ProductModule[];
@@ -32,25 +30,12 @@ export const PRODUCT_GROUPS = [
   { id: "org", label: "For NGOs and businesses" },
 ] as const;
 
-// What every product ships with.
-export const EVERY_PRODUCT = ["Roles and permissions", "Audit log", "Daily backups", "Staff training"];
-
 export const PRODUCTS: Product[] = [
   {
     id: "church-os",
     group: "church",
     name: "Church OS",
-    hook: "Member records live in spreadsheets and phones.",
-    pains: [
-      { pain: "Five spreadsheets, no single list", fix: "One record per person and household" },
-      { pain: "Giving reconciled by hand on Mondays", fix: "Online giving that reconciles itself" },
-      { pain: "Nobody notices who stopped coming", fix: "Drifting members flagged weekly" },
-    ],
-    features: [
-      { title: "People", items: ["Households and family links", "Attendance and drift alerts", "Private pastoral notes"] },
-      { title: "Giving", items: ["GCash, Maya, cards, bank", "Recurring gifts and statements", "Auto-matched deposits"] },
-      { title: "Events and teams", items: ["Registration and check-in", "Volunteer schedules", "Kids check-in labels"] },
-    ],
+    hook: "Member records scattered across spreadsheets.",
     integrations: ["GCash", "Maya", "PayMongo", "Google Workspace", "Mailchimp"],
     platforms: "Web, iOS, Android",
     modules: [
@@ -75,17 +60,7 @@ export const PRODUCTS: Product[] = [
     id: "pipeline",
     group: "church",
     name: "AI Church Pipeline",
-    hook: "First-time guests visit once and disappear.",
-    pains: [
-      { pain: "A welcome card, then silence", fix: "Every guest on a clear next step" },
-      { pain: "Follow-up depends on who remembers", fix: "AI drafts the message and assigns it" },
-      { pain: "No idea where people stall", fix: "See each stage, guest to leader" },
-    ],
-    features: [
-      { title: "Pipeline", items: ["Custom stages", "An owner for every person", "Stall alerts"] },
-      { title: "AI assist", items: ["Next-step suggestions", "Drafted texts and emails", "Weekly summary for pastors"] },
-      { title: "Capture", items: ["QR guest cards", "Web connect forms", "Sunday check-in import"] },
-    ],
+    hook: "Guests visit once and disappear.",
     integrations: ["Church OS", "SMS", "Gmail", "Outlook", "Google Forms"],
     platforms: "Web, iOS, Android",
     modules: [
@@ -104,23 +79,13 @@ export const PRODUCTS: Product[] = [
         { id: "l", label: "Over 1,000", monthly: 159, setupFactor: 1.3 },
       ],
     },
-    note: "Your team approves every AI-drafted message before it sends. SMS fees are billed at cost.",
+    note: "Your team approves every AI message. SMS billed at cost.",
   },
   {
     id: "sermon",
     group: "church",
     name: "Sermon Maker",
-    hook: "Slides and handouts get made late on Saturday.",
-    pains: [
-      { pain: "Notes scattered across apps", fix: "One workspace per series" },
-      { pain: "Slides, handout, and guide made separately", fix: "One outline, three outputs" },
-      { pain: "Past sermons hard to find", fix: "Searchable sermon library" },
-    ],
-    features: [
-      { title: "Write", items: ["Series and outlines", "Scripture lookup", "Notes and illustrations"] },
-      { title: "Produce", items: ["Slides for ProPresenter", "Handouts with blanks", "Small-group guides"] },
-      { title: "Reuse", items: ["Searchable archive", "Series templates", "Preaching calendar"] },
-    ],
+    hook: "Slides and handouts made late on Saturday.",
     integrations: ["ProPresenter", "PowerPoint", "Keynote", "Google Drive", "YouTube"],
     platforms: "Web",
     modules: [
@@ -139,23 +104,13 @@ export const PRODUCTS: Product[] = [
         { id: "l", label: "6 or more", monthly: 69, setupFactor: 1.2 },
       ],
     },
-    note: "The pastor writes the sermon. AI only drafts summaries and questions.",
+    note: "The pastor writes. AI drafts summaries and questions.",
   },
   {
     id: "bible-study",
     group: "church",
     name: "Bible Study Groups",
-    hook: "You hear a group is struggling after the leader quits.",
-    pains: [
-      { pain: "Group health is invisible", fix: "Health score for every group" },
-      { pain: "Attendance lost in group chats", fix: "One-minute leader check-ins" },
-      { pain: "New people wait weeks for a group", fix: "Placement by area and schedule" },
-    ],
-    features: [
-      { title: "Care", items: ["Group health score", "Leader check-ins", "Prayer requests"] },
-      { title: "Grow", items: ["Group finder", "Waitlist and placement", "Reading plans"] },
-      { title: "Connect", items: ["Viber and SMS announcements", "Attendance trends", "Church OS sync"] },
-    ],
+    hook: "Struggling groups go unnoticed.",
     integrations: ["Church OS", "Viber", "SMS", "Google Calendar"],
     platforms: "Web, iOS, Android",
     modules: [
@@ -180,17 +135,7 @@ export const PRODUCTS: Product[] = [
     id: "hris",
     group: "church",
     name: "Church HRIS",
-    hook: "Payroll and leave are tracked by hand.",
-    pains: [
-      { pain: "Staff files in folders and email", fix: "One profile per staff member" },
-      { pain: "SSS, PhilHealth, Pag-IBIG by spreadsheet", fix: "Payroll with contributions computed" },
-      { pain: "Leave requests by text message", fix: "Requests, approvals, and balances" },
-    ],
-    features: [
-      { title: "People", items: ["Staff profiles and 201 files", "Document expiry alerts", "Org chart"] },
-      { title: "Payroll", items: ["Semi-monthly pay runs", "SSS, PhilHealth, Pag-IBIG, tax", "Payslips by email"] },
-      { title: "Time off", items: ["Leave requests and approvals", "Balances and accruals", "Philippine holidays"] },
-    ],
+    hook: "Payroll and leave tracked by hand.",
     integrations: ["Bank payroll files", "Google Workspace", "Xero", "QuickBooks"],
     platforms: "Web, iOS, Android",
     modules: [
@@ -209,25 +154,15 @@ export const PRODUCTS: Product[] = [
         { id: "l", label: "Over 50", monthly: 149, setupFactor: 1.3 },
       ],
     },
-    note: "Contribution amounts in the prototype are samples. Production uses current SSS, PhilHealth, and Pag-IBIG tables.",
+    note: "Demo contributions are samples. Production uses current SSS, PhilHealth, and Pag-IBIG tables.",
   },
   {
     id: "hubspot",
     group: "org",
     name: "HubSpot for NGOs",
-    hook: "Donor history is spread across inboxes.",
-    pains: [
-      { pain: "Donors in a spreadsheet and three inboxes", fix: "One clean contact record" },
-      { pain: "The same appeal sent to everyone", fix: "Segmented, automated campaigns" },
-      { pain: "Board reports take a week", fix: "Live dashboards" },
-    ],
-    features: [
-      { title: "Data", items: ["Import and deduplication", "Donor and volunteer properties", "Gift history"] },
-      { title: "Engage", items: ["Segmented campaigns", "Year-end appeal automation", "Website forms"] },
-      { title: "Report", items: ["Board dashboards", "Retention reports", "Campaign results"] },
-    ],
+    hook: "Donor history spread across inboxes.",
     integrations: ["HubSpot", "GCash", "PayMongo", "WordPress", "Google Workspace"],
-    platforms: "Set up in your HubSpot account",
+    platforms: "Your HubSpot account",
     modules: [
       { id: "setup", label: "CRM setup and import", setup: 240, monthly: 0, included: true },
       { id: "pipelines", label: "Donor pipelines", setup: 160, monthly: 0 },
@@ -244,23 +179,13 @@ export const PRODUCTS: Product[] = [
         { id: "l", label: "Over 25,000", monthly: 0, setupFactor: 1.35 },
       ],
     },
-    note: "HubSpot subscription fees are paid to HubSpot. The prototype is Zion's illustration, not HubSpot's screens.",
+    note: "HubSpot fees are paid to HubSpot. Demo screens are Zion's illustration.",
   },
   {
     id: "erp",
     group: "org",
     name: "SME ERP",
-    hook: "You learn you're out of stock from a customer.",
-    pains: [
-      { pain: "Stockouts found by customers", fix: "Reorder alerts before you run out" },
-      { pain: "Invoices chased from memory", fix: "Automatic payment reminders" },
-      { pain: "Month-end takes a week", fix: "Reports ready on the 1st" },
-    ],
-    features: [
-      { title: "Stock", items: ["Multi-branch inventory", "Reorder alerts", "Barcode scanning"] },
-      { title: "Sell and buy", items: ["Quotes, orders, deliveries", "Purchase orders", "Supplier price lists"] },
-      { title: "Money", items: ["VAT invoices", "Payment reminders", "Accounting sync"] },
-    ],
+    hook: "Customers find your stockouts first.",
     integrations: ["Xero", "QuickBooks", "GCash", "Maya", "Barcode scanners"],
     platforms: "Web, Android (warehouse)",
     modules: [

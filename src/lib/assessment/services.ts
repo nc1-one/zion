@@ -2,9 +2,9 @@ import type { BuildTypeId } from "./questions";
 import type { ServiceId } from "./types";
 
 export const SERVICE_GROUPS = [
-  { id: "build", label: "Build", blurb: "Design and develop what your mission needs." },
-  { id: "run", label: "Run", blurb: "Keep it secure, reliable, and supported." },
-  { id: "grow", label: "Grow", blurb: "Reach more people and plan what's next." },
+  { id: "build", label: "Build" },
+  { id: "run", label: "Run" },
+  { id: "grow", label: "Grow" },
 ] as const;
 
 export type ServiceGroupId = (typeof SERVICE_GROUPS)[number]["id"];
@@ -29,7 +29,7 @@ export const SERVICES: Service[] = [
     group: "build",
     title: "Custom Software",
     desc: "Web apps, mobile apps, and internal systems.",
-    includes: ["Web apps and member portals", "iOS and Android apps", "Online giving, booking, and payments", "Integrations with the tools you already use"],
+    includes: ["Web apps and portals", "iOS and Android apps", "Giving, booking, payments", "Integrations"],
     bestFor: "Ministries and businesses that have outgrown spreadsheets and off-the-shelf plugins.",
     buildType: "webapp",
   },
@@ -38,7 +38,7 @@ export const SERVICES: Service[] = [
     group: "build",
     title: "UI/UX & Product Design",
     desc: "Websites and apps people find easy to use.",
-    includes: ["Websites and landing pages", "Brand-aligned design systems", "Wireframes and clickable prototypes", "Accessibility reviews"],
+    includes: ["Websites and landing pages", "Design systems", "Clickable prototypes", "Accessibility reviews"],
     bestFor: "Churches and organizations whose website no longer reflects who they are.",
     buildType: "redesign",
   },
@@ -47,7 +47,7 @@ export const SERVICES: Service[] = [
     group: "run",
     title: "Infrastructure & DevOps",
     desc: "Hosting, deployments, and backups that stay up.",
-    includes: ["Cloud hosting and migrations", "Automated deployments and backups", "Uptime and performance monitoring", "Hosting cost reviews"],
+    includes: ["Cloud hosting and migrations", "Automated deploys and backups", "Uptime monitoring", "Hosting cost reviews"],
     bestFor: "Teams running important systems on fragile or expensive hosting.",
     buildType: "itsupport",
   },
@@ -66,7 +66,7 @@ export const SERVICES: Service[] = [
     group: "run",
     title: "Cybersecurity",
     desc: "Audits, testing, and protection for your data.",
-    includes: ["Security audits and penetration tests", "Data protection and privacy compliance", "Access control and two-factor rollout", "Incident response planning"],
+    includes: ["Audits and penetration tests", "Data privacy compliance", "Two-factor rollout", "Incident response plans"],
     bestFor: "Anyone handling donor, member, or customer data.",
     buildType: "itsupport",
   },
@@ -75,7 +75,7 @@ export const SERVICES: Service[] = [
     group: "grow",
     title: "Digital Marketing",
     desc: "Search, social, and email that reach more people.",
-    includes: ["SEO and local search", "Social media content and calendars", "Email newsletters and automation", "Paid campaigns with clear reporting"],
+    includes: ["SEO and local search", "Social content", "Email automation", "Paid campaigns"],
     bestFor: "Faith-driven businesses and ministries ready to grow their reach.",
     buildType: "marketing",
   },
@@ -84,7 +84,7 @@ export const SERVICES: Service[] = [
     group: "grow",
     title: "Technology Consulting",
     desc: "Honest advice before big technology decisions.",
-    includes: ["Technology roadmaps", "System audits and vendor selection", "Digital transformation planning", "Fractional CTO guidance"],
+    includes: ["Technology roadmaps", "Vendor selection", "System audits", "Fractional CTO"],
     bestFor: "Leaders facing a big technology decision who want an honest second opinion.",
   },
 ];

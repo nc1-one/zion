@@ -13,7 +13,6 @@ interface ProjectType {
   title: string;
   kind: string;
   desc: string;
-  tags: string[];
   monogram: string;
   link?: string;
   appStore?: string;
@@ -27,7 +26,6 @@ const PROJECTS: ProjectType[] = [
     title: "Jesus.Net Philippines",
     kind: "Digital ministry portal",
     desc: "Missions portal for individuals, churches, and Bible study leaders in 160+ countries.",
-    tags: ["Web Platform", "Ministry Tech", "Multi-Tool"],
     monogram: "J.NET",
     link: "https://jesus.net.ph",
     featured: true,
@@ -38,7 +36,6 @@ const PROJECTS: ProjectType[] = [
     title: "Turn Vertical",
     kind: "Digital evangelism platform",
     desc: "App for recording testimonies and sharing Gospel videos.",
-    tags: ["Web App", "Mobile App", "Video Platform"],
     monogram: "TV",
     appStore: "https://apps.apple.com/my/app/turn-vertical/id6758944157",
     category: "Web & Mobile",
@@ -48,7 +45,6 @@ const PROJECTS: ProjectType[] = [
     title: "HopeBegins.Today",
     kind: "Faith-based mental health",
     desc: "Website for a faith-based mental health coaching program.",
-    tags: ["Ministry Website", "Booking System"],
     monogram: "HB",
     link: "https://hopebegins.today",
     category: "Ministry",
@@ -58,7 +54,6 @@ const PROJECTS: ProjectType[] = [
     title: "Glassbox Philippines",
     kind: "Systems integration",
     desc: "Inventory and ordering connected for a finishes company.",
-    tags: ["Systems Integration", "Enterprise"],
     monogram: "GB",
     category: "Enterprise",
     image: "/images/glassbox-site.png",
@@ -67,7 +62,6 @@ const PROJECTS: ProjectType[] = [
     title: "Himala Every Day",
     kind: "Devotional landing page",
     desc: "Landing page for a devotional read in 25+ languages.",
-    tags: ["Landing Page", "UI/UX"],
     monogram: "HED",
     link: "https://himalaeveryday.ph",
     category: "Ministry",
@@ -77,7 +71,6 @@ const PROJECTS: ProjectType[] = [
     title: "eSTAR Foundation",
     kind: "Ministry impact reporting",
     desc: "Reporting platform that maps churches and unreached communities.",
-    tags: ["Impact Reporting", "Missions Data"],
     monogram: "eSF",
     link: "https://www.estar.ws/",
     category: "Enterprise",
@@ -117,9 +110,6 @@ export function Portfolio() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
           <div>
             <RevealHeading text="Selected work" className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
-            <p className="mt-4 text-[1rem] leading-[1.7] text-graphite max-w-[34rem]">
-            Built for churches, ministries, and businesses.
-          </p>
           </div>
 
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter projects">
@@ -183,7 +173,6 @@ export function Portfolio() {
                 </button>
 
                 <div className="p-6 md:p-7 flex flex-col flex-1">
-                  <div className="annot text-mist mb-3">{project.tags.join("  ·  ")}</div>
                   <h3 className="font-display text-[1.45rem] leading-[1.15] font-semibold text-ink">{project.title}</h3>
                   <p className="mt-1 text-[0.88rem] font-medium text-gold-deep">{project.kind}</p>
                   <p className="mt-2.5 text-[0.88rem] leading-[1.65] text-graphite">{project.desc}</p>
@@ -208,13 +197,6 @@ export function Portfolio() {
                         App Store <ArrowUpRight size={14} />
                       </a>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedProject(project)}
-                      className="text-[0.85rem] font-medium text-graphite hover:text-ink cursor-pointer"
-                    >
-                      View details
-                    </button>
                   </div>
                 </div>
               </motion.article>
@@ -270,7 +252,6 @@ export function Portfolio() {
                     {selectedProject.title}
                   </h3>
                   <p className="mt-1 text-[0.9rem] font-medium text-gold-deep">{selectedProject.kind}</p>
-                  <div className="annot text-mist mt-3">{selectedProject.tags.join("  ·  ")}</div>
                   <p className="mt-5 text-[0.9rem] leading-[1.7] text-graphite">{selectedProject.desc}</p>
                 </div>
 
