@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono, Cormorant_Garamond, Inter } from "next/font/google";
+import { Schibsted_Grotesk, JetBrains_Mono, Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+// Marketing type: one grotesk for headings and text.
+const schibsted = Schibsted_Grotesk({
+  variable: "--font-schibsted",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -20,17 +20,17 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+// The wordmark keeps Zion's serif.
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Zion Systems and Build — Frameworks for a Higher Purpose",
   description:
-    "Scope your next website, app, or system with the Zion Agent: paste your website, answer a few questions, and get a roadmap, deliverables, timeline, and cost. IT development, marketing, and servicing for churches, ministries, and faith-driven businesses building awesome things for the Kingdom.",
+    "Software, IT, and marketing for churches, ministries, nonprofits, and faith-driven businesses. Scope your project in three minutes with the Zion Agent.",
 };
 
 export default function RootLayout({
@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${jetbrains.variable} ${cormorant.variable} ${inter.variable} scroll-smooth`}>
+    <html lang="en" className={`${schibsted.variable} ${jetbrains.variable} ${cormorant.variable} ${inter.variable} scroll-smooth`}>
       <body className="antialiased">{children}</body>
     </html>
   );

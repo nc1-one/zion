@@ -2,93 +2,85 @@
 
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { CountUp, RevealHeading } from "@/components/ui/motion";
+import { RevealHeading } from "@/components/ui/motion";
 
-const POINTS = [
-  { title: "Costs less", desc: "A lean team and modern tools keep the bill small." },
-  { title: "Tech for good", desc: "For churches, nonprofits, schools, and faith-driven businesses." },
-  { title: "Pro-Kingdom", desc: "Built to help you reach, disciple, and serve." },
+const ROWS = [
+  { label: "Pricing", them: "Per seat, per add-on", us: "By size, modules you pick" },
+  { label: "Team", them: "Overseas vendor", us: "Manila, your time zone" },
+  { label: "Support", them: "Ticket queue", us: "The team that built it" },
 ];
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function Value() {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(chartRef, { once: true, margin: "-120px" });
+  const tableRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(tableRef, { once: true, margin: "-120px" });
 
   return (
-    <section id="why" className="py-20 md:py-28 px-5 md:px-10 bg-paper border-y border-rule">
-      <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-12 lg:gap-16 items-center">
-          <div>
-            <RevealHeading
-              text="Good tech shouldn't cost a fortune."
-              className="font-display text-[clamp(2.4rem,4.6vw,3.6rem)] leading-[1.04] font-semibold text-ink"
-            />
-            <p className="mt-5 text-[1.05rem] leading-[1.6] text-ink-soft max-w-[30rem]">
-              Software for the Kingdom, priced for the mission.
-            </p>
-          </div>
-
-          {/* Signature: what you'd pay elsewhere vs. with Zion */}
-          <div ref={chartRef} className="rounded-[16px] border border-rule bg-sheet p-6 md:p-8">
-            <div className="flex items-end justify-between gap-6">
-              <div className="font-display text-[clamp(4rem,9vw,6.5rem)] leading-[0.85] font-semibold text-gold-bright">
-                <CountUp value={inView ? 45 : 0} />%
-              </div>
-              <p className="pb-1 text-right text-[0.95rem] leading-snug text-ink-soft max-w-[14rem]">
-                less than the usual commercial software
-              </p>
-            </div>
-
-            <div className="mt-8 flex flex-col gap-5">
-              <div>
-                <div className="text-[0.82rem] text-graphite mb-2">Typical commercial software</div>
-                <motion.div
-                  className="h-9 rounded-md bg-raised border border-rule origin-left"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: inView ? 1 : 0 }}
-                  transition={{ duration: 0.9, ease: EASE }}
-                />
-              </div>
-              <div>
-                <div className="text-[0.82rem] text-ink font-medium mb-2">Zion</div>
-                <div className="relative h-9">
-                  <motion.div
-                    className="absolute inset-y-0 left-0 w-[55%] rounded-md bg-gold origin-left"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: inView ? 1 : 0 }}
-                    transition={{ duration: 0.9, delay: 0.25, ease: EASE }}
-                  />
-                  <motion.div
-                    className="absolute inset-y-0 left-[55%] right-0 ml-1.5 rounded-md border border-dashed border-gold/60 flex items-center justify-center text-[0.8rem] font-semibold text-gold-bright"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: inView ? 1 : 0 }}
-                    transition={{ duration: 0.5, delay: 1 }}
-                  >
-                    You keep 45%
-                  </motion.div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <section id="why" className="py-24 md:py-32 px-5 md:px-10 bg-paper border-y border-rule">
+      <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-14 lg:gap-20 items-start">
+        <div>
+          <RevealHeading text="Good tech shouldn't cost a fortune." className="heading-section text-ink" />
+          <p className="mt-6 text-[1.1rem] leading-[1.6] text-graphite max-w-[28rem]">
+            Technology is for good, and for the Kingdom. We price it that way.
+          </p>
         </div>
 
-        <ul className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
-          {POINTS.map((point, i) => (
-            <motion.li
-              key={point.title}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
+        <div ref={tableRef} role="table" aria-label="Zion compared with typical commercial software" className="text-[0.95rem]">
+          <div role="row" className="grid grid-cols-[5.5rem_1fr_1fr] sm:grid-cols-[7rem_1fr_1fr] gap-x-4 pb-3 text-[0.82rem]">
+            <span role="columnheader" />
+            <span role="columnheader" className="text-mist">
+              Typical software
+            </span>
+            <span role="columnheader" className="font-semibold text-gold-bright">
+              Zion
+            </span>
+          </div>
+          {ROWS.map((row, i) => (
+            <motion.div
+              key={row.label}
+              role="row"
+              initial={{ opacity: 0, y: 8 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: i * 0.08, ease: EASE }}
-              className="pt-5 border-t border-gold/50"
+              className="grid grid-cols-[5.5rem_1fr_1fr] sm:grid-cols-[7rem_1fr_1fr] gap-x-4 py-4 border-t border-rule"
             >
-              <h3 className="font-display text-[1.5rem] font-semibold text-ink">{point.title}</h3>
-              <p className="mt-1.5 text-[0.92rem] leading-[1.6] text-graphite">{point.desc}</p>
-            </motion.li>
+              <span role="rowheader" className="text-[0.82rem] text-mist pt-0.5">
+                {row.label}
+              </span>
+              <span role="cell" className="text-graphite">
+                {row.them}
+              </span>
+              <span role="cell" className="text-ink font-medium">
+                {row.us}
+              </span>
+            </motion.div>
           ))}
-        </ul>
+
+          {/* The bottom line */}
+          <div role="row" className="grid grid-cols-[5.5rem_1fr_1fr] sm:grid-cols-[7rem_1fr_1fr] gap-x-4 pt-5 pb-1 border-t border-ink/40 items-center">
+            <span role="rowheader" className="text-[0.82rem] text-mist">
+              Cost
+            </span>
+            <span role="cell" className="block">
+              <motion.span
+                className="block h-3 rounded-full bg-raised origin-left"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: inView ? 1 : 0 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
+              />
+            </span>
+            <span role="cell" className="flex items-center gap-3">
+              <motion.span
+                className="block h-3 w-[55%] rounded-full bg-gold origin-left"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: inView ? 1 : 0 }}
+                transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+              />
+              <span className="text-[0.82rem] font-semibold text-gold-bright whitespace-nowrap">45% less</span>
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );

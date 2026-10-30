@@ -4,7 +4,6 @@ import { Assessment } from "@/components/assessment/Assessment";
 import { Value } from "@/components/sections/Value";
 import { Products } from "@/components/sections/Products";
 import { Offerings } from "@/components/sections/Offerings";
-import { AgentGuide } from "@/components/agent/AgentGuide";
 import { Portfolio } from "@/components/sections/Portfolio";
 import { Contact } from "@/components/sections/Contact";
 import { Footer } from "@/components/shared/Footer";
@@ -22,7 +21,6 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
-      <AgentGuide />
     </AssessmentProvider>
   );
 }

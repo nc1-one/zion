@@ -58,8 +58,8 @@ export function Assessment() {
   const sheetY = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
   return (
-    <section ref={sectionRef} id="assessment" className="relative pt-[calc(var(--nav-height)+2.5rem)] md:pt-[calc(var(--nav-height)+3.5rem)] pb-20 md:pb-28 px-5 md:px-10 overflow-clip">
-      <div className="relative max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-10 lg:gap-16 items-start">
+    <section ref={sectionRef} id="assessment" className="relative pt-[calc(var(--nav-height)+3rem)] md:pt-[calc(var(--nav-height)+5rem)] pb-24 md:pb-32 px-5 md:px-10 overflow-clip">
+      <div className="relative max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-10 lg:gap-16 items-start">
         <div className="lg:sticky lg:top-[calc(var(--nav-height)+2rem)]">
           <AnimatePresence mode="wait">
             <motion.div
@@ -87,11 +87,11 @@ export function Assessment() {
 // The agent "speaking": mascot, name, and a short status line.
 function AgentHeader({ mood = "idle", children }: { mood?: AgentMood; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <AgentMascot size={38} mood={mood} />
-      <div className="leading-tight">
-        <div className="text-[0.85rem] font-semibold text-ink">Zion Agent</div>
-        <div className="annot text-trace mt-0.5">{children}</div>
+    <div className="flex items-center gap-3 mb-8">
+      <AgentMascot size={30} mood={mood} />
+      <div className="text-[0.88rem] leading-tight">
+        <span className="font-semibold text-ink">Zion Agent</span>
+        <span className="text-graphite"> · {children}</span>
       </div>
     </div>
   );
@@ -121,9 +121,9 @@ function IntroPanel() {
       <RevealHeading
         as="h1"
         text="Know what to build before you build it."
-        className="font-display text-[clamp(2.6rem,5.6vw,4.4rem)] leading-[1.04] font-semibold text-ink tracking-[-0.01em]"
+        className="heading-hero text-ink"
       />
-      <p className="mt-6 text-[1.05rem] leading-[1.7] text-ink-soft max-w-[34rem]">
+      <p className="mt-7 text-[1.15rem] leading-[1.6] text-ink-soft max-w-[32rem]">
         Paste your website. Answer seven questions. Get a roadmap, timeline, and cost.
       </p>
 
@@ -181,11 +181,13 @@ function IntroPanel() {
       </form>
 
 
-      <div className="mt-10 max-w-[34rem]">
-        <div className="annot text-mist mb-2">Trusted by</div>
-        <p className="font-display text-[1.05rem] text-graphite leading-[1.7]">
-          Jesus.Net Philippines · Turn Vertical · HopeBegins · eSTAR Foundation · Glassbox PH
-        </p>
+      <div className="mt-14 max-w-[34rem]">
+        <div className="annot text-mist mb-3">Trusted by</div>
+        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-[0.95rem] font-medium text-graphite">
+          {["Jesus.Net Philippines", "Turn Vertical", "HopeBegins", "eSTAR Foundation", "Glassbox PH"].map((name) => (
+            <li key={name}>{name}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );

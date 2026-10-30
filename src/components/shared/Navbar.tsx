@@ -58,18 +58,15 @@ export function Navbar() {
       <nav
         className={cn(
           "fixed top-0 inset-x-0 z-50 h-[var(--nav-height)] flex items-center justify-between px-5 md:px-10 border-b transition-[background-color,border-color,transform] duration-300",
-          isScrolled || isMenuOpen ? "bg-paper border-rule" : "bg-transparent border-transparent",
+          isScrolled || isMenuOpen ? "bg-night/95 border-rule" : "bg-transparent border-transparent",
           hidden && !isMenuOpen && "-translate-y-full",
         )}
       >
         <ScrollProgress />
         <a href="#assessment" className="flex items-center gap-3 no-underline" onClick={() => setIsMenuOpen(false)}>
-          <Image src="/logo.png" alt="" width={36} height={36} priority className="w-9 h-9 object-contain" />
-          <span className="flex flex-col leading-none">
-            <span className="font-display text-[1.2rem] font-bold text-ink tracking-tight">
-              Zion <span className="text-gold-deep">Systems &amp; Build</span>
-            </span>
-            <span className="annot text-mist text-[0.55rem] mt-1">Frameworks for a higher purpose</span>
+          <Image src="/logo.png" alt="" width={32} height={32} priority className="w-8 h-8 object-contain" />
+          <span className="font-brand text-[1.3rem] font-bold leading-none text-ink">
+            Zion <span className="text-gold-deep">Systems &amp; Build</span>
           </span>
         </a>
 
@@ -80,19 +77,19 @@ export function Navbar() {
               href={link.href}
               aria-current={active === link.href ? "location" : undefined}
               className={cn(
-                "relative px-3.5 py-2 text-[0.85rem] font-medium transition-colors no-underline",
+                "relative px-3 py-2 text-[0.88rem] font-medium transition-colors no-underline",
                 active === link.href ? "text-ink" : "text-graphite hover:text-ink",
               )}
             >
               {link.name}
               {active === link.href && (
-                <motion.span layoutId="nav-underline" className="absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] rounded-full bg-gold" transition={{ type: "spring", stiffness: 420, damping: 36 }} />
+                <motion.span layoutId="nav-underline" className="absolute left-3 right-3 -bottom-0.5 h-px bg-ink" transition={{ type: "spring", stiffness: 420, damping: 36 }} />
               )}
             </a>
           ))}
           <a
             href="#contact"
-            className="ml-3 px-4 py-2 text-[0.85rem] font-semibold text-paper bg-gold rounded-lg hover:bg-gold-bright hover:-translate-y-px transition-[background-color,transform] no-underline"
+            className="ml-4 px-4 py-2 text-[0.88rem] font-semibold text-night bg-gold rounded-lg hover:bg-gold-bright transition-colors no-underline"
           >
             Talk to us
           </a>
@@ -113,7 +110,7 @@ export function Navbar() {
       <div
         id="mobile-menu"
         className={cn(
-          "fixed top-[var(--nav-height)] inset-x-0 bottom-0 z-40 bg-paper flex flex-col px-5 py-6 lg:hidden transition-[opacity,transform] duration-300",
+          "fixed top-[var(--nav-height)] inset-x-0 bottom-0 z-40 bg-night flex flex-col px-5 py-6 lg:hidden transition-[opacity,transform] duration-300",
           isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none",
         )}
         inert={!isMenuOpen}
@@ -123,7 +120,7 @@ export function Navbar() {
             key={link.name}
             href={link.href}
             onClick={() => setIsMenuOpen(false)}
-            className="py-4 font-display text-[1.6rem] font-semibold text-ink border-b border-rule no-underline"
+            className="py-4 font-display text-[1.6rem] font-semibold tracking-[-0.03em] text-ink border-b border-rule no-underline"
           >
             {link.name}
           </a>
@@ -131,7 +128,7 @@ export function Navbar() {
         <a
           href="#contact"
           onClick={() => setIsMenuOpen(false)}
-          className="mt-6 text-center py-3.5 bg-gold text-paper font-semibold rounded-lg no-underline"
+          className="mt-6 text-center py-3.5 bg-gold text-night font-semibold rounded-lg no-underline"
         >
           Talk to us
         </a>
