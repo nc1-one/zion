@@ -7,7 +7,7 @@ import { AgentMascot, type AgentMood } from "./AgentMascot";
 import { useAssessment, type Stage } from "@/components/assessment/AssessmentProvider";
 import { cn } from "@/lib/utils";
 
-const SECTIONS = ["assessment", "offerings", "products", "use-cases", "process", "work", "about", "contact"] as const;
+const SECTIONS = ["assessment", "why", "products", "offerings", "work", "contact"] as const;
 type SectionId = (typeof SECTIONS)[number];
 
 const STAGE_TIPS: Record<Stage, string> = {
@@ -18,15 +18,13 @@ const STAGE_TIPS: Record<Stage, string> = {
 };
 
 const SECTION_TIPS: Record<Exclude<SectionId, "assessment">, { tip: string; withScope?: string }> = {
+  why: { tip: "Same kind of software, 45% less." },
+  products: { tip: "Every demo is clickable." },
   offerings: {
     tip: "Pick a service to see what's included.",
     withScope: "Highlighted services are in your scope.",
   },
-  products: { tip: "Pick a problem. The prototype is clickable." },
-  "use-cases": { tip: "Press play to watch a project unfold." },
-  process: { tip: "Select a phase to see what you get." },
   work: { tip: "Some of our past work." },
-  about: { tip: "The values behind every build." },
   contact: {
     tip: "We reply within one business day.",
     withScope: "Your attachment is ready to send.",
@@ -35,10 +33,8 @@ const SECTION_TIPS: Record<Exclude<SectionId, "assessment">, { tip: string; with
 
 const TOUR = [
   { id: "assessment", label: "Scope my project" },
-  { id: "offerings", label: "What Zion offers" },
-  { id: "products", label: "Digital products" },
-  { id: "use-cases", label: "Example projects" },
-  { id: "process", label: "How we work" },
+  { id: "products", label: "Try the products" },
+  { id: "offerings", label: "Services" },
   { id: "work", label: "Our work" },
   { id: "contact", label: "Talk to the team" },
 ];

@@ -69,9 +69,9 @@ export function ScopeSheet() {
               </h3>
               <p className="mt-3 text-[0.88rem] text-mist">
                 {stage === "intro"
-                  ? "The Zion Agent drafts your scope here as you answer."
+                  ? "Your scope builds here as you answer."
                   : stage === "drafting"
-                    ? "Turning your answers into a roadmap, deliverables, and cost…"
+                    ? "Drafting roadmap, deliverables, and cost…"
                     : "Your answers appear here as you go."}
               </p>
             </>
@@ -130,7 +130,7 @@ export function ScopeSheet() {
             </p>
           ) : (
             <p className="text-[0.85rem] text-mist">
-              {stage === "intro" ? "Share your website and the agent reads it first." : "No website to read. The agent will scope from your answers."}
+              {stage === "intro" ? "The agent reads your site first." : "No site to read. Scoping from your answers."}
             </p>
           )}
         </SheetSection>
@@ -168,7 +168,7 @@ export function ScopeSheet() {
             </div>
           ) : (
             <p className="text-[0.85rem] text-mist">
-              {stage === "drafting" ? "Listing what you'll receive in each phase…" : "Each phase's deliverables and cost will be listed here."}
+              {stage === "drafting" ? "Listing deliverables…" : "Deliverables appear here."}
             </p>
           )}
         </SheetSection>

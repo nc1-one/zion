@@ -35,7 +35,7 @@ const STEPS: Step[] = [
     kind: "multi",
     label: "Features",
     title: "What does it need to do?",
-    hint: "Choose any that matter. Skip this if you're not sure yet.",
+    hint: "Optional.",
     options: FEATURES,
     optional: true,
   },
@@ -47,7 +47,7 @@ const STEPS: Step[] = [
     kind: "text",
     label: "Goal",
     title: "What should this project achieve?",
-    hint: "A sentence or two in your own words. Optional, but it helps me tailor your scope.",
+    hint: "Optional. A sentence is enough.",
   },
 ];
 
@@ -124,9 +124,8 @@ function IntroPanel() {
         className="font-display text-[clamp(2.6rem,5.6vw,4.4rem)] leading-[1.04] font-semibold text-ink tracking-[-0.01em]"
       />
       <p className="mt-6 text-[1.05rem] leading-[1.7] text-ink-soft max-w-[34rem]">
-            Paste your website and answer seven questions. Get a roadmap, timeline, and cost in about three minutes.
-          </p>
-      <p className="mt-3 text-[0.9rem] text-graphite">For churches, ministries, nonprofits, schools, and faith-driven businesses.</p>
+        Paste your website. Answer seven questions. Get a roadmap, timeline, and cost.
+      </p>
 
       <form onSubmit={submit} className="mt-8 max-w-[34rem]" noValidate>
         <label htmlFor="site-url" className="annot text-graphite">
@@ -183,7 +182,7 @@ function IntroPanel() {
 
 
       <div className="mt-10 max-w-[34rem]">
-        <div className="annot text-mist mb-2">Trusted by Kingdom organizations</div>
+        <div className="annot text-mist mb-2">Trusted by</div>
         <p className="font-display text-[1.05rem] text-graphite leading-[1.7]">
           Jesus.Net Philippines · Turn Vertical · HopeBegins · eSTAR Foundation · Glassbox PH
         </p>
@@ -293,7 +292,7 @@ function QuestionPanel() {
                 value={answers.goal ?? ""}
                 onChange={(e) => setAnswer("goal", e.target.value.slice(0, 800))}
                 rows={4}
-                placeholder="For example: let our members register for retreats online and give monthly without calling the office."
+                placeholder="e.g. Members register for retreats and give online."
                 className="w-full p-4 bg-sheet border border-rule rounded-xl text-[0.95rem] leading-[1.6] text-ink placeholder:text-mist outline-none resize-y transition-[border-color,box-shadow] focus:border-trace focus:shadow-[0_0_0_4px_var(--color-trace-wash)]"
               />
             ) : (
@@ -437,8 +436,8 @@ function DonePanel() {
       </h2>
       <p className="mt-4 text-[0.95rem] leading-[1.65] text-graphite max-w-[32rem]">
         {proposal.source === "agent"
-          ? "Drafted from your answers and your site. Send it and we'll review it with you."
-          : "Drafted from your answers. Send it and we'll refine it with you."}
+          ? "From your answers and your site. Send it to review with us."
+          : "From your answers. Send it to review with us."}
       </p>
 
       <dl className="mt-7 grid grid-cols-2 max-w-[32rem] border border-rule rounded-xl bg-sheet overflow-hidden">

@@ -52,9 +52,7 @@ export function Offerings() {
             {proposal && <div className="annot text-gold-deep mb-4">In your scope</div>}
             <RevealHeading key={proposal ? "scope" : "all"} text={proposal ? "Services in your scope" : "Services"} className="font-display text-[clamp(2.2rem,4vw,3.2rem)] leading-[1.06] font-semibold text-ink" />
           </div>
-          <p className="text-[1rem] leading-[1.7] text-graphite lg:pt-9 max-w-[36rem]">
-            {proposal ? `Your scope uses ${inScope.size} of these.` : "From your first website to the IT that keeps it running."}
-          </p>
+          {proposal && <p className="text-[1rem] leading-[1.7] text-graphite lg:pt-9 max-w-[36rem]">Your scope uses {inScope.size} of these.</p>}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-6 lg:gap-16 items-start">
@@ -62,10 +60,7 @@ export function Offerings() {
           <div role="tablist" aria-orientation="vertical" aria-label="Zion offerings" className="flex flex-col gap-6">
             {SERVICE_GROUPS.map((group) => (
               <div key={group.id}>
-                <div className="flex items-baseline gap-3 mb-2">
-                  <span className="font-display text-[1.35rem] font-semibold text-ink">{group.label}</span>
-                  <span className="text-[0.82rem] text-graphite">{group.blurb}</span>
-                </div>
+                <div className="font-display text-[1.35rem] font-semibold text-ink mb-2">{group.label}</div>
                 <div className="flex flex-col border-t border-rule">
                   {SERVICES.filter((s) => s.group === group.id).map((svc) => {
                     const Icon = ICONS[svc.id];
@@ -142,8 +137,7 @@ export function Offerings() {
                 <h3 className="mt-6 font-display text-[2rem] leading-[1.1] font-semibold text-ink">{selected.title}</h3>
                 <p className="mt-3 text-[0.98rem] leading-[1.7] text-ink-soft">{selected.desc}</p>
 
-                <div className="mt-7 annot text-graphite">What&apos;s included</div>
-                <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
                   {selected.includes.map((item) => (
                     <li key={item} className="flex gap-2.5 text-[0.9rem] leading-[1.45] text-ink">
                       <Check size={16} strokeWidth={2.5} className="text-gold-deep shrink-0 mt-0.5" />
@@ -153,7 +147,7 @@ export function Offerings() {
                 </ul>
 
                 <Button onClick={scopeThis} className="mt-7">
-                  Scope this with the Zion Agent <ArrowRight size={16} />
+                  Scope this <ArrowRight size={16} />
                 </Button>
               </motion.div>
             </AnimatePresence>

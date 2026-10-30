@@ -20,7 +20,7 @@ export function Footer() {
           ))}
         </nav>
 
-        <div className="text-[0.8rem] text-mist">© {new Date().getFullYear()} Zion Systems. All rights reserved.</div>
+        <div className="text-[0.8rem] text-mist">© {new Date().getFullYear()} Zion Systems · Manila</div>
       </div>
     </footer>
   );
