@@ -22,8 +22,17 @@ interface AssessmentState {
   // What the contact form sends along: the drafted scope or a quick quote.
   attachment: Attachment;
   quote: Quote | null;
-  // A message for the Zion Agent guide to say next (e.g. after a preset).
-  notice: { id: number; text: string } | null;
+  // Details the Zion Agent collected, for the contact form to fill in.
+  contactDraft: ContactDraft | null;
+}
+
+export interface ContactDraft {
+  id: number;
+  fullName?: string;
+  email?: string;
+  organizationType?: string;
+  referredBy?: string;
+  message?: string;
 }
 
 interface AssessmentContextValue extends AssessmentState {
@@ -35,8 +44,8 @@ interface AssessmentContextValue extends AssessmentState {
   reset: () => void;
   setAttachment: (attachment: Attachment) => void;
   sendQuote: (quote: Quote) => void;
-  preset: (answers: Partial<Answers>, notice: string) => void;
-  say: (text: string) => void;
+  preset: (answers: Partial<Answers>) => void;
+  prefillContact: (draft: Omit<ContactDraft, "id">) => void;
 }
 
 const AssessmentContext = createContext<AssessmentContextValue | null>(null);
@@ -52,7 +61,7 @@ const INITIAL: AssessmentState = {
   error: null,
   attachment: null,
   quote: null,
-  notice: null,
+  contactDraft: null,
 };
 
 export function AssessmentProvider({ children }: { children: React.ReactNode }) {
@@ -126,7 +135,7 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
   const reset = useCallback(() => {
     runId.current++;
     scanPromise.current = null;
-    setState((s) => ({ ...INITIAL, quote: s.quote, attachment: s.quote ? "quote" : null }));
+    setState((s) => ({ ...INITIAL, quote: s.quote, attachment: s.quote ? "quote" : null, answers: { ...EMPTY_ANSWERS, region: s.answers.region } }));
   }, []);
 
   const setAttachment = useCallback((attachment: Attachment) => setState((s) => ({ ...s, attachment })), []);
@@ -137,31 +146,33 @@ export function AssessmentProvider({ children }: { children: React.ReactNode }) 
       ...s,
       quote,
       attachment: "quote",
-      notice: { id: (s.notice?.id ?? 0) + 1, text: `Quote attached. Add your details and send.` },
     }));
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const say = useCallback((text: string) => setState((s) => ({ ...s, notice: { id: (s.notice?.id ?? 0) + 1, text } })), []);
+  // Fill in the contact form (from the Zion Agent) and take the visitor there.
+  const prefillContact = useCallback((draft: Omit<ContactDraft, "id">) => {
+    setState((s) => ({ ...s, contactDraft: { ...draft, id: (s.contactDraft?.id ?? 0) + 1 } }));
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
-  // Start a fresh assessment with some answers filled in (from Offerings or Use cases).
-  const preset = useCallback((answers: Partial<Answers>, notice: string) => {
+  // Start a fresh assessment with some answers filled in (from Services).
+  const preset = useCallback((answers: Partial<Answers>) => {
     runId.current++;
     scanPromise.current = null;
     setState((s) => ({
       ...INITIAL,
       quote: s.quote,
       attachment: s.quote ? "quote" : null,
-      answers: { ...EMPTY_ANSWERS, ...answers },
-      notice: { id: (s.notice?.id ?? 0) + 1, text: notice },
+      answers: { ...EMPTY_ANSWERS, region: s.answers.region, ...answers },
     }));
     document.getElementById("assessment")?.scrollIntoView({ behavior: "smooth" });
     window.setTimeout(() => document.getElementById("site-url")?.focus({ preventScroll: true }), 600);
   }, []);
 
   const value = useMemo(
-    () => ({ ...state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachment, sendQuote, preset, say }),
-    [state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachment, sendQuote, preset, say],
+    () => ({ ...state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachment, sendQuote, preset, prefillContact }),
+    [state, start, setAnswer, goToStep, draft, editAnswers, reset, setAttachment, sendQuote, preset, prefillContact],
   );
 
   return (

@@ -14,7 +14,7 @@ export function Offerings() {
   const inScope = new Set(proposal?.recommendedServices ?? []);
 
   const scope = (svc: Service) =>
-    preset(svc.buildType ? { buildTypes: [svc.buildType] } : {}, `Started a scope with ${svc.title}. Add your website.`);
+    preset(svc.buildType ? { buildTypes: [svc.buildType] } : {});
 
   return (
     <section id="offerings" className="py-24 md:py-32 px-5 md:px-10 bg-paper border-y border-rule">

@@ -1,4 +1,5 @@
 import type { Quote } from "./assessment/types";
+import type { WorkRegionId } from "./assessment/questions";
 
 // Prices here are what visitors see. They are derived from Zion's internal
 // effort estimates, which never ship to the browser.
@@ -14,7 +15,7 @@ export interface ProductModule {
 }
 
 export interface Product {
-  id: "church-os" | "pipeline" | "sermon" | "bible-study" | "hris" | "hubspot" | "erp";
+  id: "church-os" | "pipeline" | "sermon" | "bible-study" | "hris" | "hubspot" | "donors" | "erp" | "store";
   group: "church" | "org";
   name: string;
   hook: string; // the problem visitors recognise
@@ -185,6 +186,33 @@ export const PRODUCTS: Product[] = [
     note: "HubSpot fees are paid to HubSpot. Demo screens are Zion's illustration.",
   },
   {
+    id: "donors",
+    group: "org",
+    name: "Donors & Impact",
+    hook: "Donors give once and never hear what happened.",
+    integrations: ["GCash", "Maya", "PayMongo", "Mailchimp", "Xero", "Google Workspace"],
+    platforms: "Web, donor app on iOS and Android",
+    modules: [
+      { id: "records", label: "Donor records and gifts", setup: 560, monthly: 0, included: true },
+      { id: "giving", label: "Online giving pages", setup: 320, monthly: 10 },
+      { id: "impact", label: "Programs and impact tracking", setup: 400, monthly: 15 },
+      { id: "reports", label: "Donor impact reports", setup: 320, monthly: 10 },
+      { id: "campaigns", label: "Campaigns and peer-to-peer", setup: 320, monthly: 15 },
+      { id: "grants", label: "Grants pipeline", setup: 240, monthly: 10 },
+      { id: "app", label: "Donor mobile app", setup: 960, monthly: 25 },
+      { id: "migration", label: "Data migration", setup: 160, monthly: 0 },
+    ],
+    tiers: {
+      label: "Donor records",
+      options: [
+        { id: "s", label: "Up to 2,000", monthly: 29, setupFactor: 1 },
+        { id: "m", label: "2,000 – 10,000", monthly: 69, setupFactor: 1.15 },
+        { id: "l", label: "Over 10,000", monthly: 149, setupFactor: 1.3 },
+      ],
+    },
+    note: "Payment processing fees are billed by the provider.",
+  },
+  {
     id: "erp",
     group: "org",
     name: "SME ERP",
@@ -209,7 +237,45 @@ export const PRODUCTS: Product[] = [
       ],
     },
   },
+  {
+    id: "store",
+    group: "org",
+    name: "Online Store",
+    hook: "Orders come in through chat and get lost.",
+    integrations: ["GCash", "Maya", "PayMongo", "LBC", "J&T Express", "Grab Express", "Facebook and Instagram"],
+    platforms: "Storefront, admin, iOS and Android",
+    modules: [
+      { id: "catalog", label: "Storefront and catalog", setup: 720, monthly: 0, included: true },
+      { id: "checkout", label: "Checkout and payments", setup: 320, monthly: 10 },
+      { id: "shipping", label: "Shipping and couriers", setup: 240, monthly: 10 },
+      { id: "discounts", label: "Discounts and promos", setup: 160, monthly: 5 },
+      { id: "customers", label: "Customer accounts", setup: 240, monthly: 10 },
+      { id: "subscriptions", label: "Subscriptions", setup: 320, monthly: 15 },
+      { id: "pos", label: "Pop-up and event POS", setup: 400, monthly: 15 },
+      { id: "app", label: "Shopping app", setup: 960, monthly: 25 },
+    ],
+    tiers: {
+      label: "Orders a month",
+      options: [
+        { id: "s", label: "Under 300", monthly: 29, setupFactor: 1 },
+        { id: "m", label: "300 – 2,000", monthly: 69, setupFactor: 1.15 },
+        { id: "l", label: "Over 2,000", monthly: 149, setupFactor: 1.3 },
+      ],
+    },
+    note: "Payment and courier fees are billed by the provider.",
+  },
 ];
+
+// Where the client needs Zion to work. Covering business hours outside Manila
+// costs more; visitors only ever see the resulting totals.
+export const PRICE_REGIONS: { id: WorkRegionId; label: string; factor: number }[] = [
+  { id: "manila", label: "Philippines / Asia", factor: 1 },
+  { id: "australia", label: "Australia / NZ", factor: 2.5 },
+  { id: "americas", label: "Americas", factor: 2.5 },
+  { id: "uk", label: "UK / Europe", factor: 2.5 },
+];
+
+const regionOf = (id: WorkRegionId) => PRICE_REGIONS.find((r) => r.id === id) ?? PRICE_REGIONS[0];
 
 function makeRef() {
   const bytes = new Uint8Array(3);
@@ -220,28 +286,33 @@ function makeRef() {
 const round = (n: number, step: number) => Math.round(n / step) * step;
 
 // Pure estimate for live totals; productQuote adds a reference when sent.
-export function productEstimate(product: Product, selected: string[], tierId: string) {
+export function productEstimate(product: Product, selected: string[], tierId: string, regionId: WorkRegionId = "manila") {
   const tier = product.tiers.options.find((o) => o.id === tierId) ?? product.tiers.options[0];
+  const { factor } = regionOf(regionId);
+  const monthly = (n: number) => (factor === 1 ? n : round(n * factor, 5));
   const lines = product.modules
     .filter((m) => m.included || selected.includes(m.id))
-    .map((m) => ({ label: m.label, oneTime: round(m.setup * tier.setupFactor, 10), monthly: m.monthly }));
+    .map((m) => ({ label: m.label, oneTime: round(m.setup * tier.setupFactor * factor, 10), monthly: monthly(m.monthly) }));
   const setupTotal = round(lines.reduce((sum, l) => sum + l.oneTime, 0), 50);
-  const monthlyTotal = tier.monthly + lines.reduce((sum, l) => sum + l.monthly, 0);
-  return { tier, lines, setupTotal, monthlyTotal, weeks: Math.max(3, Math.ceil(setupTotal / 240) + 1) };
+  const tierMonthly = monthly(tier.monthly);
+  const monthlyTotal = tierMonthly + lines.reduce((sum, l) => sum + l.monthly, 0);
+  const baseSetup = product.modules.filter((m) => m.included || selected.includes(m.id)).reduce((sum, m) => sum + m.setup * tier.setupFactor, 0);
+  return { tier, tierMonthly, lines, setupTotal, monthlyTotal, weeks: Math.max(3, Math.ceil(baseSetup / 240) + 1) };
 }
 
-export function productQuote(product: Product, selected: string[], tierId: string): Quote {
-  const { tier, lines, setupTotal, monthlyTotal, weeks } = productEstimate(product, selected, tierId);
+export function productQuote(product: Product, selected: string[], tierId: string, regionId: WorkRegionId = "manila"): Quote {
+  const { tier, tierMonthly, lines, setupTotal, monthlyTotal, weeks } = productEstimate(product, selected, tierId, regionId);
   return {
     ref: makeRef(),
     createdAt: new Date().toISOString(),
     kind: "product",
     title: product.name,
-    lines: tier.monthly ? [{ label: `${product.tiers.label}: ${tier.label}`, oneTime: 0, monthly: tier.monthly }, ...lines] : lines,
-    options: [`${product.tiers.label}: ${tier.label}`],
+    lines: tierMonthly ? [{ label: `${product.tiers.label}: ${tier.label}`, oneTime: 0, monthly: tierMonthly }, ...lines] : lines,
+    options: [`${product.tiers.label}: ${tier.label}`, `Time zone: ${regionOf(regionId).label}`],
     setupTotal,
     monthlyTotal,
     weeks,
+    region: regionId,
     note: product.note,
   };
 }
@@ -289,7 +360,8 @@ export type ItServiceId = (typeof IT_SERVICES)[number]["id"];
 export type DevTeamId = (typeof DEV_TEAM)[number]["id"];
 export type ItTermId = (typeof IT_TERMS)[number]["id"];
 
-export function managedItEstimate(sizeId: ItSizeId, services: ItServiceId[], devId: DevTeamId, termId: ItTermId) {
+export function managedItEstimate(sizeId: ItSizeId, services: ItServiceId[], devId: DevTeamId, termId: ItTermId, regionId: WorkRegionId = "manila") {
+  const { factor } = regionOf(regionId);
   const size = IT_SIZES.find((s) => s.id === sizeId)!;
   const term = IT_TERMS.find((t) => t.id === termId)!;
   const dev = DEV_TEAM.find((d) => d.id === devId)!;
@@ -298,25 +370,26 @@ export function managedItEstimate(sizeId: ItSizeId, services: ItServiceId[], dev
     ...(services.length ? [{ label: "Monthly report and planning call", monthly: 8 }] : []),
     ...(dev.monthly ? [{ label: `${dev.label} (${dev.detail.toLowerCase()})`, monthly: dev.monthly }] : []),
   ];
-  const lines = list.map((l) => ({ label: l.label, oneTime: 0, monthly: Math.round(l.monthly * (1 - term.discount)) }));
+  const lines = list.map((l) => ({ label: l.label, oneTime: 0, monthly: round(l.monthly * factor * (1 - term.discount), factor === 1 ? 1 : 5) }));
   const monthly = lines.reduce((sum, l) => sum + l.monthly, 0);
-  const listMonthly = Math.round(list.reduce((sum, l) => sum + l.monthly, 0));
+  const listMonthly = Math.round(list.reduce((sum, l) => sum + l.monthly * factor, 0));
   return { size, term, dev, lines, monthly, contractTotal: monthly * term.months, savings: Math.max(0, (listMonthly - monthly) * term.months) };
 }
 
-export function managedItQuote(sizeId: ItSizeId, services: ItServiceId[], devId: DevTeamId, termId: ItTermId): Quote {
-  const { size, term, lines, monthly, contractTotal } = managedItEstimate(sizeId, services, devId, termId);
+export function managedItQuote(sizeId: ItSizeId, services: ItServiceId[], devId: DevTeamId, termId: ItTermId, regionId: WorkRegionId = "manila"): Quote {
+  const { size, term, lines, monthly, contractTotal } = managedItEstimate(sizeId, services, devId, termId, regionId);
   return {
     ref: makeRef(),
     createdAt: new Date().toISOString(),
     kind: "managed-it",
     title: `Managed IT for ${size.label} people`,
     lines,
-    options: lines.map((l) => l.label),
+    options: [...lines.map((l) => l.label), `Time zone: ${regionOf(regionId).label}`],
     setupTotal: 0,
     monthlyTotal: monthly,
     term: term.label,
     contractTotal,
+    region: regionId,
     note: "A Zion team member confirms what's covered before the plan starts.",
   };
 }

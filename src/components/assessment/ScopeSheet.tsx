@@ -11,6 +11,7 @@ import {
   FEATURES,
   ORG_TYPES,
   TIMELINES,
+  WORK_REGIONS,
   labelOf,
 } from "@/lib/assessment/questions";
 import { surveyNotes } from "@/lib/assessment/survey";
@@ -35,6 +36,7 @@ export function ScopeSheet() {
   const brief: [string, string | null][] = [
     ["For", host ?? (stage === "intro" ? null : "No website yet")],
     ["Organization", answers.orgType ? labelOf(ORG_TYPES, answers.orgType) : null],
+    ["Team in", answers.region ? labelOf(WORK_REGIONS, answers.region) : null],
     ["Building", answers.buildTypes?.length ? answers.buildTypes.map((b) => labelOf(BUILD_TYPES, b)).join(", ") : null],
     ["Must-haves", answers.features?.length ? answers.features.map((f) => labelOf(FEATURES, f)).join(", ") : null],
     ["Audience", answers.audience ? labelOf(AUDIENCE_SIZES, answers.audience) : null],
@@ -90,7 +92,7 @@ export function ScopeSheet() {
           {/* Brief */}
           {done ? (
             <p className="annot text-graphite leading-[1.9] -mt-3">
-              {[host, labelOf(ORG_TYPES, proposal.answers.orgType), labelOf(TIMELINES, proposal.answers.timeline)]
+              {[host, labelOf(ORG_TYPES, proposal.answers.orgType), labelOf(WORK_REGIONS, proposal.answers.region), labelOf(TIMELINES, proposal.answers.timeline)]
                 .filter(Boolean)
                 .join("  ·  ")}
             </p>

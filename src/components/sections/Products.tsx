@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import React, { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, ChevronLeft, ChevronRight, Lock, Pause, Play, Smartphone } from "lucide-react";
@@ -8,6 +8,7 @@ import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { ProtoDriveProvider, type ProtoDrive, type StackEntry } from "@/components/products/drive";
 import { SHOWCASE, type TourStep } from "@/components/products/showcase";
 import { Button } from "@/components/ui/Button";
+import { RegionSelect, useRegion } from "@/components/ui/RegionSelect";
 import { CountUp, RevealHeading } from "@/components/ui/motion";
 import { money, weeksLabel } from "@/lib/assessment/format";
 import { EVERY_PLAN, PRODUCTS, PRODUCT_GROUPS, productEstimate, productQuote, type Product } from "@/lib/quotes";
@@ -25,7 +26,9 @@ const PROTOTYPES: Record<Product["id"], React.ComponentType> = {
   "bible-study": dynamic(() => import("@/components/products/bible-study").then((m) => m.BibleStudyPrototype), { ssr: false, loading: PrototypeLoading }),
   hris: dynamic(() => import("@/components/products/hris").then((m) => m.ChurchHRISPrototype), { ssr: false, loading: PrototypeLoading }),
   hubspot: dynamic(() => import("@/components/products/hubspot").then((m) => m.HubSpotPrototype), { ssr: false, loading: PrototypeLoading }),
+  donors: dynamic(() => import("@/components/products/donors").then((m) => m.DonorsPrototype), { ssr: false, loading: PrototypeLoading }),
   erp: dynamic(() => import("@/components/products/erp").then((m) => m.ErpPrototype), { ssr: false, loading: PrototypeLoading }),
+  store: dynamic(() => import("@/components/products/store").then((m) => m.StorePrototype), { ssr: false, loading: PrototypeLoading }),
 };
 
 const ProductPhone = dynamic(() => import("@/components/products/phones").then((m) => m.ProductPhone), { ssr: false });
@@ -116,7 +119,8 @@ export function Products() {
   const running = playing && inView && !reduce && !phoneFirst;
   const selected = modules[product.id];
   const tierId = tiers[product.id] ?? product.tiers.options[0].id;
-  const estimate = productEstimate(product, selected, tierId);
+  const [region] = useRegion();
+  const estimate = productEstimate(product, selected, tierId, region);
   const Prototype = PROTOTYPES[product.id];
 
   const onPath = useCallback((p: string) => {
@@ -247,6 +251,19 @@ export function Products() {
     window.setTimeout(() => void play(SHOWCASE[id].tour[0]), 500);
   };
 
+  // The Zion Agent can open a product's demo from the chat.
+  const showFromAgent = useEffectEvent((id: string) => {
+    const match = PRODUCTS.find((p) => p.id === id);
+    if (!match) return;
+    pickProduct(match.id);
+    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+  });
+  useEffect(() => {
+    const onShow = (e: Event) => showFromAgent((e as CustomEvent<string>).detail);
+    window.addEventListener("zion:show-product", onShow);
+    return () => window.removeEventListener("zion:show-product", onShow);
+  }, []);
+
   // Start the tour the first time the demo scrolls into view.
   useEffect(() => {
     if (!inView || startedRef.current || reduce || phoneFirst) return;
@@ -265,7 +282,7 @@ export function Products() {
     <section id="products" className="py-24 md:py-32 px-5 md:px-10">
       <div className="max-w-[1240px] mx-auto">
         <div className="max-w-[40rem]">
-          <RevealHeading text="Software built for ministry, priced for the mission." className="heading-section text-ink" />
+          <RevealHeading text="Software built with excellence, priced for the mission." className="heading-section text-ink" />
           <p className="mt-5 text-[1.1rem] leading-relaxed text-graphite">Seven apps, ready to run. Every demo below is live.</p>
         </div>
 
@@ -585,6 +602,9 @@ export function Products() {
 
               <aside className="lg:sticky lg:top-[calc(var(--nav-height)+1.5rem)] rounded-[18px] bg-sheet ring-1 ring-rule p-6" aria-live="polite">
                 <div className="text-[0.95rem] font-semibold text-ink">{product.name}</div>
+                <div className="mt-4">
+                  <RegionSelect id="product-region" />
+                </div>
                 <dl className="mt-6 flex flex-col gap-5">
                   <div>
                     <dt className="text-[0.78rem] text-mist">Setup, one-time</dt>
@@ -607,7 +627,7 @@ export function Products() {
                   </div>
                 </dl>
                 <p className="mt-4 text-[0.82rem] text-graphite">Live in about {weeksLabel(estimate.weeks)}</p>
-                <Button className="mt-6 w-full justify-center" onClick={() => sendQuote(productQuote(product, selected, tierId))}>
+                <Button className="mt-6 w-full justify-center" onClick={() => sendQuote(productQuote(product, selected, tierId, region))}>
                   Request a quote <ArrowRight size={16} />
                 </Button>
                 <p className="mt-4 pt-4 border-t border-rule text-[0.8rem] text-gold-bright">45% less than typical commercial software</p>

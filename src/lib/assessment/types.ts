@@ -6,6 +6,7 @@ import {
   FEATURES,
   ORG_TYPES,
   TIMELINES,
+  WORK_REGIONS,
   idsOf,
 } from "./questions";
 
@@ -33,6 +34,7 @@ export const AnswersSchema = z.object({
   audience: z.enum(idsOf(AUDIENCE_SIZES)),
   content: z.enum(idsOf(CONTENT_READINESS)),
   timeline: z.enum(idsOf(TIMELINES)),
+  region: z.enum(idsOf(WORK_REGIONS)).default("manila"),
   goal: z.string().trim().max(800),
 });
 export type Answers = z.infer<typeof AnswersSchema>;
@@ -120,6 +122,7 @@ export const QuoteSchema = z.object({
   weeks: z.number().int().min(1).optional(),
   term: z.string().max(40).optional(),
   contractTotal: z.number().nonnegative().optional(),
+  region: z.enum(idsOf(WORK_REGIONS)).optional(),
   note: z.string().max(300).optional(),
 });
 export type Quote = z.infer<typeof QuoteSchema>;

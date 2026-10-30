@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { ProposalSchema, QuoteSchema, type Proposal, type Quote } from "@/lib/assessment/types";
 import { formatDate, money, weeksLabel } from "@/lib/assessment/format";
-import { HOURLY_RATE } from "@/lib/assessment/pricing";
+import { rateFor } from "@/lib/assessment/pricing";
+import { WORK_REGIONS, labelOf, type WorkRegionId } from "@/lib/assessment/questions";
 import { serviceTitle } from "@/lib/assessment/services";
 
 // Validation schema for the contact form
@@ -11,6 +12,7 @@ const contactSchema = z.object({
   fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Invalid email address").max(200),
   organizationType: z.string().max(80).optional(),
+  referredBy: z.string().trim().max(160).optional(),
   message: z.string().trim().min(10, "Message must be at least 10 characters").max(4000),
   proposal: ProposalSchema.nullish(),
   quote: QuoteSchema.nullish(),
@@ -26,10 +28,14 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-// Internal only: approximate effort behind a price, for the Zion team.
-const effort = (usd: number) => `≈${Math.round(usd / HOURLY_RATE)} h`;
+// Internal only: the client's region, Zion's rate for it, and the approximate
+// effort behind a price. Never shown to visitors.
+const effortAt = (region: WorkRegionId | undefined) => (usd: number) => `≈${Math.round(usd / rateFor(region))} h`;
+const regionLine = (region: WorkRegionId | undefined) =>
+  `<p style="color: #56616D; font-size: 13px;"><strong>Internal:</strong> ${escapeHtml(labelOf(WORK_REGIONS, region ?? "manila"))} · $${rateFor(region)}/h</p>`;
 
 function proposalHtml(p: Proposal): string {
+  const effort = effortAt(p.answers.region);
   const phases = p.phases
     .map(
       (phase) => `
@@ -41,7 +47,7 @@ function proposalHtml(p: Proposal): string {
           .map(
             (d) => `<tr>
               <td style="padding: 6px 12px 6px 0; vertical-align: top;">${escapeHtml(d.name)}<br/><span style="color: #56616D; font-size: 13px;">${escapeHtml(d.description)}</span></td>
-              <td style="padding: 6px 0; text-align: right; vertical-align: top; white-space: nowrap;">${money(d.cost)} <span style="color: #999;">(${effort(d.cost)})</span></td>
+              <td style="padding: 6px 0; text-align: right; vertical-align: top; white-space: nowrap;">${d.cost ? `${money(d.cost)} <span style="color: #999;">(${effort(d.cost)})</span>` : ""}</td>
             </tr>`,
           )
           .join("")}`,
@@ -58,6 +64,7 @@ function proposalHtml(p: Proposal): string {
     <h3 style="margin: 0 0 6px;">${escapeHtml(p.projectTitle)}</h3>
     <p style="line-height: 1.6;">${escapeHtml(p.summary)}</p>
     <p><strong>Estimated investment:</strong> ${money(p.totalCost)} <span style="color: #999;">(${effort(p.totalCost)} internal)</span> &nbsp;·&nbsp; <strong>Timeline:</strong> ${weeksLabel(p.totalWeeks)}</p>
+    ${regionLine(p.answers.region)}
     ${p.siteFindings.length ? `<p><strong>Site survey</strong></p><ul>${p.siteFindings.map((f) => `<li>${escapeHtml(f)}</li>`).join("")}</ul>` : ""}
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">${phases}</table>
     ${p.assumptions.length ? `<p><strong>Assumptions</strong></p><ul>${p.assumptions.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul>` : ""}
@@ -66,6 +73,7 @@ function proposalHtml(p: Proposal): string {
 }
 
 function quoteHtml(q: Quote): string {
+  const effort = effortAt(q.region);
   const price = (l: { oneTime: number; monthly: number }) =>
     [l.oneTime ? `${money(l.oneTime)} setup (${effort(l.oneTime)})` : "", l.monthly ? `${money(l.monthly)}/mo (${effort(l.monthly)})` : ""].filter(Boolean).join(" · ");
   return `
@@ -77,6 +85,7 @@ function quoteHtml(q: Quote): string {
       ${q.monthlyTotal ? `<strong>Monthly:</strong> ${money(q.monthlyTotal)}` : ""}
       ${q.weeks ? ` &nbsp;·&nbsp; live in about ${weeksLabel(q.weeks)}` : ""}
     </p>
+    ${regionLine(q.region)}
     ${q.term ? `<p><strong>Contract:</strong> ${escapeHtml(q.term)}${q.contractTotal ? ` · ${money(q.contractTotal)} total` : ""}</p>` : ""}
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
       ${q.lines
@@ -97,7 +106,7 @@ export async function sendContactEmail(data: ContactInput) {
     return { success: false, error: errorMessage };
   }
 
-  const { fullName, email, organizationType, message, proposal, quote } = validated.data;
+  const { fullName, email, organizationType, referredBy, message, proposal, quote } = validated.data;
 
   // ---- Environment -------------------------------------------------------
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -146,6 +155,7 @@ export async function sendContactEmail(data: ContactInput) {
             <h2 style="color: #8A681D;">${proposal ? "New scope from the Zion Agent" : quote ? "New quote request" : "New Contact Form Submission"}</h2>
             <p><strong>From:</strong> ${escapeHtml(fullName)} (${escapeHtml(email)})</p>
             <p><strong>Organization Type:</strong> ${escapeHtml(organizationType || "Not specified")}</p>
+            <p><strong>Referred by:</strong> ${escapeHtml(referredBy || "Not specified")}</p>
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
             <p><strong>Message:</strong></p>
             <p style="white-space: pre-wrap; line-height: 1.6; color: #333;">${escapeHtml(message)}</p>

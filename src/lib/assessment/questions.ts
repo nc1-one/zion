@@ -43,6 +43,14 @@ export const CONTENT_READINESS = [
   { id: "scratch", label: "We're starting from scratch" },
 ] as const;
 
+// Where the client's team works. Zion is in Manila and also covers these time zones.
+export const WORK_REGIONS = [
+  { id: "manila", label: "Philippines or elsewhere in Asia", hint: "Manila time, GMT+8" },
+  { id: "australia", label: "Australia or New Zealand", hint: "AEST to NZST" },
+  { id: "americas", label: "United States, Canada, or Latin America", hint: "Eastern to Pacific" },
+  { id: "uk", label: "United Kingdom or Europe", hint: "GMT to CET" },
+] as const;
+
 export const TIMELINES = [
   { id: "asap", label: "As soon as possible" },
   { id: "quarter", label: "In the next 1–3 months" },
@@ -58,6 +66,7 @@ export type FeatureId = Ids<typeof FEATURES>;
 export type AudienceSizeId = Ids<typeof AUDIENCE_SIZES>;
 export type ContentReadinessId = Ids<typeof CONTENT_READINESS>;
 export type TimelineId = Ids<typeof TIMELINES>;
+export type WorkRegionId = Ids<typeof WORK_REGIONS>;
 
 export const idsOf = <T extends readonly { id: string }[]>(list: T) =>
   list.map((item) => item.id) as unknown as [Ids<T>, ...Ids<T>[]];

@@ -35,7 +35,7 @@ const description = "Software, IT, and marketing for churches, ministries, nonpr
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://zionsystems.dev"),
-  title: "Zion Systems & Build: software for ministry, priced for the mission",
+  title: "Zion Systems & Build: software built with excellence, priced for the mission",
   description,
   alternates: { canonical: "/" },
   openGraph: {
