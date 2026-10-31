@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, Reorder, motion, useDragControls } from "framer-motion";
-import { AArrowDown, AArrowUp, CalendarCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, GripVertical, Layers, Library, Lightbulb, MessageSquare, MessagesSquare, Minus, Pause, PenLine, Play, Plus, Presentation, RefreshCw, RotateCcw, Search, Send, Trash2, X } from "lucide-react";
-import { Avatar, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
+import { AArrowDown, AArrowUp, CalendarCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, GripVertical, Layers, Library, Lightbulb, ListOrdered, MessageSquare, MessagesSquare, Minus, Pause, PenLine, Play, Plus, Presentation, RefreshCw, RotateCcw, Search, Send, Trash2, X } from "lucide-react";
+import { ProtoHeading, Avatar, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, inputClass, textareaClass, useProtoApp, type ProtoAlert, type ProtoSearchItem } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
 // ---- Types ------------------------------------------------------------------------
@@ -40,6 +40,7 @@ const fmt = (iso: string) => {
 };
 const iso = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 const mmss = (secs: number) => `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+const clip = (text: string, max: number) => (text.length <= max ? text : `${text.slice(0, max).replace(/\s+\S*$/, "")}…`);
 
 // The next quarter of Sundays, plus the one weekday service.
 const SUNDAYS = ["2026-11-01", "2026-11-08", "2026-11-15", "2026-11-22", "2026-11-29", "2026-12-06", "2026-12-13", "2026-12-20", "2026-12-27", "2027-01-03", "2027-01-10", "2027-01-17", "2027-01-24"];
@@ -718,6 +719,195 @@ function PreachMode({ s, seriesTitle, onEnd }: { s: Sermon; seriesTitle: string;
   );
 }
 
+// ---- Service order: the run sheet around the sermon -----------------------------------------
+
+type ItemKind = "song" | "reading" | "prayer" | "sermon" | "response" | "other";
+interface ServiceItem { id: string; kind: ItemKind; title: string; key: string; who: string; minutes: number }
+
+const ITEM_KINDS: Record<ItemKind, { label: string; tone: string; bar: string; minutes: number; hint: string }> = {
+  song: { label: "Song", tone: "bg-gold-wash text-gold", bar: "bg-gold", minutes: 4, hint: "Song title" },
+  reading: { label: "Reading", tone: "bg-trace-wash text-trace", bar: "bg-trace", minutes: 2, hint: "Reference, like Psalm 46:1" },
+  prayer: { label: "Prayer", tone: "bg-good/10 text-good", bar: "bg-good", minutes: 2, hint: "Opening, pastoral, or closing prayer" },
+  sermon: { label: "Sermon", tone: "bg-ink text-sheet", bar: "bg-ink", minutes: 0, hint: "" },
+  response: { label: "Response", tone: "bg-warn/10 text-warn", bar: "bg-warn", minutes: 4, hint: "Prayer, communion, or invitation" },
+  other: { label: "Other", tone: "bg-raised text-ink-soft", bar: "bg-mist", minutes: 3, hint: "Welcome, offering, or benediction" },
+};
+const ADDABLE: ItemKind[] = ["song", "reading", "prayer", "response", "other"];
+const SERVING = ["Pastor Dan", "Pastor Joel", "Rina Navarro", "Mark Santos", "Joy Lim", "Carlo Reyes", "Beth Aquino"];
+const SERVICE_START = 9 * 60;
+const clock = (offset: number, suffix = false) => {
+  const t = SERVICE_START + offset;
+  const h = Math.floor(t / 60);
+  return `${h > 12 ? h - 12 : h}:${String(t % 60).padStart(2, "0")}${suffix ? (h >= 12 ? " PM" : " AM") : ""}`;
+};
+
+let itemSeq = 100;
+const newItemId = () => `o${++itemSeq}`;
+const item = (id: string, kind: ItemKind, title: string, who: string, minutes: number, key = ""): ServiceItem => ({ id, kind, title, key, who, minutes });
+// The sermon row takes its title, preacher, and length from the outline.
+const SERVICE: ServiceItem[] = [
+  item("o1", "other", "Welcome and announcements", "Mark Santos", 5),
+  item("o2", "song", "Come, Thou Fount of Every Blessing", "Joy Lim", 5, "G"),
+  item("o3", "song", "Be Thou My Vision", "Joy Lim", 5, "D"),
+  item("o4", "prayer", "Opening prayer", "Pastor Joel", 2),
+  item("o5", "reading", "Ezekiel 36:26-27", "Carlo Reyes", 2),
+  item("o6", "song", "Holy, Holy, Holy", "Joy Lim", 5, "Eb"),
+  item("o7", "sermon", "", "", 0),
+  item("o8", "response", "Prayer for workers and students", "Pastor Dan", 5),
+  item("o9", "other", "Offering", "Beth Aquino", 5),
+  item("o10", "song", "Take My Life and Let It Be", "Joy Lim", 4, "F"),
+  item("o11", "other", "Benediction", "Pastor Dan", 1),
+];
+
+function ServiceOrder({ items, onItems, target, onTarget, sermon, onSermon, notify }: {
+  items: ServiceItem[]; onItems: (items: ServiceItem[]) => void; target: number; onTarget: (minutes: number) => void;
+  sermon: Sermon; onSermon: () => void; notify: (text: string) => void;
+}) {
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const mins = (it: ServiceItem) => (it.kind === "sermon" ? minutesOf(sermon) : it.minutes);
+  const whoOf = (it: ServiceItem) => (it.kind === "sermon" ? sermon.preacher : it.who);
+  const nameOf = (it: ServiceItem) => (it.kind === "sermon" ? sermon.title : it.title) || ITEM_KINDS[it.kind].label;
+  const total = items.reduce((n, it) => n + mins(it), 0);
+  const left = target - total;
+  const span = Math.max(total, target);
+  const keys = items.filter((it) => it.kind === "song").map((it) => it.key || "?");
+  const unassigned = items.filter((it) => !whoOf(it)).length;
+  const team = [...new Set(items.map(whoOf).filter(Boolean))].map((name) => {
+    const mine = items.filter((it) => whoOf(it) === name);
+    return { name, count: mine.length, min: mine.reduce((n, it) => n + mins(it), 0) };
+  });
+
+  const patch = (id: string, p: Partial<ServiceItem>) => onItems(items.map((it) => (it.id === id ? { ...it, ...p } : it)));
+  const move = (i: number, dir: -1 | 1) => {
+    const c = [...items];
+    [c[i], c[i + dir]] = [c[i + dir], c[i]];
+    onItems(c);
+  };
+  const add = (kind: ItemKind) => {
+    const id = newItemId();
+    onItems([...items, { id, kind, title: "", key: "", who: "", minutes: ITEM_KINDS[kind].minutes }]);
+    setFocusId(id);
+    notify(`${ITEM_KINDS[kind].label} added at the end`);
+  };
+  const remove = (it: ServiceItem) => {
+    onItems(items.filter((x) => x.id !== it.id));
+    notify(`${nameOf(it)} removed`);
+  };
+
+  return (
+    <>
+      <ScreenHeader title="Service order" subtitle={`${fmt(sermon.date)} · starts ${clock(0, true)} · ${items.length} items`} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+        <Stat label="Total" value={`${total} min`} sub={left < 0 ? `${-left} min over target` : left === 0 ? "On target" : `${left} min to spare`} tone={left < 0 ? "bad" : "good"} />
+        <Stat label="Ends at" value={clock(total, true)} sub={`Target ${target} min`} />
+        <Stat label="Songs" value={String(keys.length)} sub={keys.length ? `Keys ${keys.join(", ")}` : "None yet"} />
+        <Stat label="Without a person" value={String(unassigned)} sub={unassigned ? "Assign each item" : "Everyone is set"} tone={unassigned ? "bad" : "good"} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_15rem] gap-3 items-start">
+        <div className="min-w-0 flex flex-col gap-3">
+          <Panel
+            title="Length against target"
+            action={
+              <label className="flex items-center gap-1.5 text-[0.72rem] text-mist">
+                Target
+                <select aria-label="Target service length" value={target} onChange={(e) => onTarget(Number(e.target.value))} className={cn(selectClass, "h-7")}>
+                  {[60, 70, 75, 80, 90].map((m) => <option key={m} value={m}>{m} min</option>)}
+                </select>
+              </label>
+            }
+          >
+            <div className="relative py-1">
+              <div role="img" aria-label={`${total} of ${target} minutes planned`} className="flex h-2.5 gap-px rounded-full overflow-hidden bg-raised">
+                {items.map((it) => <span key={it.id} title={`${nameOf(it)} · ${mins(it)} min`} style={{ width: `${(mins(it) / span) * 100}%` }} className={cn("h-full transition-[width] duration-300", ITEM_KINDS[it.kind].bar)} />)}
+              </div>
+              <span aria-hidden className="absolute inset-y-0 -ml-0.5 w-0.5 rounded-full bg-ink" style={{ left: `${(target / span) * 100}%` }} />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+              <Status tone={left < 0 ? "bad" : "good"}>{left < 0 ? `${-left} min over the ${target} min target` : `${total} of ${target} min planned`}</Status>
+              <span className="flex flex-wrap gap-x-2.5 gap-y-1">
+                {(Object.keys(ITEM_KINDS) as ItemKind[]).map((k) => (
+                  <span key={k} className="inline-flex items-center gap-1 text-[0.66rem] text-mist"><span className={cn("w-2 h-2 rounded-full", ITEM_KINDS[k].bar)} />{ITEM_KINDS[k].label}</span>
+                ))}
+              </span>
+            </div>
+          </Panel>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[0.72rem] text-mist mr-0.5">Add</span>
+            {ADDABLE.map((k) => <SmallButton key={k} onClick={() => add(k)}><Plus size={11} /> {ITEM_KINDS[k].label}</SmallButton>)}
+          </div>
+          <ol className="flex flex-col gap-2">
+            {items.map((it, i) => {
+              const k = ITEM_KINDS[it.kind];
+              const name = nameOf(it);
+              const isSermon = it.kind === "sermon";
+              const passage = it.kind === "reading" ? lookup(it.title) : null;
+              const start = items.slice(0, i).reduce((n, x) => n + mins(x), 0);
+              return (
+                <li key={it.id} className={cn("bg-sheet border rounded-lg p-2.5", isSermon ? "border-gold" : "border-rule")}>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                    <span className="w-8 shrink-0 font-mono text-[0.72rem] tabular-nums text-mist">{clock(start)}</span>
+                    <span className={cn("shrink-0 px-1.5 py-0.5 rounded text-[0.66rem] font-semibold", k.tone)}>{k.label}</span>
+                    {isSermon ? (
+                      <button type="button" onClick={onSermon} className="flex-1 min-w-[10rem] truncate text-left text-[0.85rem] font-medium text-ink hover:text-gold cursor-pointer">{sermon.title}</button>
+                    ) : (
+                      <input autoFocus={focusId === it.id} aria-label={`${k.label} ${i + 1}`} value={it.title} placeholder={k.hint} onChange={(e) => patch(it.id, { title: e.target.value })} className="flex-1 min-w-[10rem] h-8 px-2 rounded-md bg-transparent border border-transparent hover:border-rule focus:border-gold text-[0.85rem] font-medium text-ink placeholder:text-mist placeholder:font-normal outline-none" />
+                    )}
+                    {it.kind === "song" && (
+                      <input aria-label={`Key for ${name}`} value={it.key} placeholder="Key" maxLength={4} onChange={(e) => patch(it.id, { key: e.target.value })} className="h-8 w-14 px-2 rounded-md border border-rule bg-sheet text-center font-mono text-[0.78rem] text-ink placeholder:text-mist outline-none focus:border-gold" />
+                    )}
+                  </div>
+                  {passage && (
+                    <p className="mt-1.5 rounded-md bg-trace-wash px-2.5 py-1.5 text-[0.76rem] leading-relaxed text-ink-soft">
+                      {passage.verses.slice(0, 3).map(([v, t]) => <span key={v}><sup className="mr-0.5 text-[0.6rem] font-semibold text-trace">{v}</sup>{t}{" "}</span>)}
+                      <span className="text-[0.64rem] text-trace">World English Bible</span>
+                    </p>
+                  )}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    {isSermon ? (
+                      <span className="text-[0.72rem] text-graphite">{sermon.preacher || "No preacher yet"} · length follows the outline</span>
+                    ) : (
+                      <select aria-label={`Who has ${name}`} value={it.who} onChange={(e) => patch(it.id, { who: e.target.value })} className={cn(selectClass, !it.who && "border-danger/50 text-danger")}>
+                        <option value="">Unassigned</option>
+                        {SERVING.map((p) => <option key={p}>{p}</option>)}
+                      </select>
+                    )}
+                    <span className="ml-auto flex items-center gap-1.5">
+                      {isSermon ? (
+                        <span className="px-2 font-mono text-[0.72rem] text-ink-soft">{mins(it)} min</span>
+                      ) : (
+                        <span className="shrink-0 flex items-center rounded-md border border-rule text-[0.7rem] text-graphite">
+                          <button type="button" aria-label={`Less time for ${name}`} onClick={() => patch(it.id, { minutes: Math.max(1, it.minutes - 1) })} className="w-6 h-6 inline-flex items-center justify-center hover:text-ink cursor-pointer"><Minus size={11} /></button>
+                          <span className="w-12 text-center font-mono tabular-nums">{it.minutes} min</span>
+                          <button type="button" aria-label={`More time for ${name}`} onClick={() => patch(it.id, { minutes: it.minutes + 1 })} className="w-6 h-6 inline-flex items-center justify-center hover:text-ink cursor-pointer"><Plus size={11} /></button>
+                        </span>
+                      )}
+                      <IconButton label={`Move ${name} up`} disabled={i === 0} onClick={() => move(i, -1)}><ChevronUp size={14} /></IconButton>
+                      <IconButton label={`Move ${name} down`} disabled={i === items.length - 1} onClick={() => move(i, 1)}><ChevronDown size={14} /></IconButton>
+                      <IconButton label={`Remove ${name}`} disabled={isSermon} onClick={() => remove(it)}><Trash2 size={13} /></IconButton>
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        <Panel title="Who is serving">
+          <ul className="flex flex-col gap-2.5">
+            {team.map((p) => (
+              <li key={p.name} className="flex items-center gap-2">
+                <Avatar name={p.name} size={22} />
+                <span className="flex-1 min-w-0 truncate text-[0.78rem] text-ink">{p.name}</span>
+                <span className="font-mono text-[0.68rem] text-mist">{p.count} · {p.min}m</span>
+              </li>
+            ))}
+            {team.length === 0 && <li className="text-[0.74rem] text-mist">Nobody assigned yet.</li>}
+          </ul>
+        </Panel>
+      </div>
+    </>
+  );
+}
+
 // ---- The app --------------------------------------------------------------------------------
 
 export function SermonMakerPrototype() {
@@ -727,6 +917,8 @@ export function SermonMakerPrototype() {
   const [threads, setThreads] = useState(THREADS);
   const [ills, setIlls] = useState(ILLUSTRATIONS);
   const [sent, setSent] = useState(SENT);
+  const [service, setService] = useState(SERVICE);
+  const [serviceTarget, setServiceTarget] = useState(75);
 
   // Editor
   const [tab, setTab] = useState<Tab>("outline");
@@ -1008,6 +1200,7 @@ export function SermonMakerPrototype() {
 
   const nav = [
     { id: "week", label: "This Sunday", icon: CalendarCheck },
+    { id: "order", label: "Service order", icon: ListOrdered },
     { id: "sermons", label: "Sermons", icon: PenLine },
     { id: "plan", label: "Calendar", icon: CalendarDays, badge: openSundays.length + unassigned.length },
     { id: "series", label: "Series", icon: Layers },
@@ -1015,6 +1208,26 @@ export function SermonMakerPrototype() {
     { id: "review", label: "Review", icon: MessagesSquare, badge: myOpen.length + reviewQueue.length },
     { id: "library", label: "Library", icon: Library },
     { id: "export", label: "Export", icon: Send },
+  ];
+
+  // Every record with a detail screen, opened the way the lists open it.
+  const search: ProtoSearchItem[] = [
+    ...[...upcoming, ...preached].map((s) => {
+      const label = s.title || "Untitled sermon";
+      return { label, hint: "Sermon", stack: [{ screen: s.status === "Preached" ? "library" : "sermons" }, { screen: "sermon", id: s.id, label }] };
+    }),
+    ...series.map((x) => ({ label: x.title, hint: "Series", stack: [{ screen: "series" }, { screen: "series-detail", id: x.id, label: x.title }] })),
+    ...ills.map((x) => ({ label: x.title, hint: "Illustration", stack: [{ screen: "illustrations" }, { screen: "illustration", id: x.id, label: x.title }] })),
+  ];
+
+  // What the bell lists is what the old count added up: drafts waiting on you, and open comments on yours.
+  const blockName = (s: Sermon | undefined, blockId: string) => {
+    const i = s ? s.blocks.findIndex((b) => b.id === blockId) : -1;
+    return s && i >= 0 ? labelOf(s.blocks, i) : "the sermon";
+  };
+  const inbox: ProtoAlert[] = [
+    ...reviewQueue.map((s) => ({ text: `${s.preacher} wants your review of ${s.title}`, time: "Due Fri, Oct 30", stack: [{ screen: "review" }, { screen: "sermon", id: s.id, label: s.title || "Untitled sermon" }] })),
+    ...myOpen.map((t) => ({ text: `${t.author} on ${blockName(sermon(t.sermonId), t.blockId)}: ${clip(t.text, 48)}`, time: t.when, stack: [{ screen: "review" }] })),
   ];
 
   const cur = app.screen === "sermon" || app.screen === "preach" ? sermon((app.id ?? "").replace(/-preach$/, "")) : undefined;
@@ -1066,7 +1279,7 @@ export function SermonMakerPrototype() {
   const reuseSrc = sermon(reuseDraft.id);
 
   return (
-    <ProtoApp app={app} name="Sermon Maker · Grace Fellowship" user="Pastor Dan Castillo" nav={nav} alerts={myOpen.length + reviewQueue.length}>
+    <ProtoApp app={app} name="Sermon Maker · Grace Fellowship" user="Pastor Dan Castillo" nav={nav} inbox={inbox} search={search}>
       {app.screen === "week" && (
         <>
           <ScreenHeader
@@ -1104,6 +1317,7 @@ export function SermonMakerPrototype() {
                 <SmallButton onClick={() => openSermon(next, "slides")}>Preview slides</SmallButton>
                 <SmallButton onClick={() => openSermon(next, "handout")}>Preview handout</SmallButton>
                 <SmallButton onClick={() => openSermon(next, "guide")}>Group guide</SmallButton>
+                <SmallButton onClick={() => app.section("order")}><ListOrdered size={12} /> Service order</SmallButton>
               </div>
             </Panel>
             <div className="flex flex-col gap-3">
@@ -1132,6 +1346,10 @@ export function SermonMakerPrototype() {
             </div>
           </div>
         </>
+      )}
+
+      {app.screen === "order" && (
+        <ServiceOrder items={service} onItems={setService} target={serviceTarget} onTarget={setServiceTarget} sermon={next} onSermon={() => openSermon(next)} notify={app.notify} />
       )}
 
       {app.screen === "sermons" && (
@@ -1285,7 +1503,7 @@ export function SermonMakerPrototype() {
               </div>
               <article className="mx-auto max-w-[28rem] rounded-md bg-sheet border border-rule p-6 text-ink shadow-[0_8px_24px_-12px_rgba(16,24,40,0.2)]">
                 <div className="flex justify-between text-[0.62rem] text-mist"><span>Grace Fellowship · {seriesOf(cur)?.title}</span><span>{fmt(cur.date)}</span></div>
-                <h5 className="text-[1.3rem] leading-tight font-semibold mt-2">{cur.title || "Untitled sermon"}</h5>
+                <ProtoHeading sub className="text-[1.3rem] leading-tight font-semibold mt-2">{cur.title || "Untitled sermon"}</ProtoHeading>
                 <div className="text-[0.72rem] text-graphite mt-0.5">{cur.passage}{cur.preacher ? ` · ${cur.preacher}` : ""}</div>
                 {cur.bigIdea && <p className="mt-3 rounded bg-gold-wash px-3 py-2 text-[0.78rem]">{cur.bigIdea}</p>}
                 <ol className="mt-4 flex flex-col gap-4 text-[0.82rem]">

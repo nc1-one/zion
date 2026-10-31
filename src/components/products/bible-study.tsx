@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { BarChart3, BookOpen, CalendarDays, Check, ClipboardCheck, FolderOpen, HeartPulse, LayoutDashboard, Megaphone, MessageSquare, Minus, Plus, Search, Send, UserPlus, Users, X } from "lucide-react";
-import { Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
+import { BarChart3, BookOpen, CalendarDays, Check, ClipboardCheck, FolderOpen, GraduationCap, HeartPulse, LayoutDashboard, Megaphone, MessageSquare, Minus, Plus, Search, Send, UserPlus, Users, X } from "lucide-react";
+import { Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp, type ProtoAlert, type ProtoSearchItem } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
 // ---- Types -------------------------------------------------------------------------
@@ -15,7 +15,8 @@ type Repeat = "Does not repeat" | "Weekly" | "Every other week" | "Monthly";
 type Kind = "PDF" | "Slides" | "Video" | "Link";
 type Tone = "good" | "warn" | "bad" | "muted";
 type GroupTab = "overview" | "members" | "events" | "resources" | "chat";
-type ModalKind = "group" | "member" | "event" | "resource" | "message" | "visit" | "request" | "announce" | "assign";
+type ModalKind = "group" | "member" | "event" | "resource" | "message" | "visit" | "request" | "announce" | "assign" | "oneonone";
+type Stage = "Apprentice" | "Leader" | "Coach";
 
 interface Member { name: string; role: Role; phone: string; isNew?: boolean }
 interface Group { id: string; seed: number; name: string; type: GroupType; area: string; day: Day; time: string; stage: string; place: string; meet: string; desc: string; listed: boolean; cap: number; members: Member[]; history: number[]; missed: number; planId: string; planWeek: number }
@@ -26,13 +27,18 @@ interface Resource { id: string; title: string; kind: Kind; groupId: string; lea
 interface ChatMsg { id: string; by: string; body: string; at: string; pinned?: boolean }
 interface Seeker { id: string; name: string; area: string; stage: string; day: Day; since: string; invited: boolean }
 interface CareEntry { id: string; groupId: string; text: string; when: string }
+// last: days since the last 1:1. trained: modules finished.
+interface LeaderRec { id: string; name: string; stage: Stage; groupId: string; coach: string; trained: number; last: number }
 
 // ---- Calendar ----------------------------------------------------------------------
 
 // Day offsets count from Monday, October 26, 2026. Today is Thursday the 29th.
 const TODAY = 3;
 const DAYS: Day[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const monthDay = (o: number) => (26 + o <= 31 ? `Oct ${26 + o}` : `Nov ${26 + o - 31}`);
+const monthDay = (o: number) => {
+  const d = 26 + o;
+  return d > 31 ? `Nov ${d - 31}` : d >= 1 ? `Oct ${d}` : `Sep ${30 + d}`;
+};
 const dateLabel = (o: number) => `${DAYS[o % 7]}, ${monthDay(o)}`;
 const whenLabel = (o: number) => (o === TODAY ? "Today" : o === TODAY + 1 ? "Tomorrow" : dateLabel(o));
 const weekly = (d: Day) => `${{ Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday", Sun: "Sunday" }[d]}s`;
@@ -215,6 +221,27 @@ const CARE_LOG: CareEntry[] = [
   { id: "k3", groupId: "g8", text: "Sent Jun Ocampo the leader handbook", when: "Oct 14" },
 ];
 
+// Leader development: apprentice, leader, coach. Each person meets their coach about once a month.
+const TRAINING = ["Leader basics", "Leading discussion", "Care and follow-up", "Child safety", "Handling conflict", "Raising apprentices"];
+const CADENCE = 30;
+const PASTOR = "Pastor Joel Manalo";
+const PIPELINE: LeaderRec[] = [
+  { id: "l1", name: "Ana Reyes", stage: "Apprentice", groupId: "g1", coach: "Mark Santos", trained: 6, last: 10 },
+  { id: "l2", name: "Bianca Ramos", stage: "Apprentice", groupId: "g3", coach: "Mark Santos", trained: 3, last: 29 },
+  { id: "l3", name: "Kaye Robles", stage: "Apprentice", groupId: "g11", coach: "Rina Navarro", trained: 2, last: 18 },
+  { id: "l4", name: "Liza Bautista", stage: "Apprentice", groupId: "g9", coach: "Grace Villanueva", trained: 1, last: 38 },
+  { id: "l5", name: "Ben Ramos", stage: "Leader", groupId: "g4", coach: "Mark Santos", trained: 6, last: 6 },
+  { id: "l6", name: "Carla Mendoza", stage: "Leader", groupId: "g10", coach: "Grace Villanueva", trained: 6, last: 22 },
+  { id: "l7", name: "Joy Dela Cruz", stage: "Leader", groupId: "g2", coach: "Rina Navarro", trained: 5, last: 15 },
+  { id: "l8", name: "Paolo Garcia", stage: "Leader", groupId: "g3", coach: "Mark Santos", trained: 5, last: 27 },
+  { id: "l9", name: "Dan Castillo", stage: "Leader", groupId: "g5", coach: "Rina Navarro", trained: 4, last: 34 },
+  { id: "l10", name: "Jun Ocampo", stage: "Leader", groupId: "g8", coach: "Grace Villanueva", trained: 3, last: 41 },
+  { id: "l11", name: "Mark Santos", stage: "Coach", groupId: "g1", coach: PASTOR, trained: 6, last: 12 },
+  { id: "l12", name: "Rina Navarro", stage: "Coach", groupId: "g6", coach: PASTOR, trained: 6, last: 9 },
+  { id: "l13", name: "Grace Villanueva", stage: "Coach", groupId: "g7", coach: PASTOR, trained: 6, last: 20 },
+];
+const COACHES = PIPELINE.filter((p) => p.stage === "Coach").map((p) => p.name);
+
 // ---- Health and matching -----------------------------------------------------------
 
 const planOf = (id: string) => PLANS.find((p) => p.id === id) ?? PLANS[0];
@@ -272,6 +299,11 @@ function eventStatus(e: GEvent) {
 const going = (e: GEvent) => Object.values(e.rsvp).filter((r) => r === "yes").length;
 const repeatText = (e: GEvent) => (e.repeat === "Does not repeat" ? "One-time" : e.repeat === "Weekly" ? `Weekly on ${weekly(DAYS[e.day % 7])}` : e.repeat);
 const kindTag = (k: Kind) => <span className="inline-block w-12 text-center font-mono text-[0.6rem] px-1 py-0.5 rounded bg-raised text-graphite shrink-0">{k}</span>;
+const stageChip = (s: Stage) => <span className={cn("inline-block px-1.5 py-0.5 rounded-md text-[0.7rem] font-medium whitespace-nowrap", s === "Coach" ? "bg-gold-wash text-ink" : "bg-raised text-graphite")}>{s}</span>;
+const agoText = (n: number) => (n === 0 ? "Today" : n === 1 ? "Yesterday" : `${n} days ago`);
+const dueOn = (last: number) => monthDay(TODAY - last + CADENCE);
+const nextStep = (p: LeaderRec) => (p.trained < TRAINING.length ? `Next: ${TRAINING[p.trained]}` : p.stage === "Apprentice" ? "Ready to lead" : p.stage === "Leader" ? "Ready to coach" : "Training complete");
+const oneOnOneStatus = (last: number) => (last > CADENCE ? <Status tone="bad">Overdue</Status> : last >= CADENCE - 7 ? <Status tone="warn">Due {dueOn(last)}</Status> : <Status tone="good">Next {dueOn(last)}</Status>);
 const selectSm = "h-8 px-2 rounded-md bg-paper border border-rule text-[0.75rem] text-ink cursor-pointer";
 
 // ---- App -------------------------------------------------------------------------------
@@ -289,6 +321,7 @@ export function BibleStudyPrototype() {
   const [visits, setVisits] = useState<Record<string, string>>({});
   const [careLog, setCareLog] = useState(CARE_LOG);
   const [reminded, setReminded] = useState(false);
+  const [team, setTeam] = useState(PIPELINE);
 
   // View state
   const [typeTab, setTypeTab] = useState<"all" | GroupType>("all");
@@ -306,6 +339,7 @@ export function BibleStudyPrototype() {
   const [threadId, setThreadId] = useState("leaders");
   const [reportTab, setReportTab] = useState<"attendance" | "growth" | "unplaced">("attendance");
   const [reportType, setReportType] = useState<"all" | GroupType>("all");
+  const [stageTab, setStageTab] = useState<"all" | Stage>("all");
 
   // Slide-over forms. A form stays tied to the screen it was opened on.
   const [modal, setModal] = useState<{ kind: ModalKind; at: string } | null>(null);
@@ -319,6 +353,7 @@ export function BibleStudyPrototype() {
   const [jDraft, setJDraft] = useState({ groupId: "g1", name: "", phone: "", note: "" });
   const [aDraft, setADraft] = useState({ body: "", sms: true });
   const [pDraft, setPDraft] = useState({ planId: "john", groupId: "g1" });
+  const [oDraft, setODraft] = useState({ id: "l10", ago: 0, note: "" });
 
   const here = app.stack.map((s) => `${s.screen}:${s.id ?? ""}`).join("/");
   const show = (kind: ModalKind) => setModal({ kind, at: here });
@@ -339,6 +374,7 @@ export function BibleStudyPrototype() {
   const tracked = scored.filter((x) => !x.h.fresh);
   const rate = tracked.reduce((s, x) => s + x.h.rate * x.g.members.length, 0) / Math.max(1, tracked.reduce((s, x) => s + x.g.members.length, 0));
   const unreadTotal = Object.values(unread).reduce((s, n) => s + n, 0);
+  const overdue = team.filter((p) => p.last > CADENCE);
   const bestFor = (s: { area: string; day: Day; stage: string }) => [...groups].sort((a, b) => matchScore(s, b) - matchScore(s, a))[0];
 
   // Updates
@@ -537,6 +573,23 @@ export function BibleStudyPrototype() {
     app.notify(`${g.name} finished ${p.readings[g.planWeek]}`);
   };
 
+  const openOneOnOne = (id?: string) => {
+    setODraft({ id: id ?? [...team].sort((a, b) => b.last - a.last)[0].id, ago: 0, note: "" });
+    show("oneonone");
+  };
+  const saveOneOnOne = () => {
+    const p = team.find((x) => x.id === oDraft.id);
+    if (!p) return;
+    setTeam((l) => l.map((x) => (x.id === p.id ? { ...x, last: oDraft.ago } : x)));
+    log(p.groupId, `${p.coach} met ${p.name} for a 1:1${oDraft.note.trim() ? `. ${oDraft.note.trim()}` : ""}`);
+    close();
+    app.notify(`1:1 with ${p.name} logged. Next one is due ${dueOn(oDraft.ago)}.`);
+  };
+  const assignCoach = (p: LeaderRec, coach: string) => {
+    setTeam((l) => l.map((x) => (x.id === p.id ? { ...x, coach } : x)));
+    app.notify(`${coach} now coaches ${p.name}`);
+  };
+
   const placeSeeker = (s: Seeker) => {
     const g = bestFor(s);
     addMember(g.id, { name: s.name, role: "Member", phone: phoneFor(s.name), isNew: true });
@@ -552,8 +605,22 @@ export function BibleStudyPrototype() {
     { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadTotal || undefined },
     { id: "resources", label: "Resources", icon: FolderOpen },
     { id: "care", label: "Health", icon: HeartPulse, badge: count("bad") || undefined },
+    { id: "leaders", label: "Leaders", icon: GraduationCap, badge: overdue.length || undefined },
     { id: "plans", label: "Reading plans", icon: BookOpen },
     { id: "reports", label: "Reports", icon: BarChart3 },
+  ];
+
+  // Everything with a detail screen, opened the same way the screens open it.
+  const search: ProtoSearchItem[] = [
+    ...groups.map((g) => ({ label: g.name, hint: "Group", stack: [{ screen: "groups" }, { screen: "group", id: g.id, label: g.name }] })),
+    ...[...events].sort(byWhen).map((e) => ({ label: `${e.title} · ${monthDay(e.day)}`, hint: "Event", stack: [{ screen: "events" }, { screen: "event", id: e.id, label: e.title }] })),
+    ...PLANS.map((p) => ({ label: p.title, hint: "Reading plan", stack: [{ screen: "plans" }, { screen: "plan", id: p.id, label: p.title }] })),
+  ];
+
+  // Groups that need care, then join requests waiting, oldest first.
+  const inbox: ProtoAlert[] = [
+    ...scored.filter((x) => band(x.h).tone === "bad").map(({ g, h }) => ({ text: `${g.name} needs care. ${reasons(h).split(" · ")[0]}`, time: "This week", stack: [{ screen: "groups" }, { screen: "group", id: g.id, label: g.name }] })),
+    ...[...requests].sort((a, b) => b.days - a.days).map((r) => ({ text: `${r.name} wants to join ${groupOf(r.groupId).name}`, time: r.days === 0 ? "Just now" : `${r.days} ${r.days === 1 ? "day" : "days"} ago`, stack: [{ screen: "finder" }] })),
   ];
 
   const healthCell = (h: Health) => (
@@ -596,7 +663,7 @@ export function BibleStudyPrototype() {
   const plan = app.screen === "plan" ? PLANS.find((p) => p.id === app.id) : undefined;
 
   return (
-    <ProtoApp app={app} name="Bible Study Groups · Grace Fellowship" user="Pastor Joel Manalo" nav={nav} alerts={count("bad") + requests.length}>
+    <ProtoApp app={app} name="Bible Study Groups · Grace Fellowship" user="Pastor Joel Manalo" nav={nav} inbox={inbox} search={search}>
       {/* ---- Overview ---- */}
       {app.screen === "dashboard" && (
         <>
@@ -1106,6 +1173,50 @@ export function BibleStudyPrototype() {
         </>
       )}
 
+      {/* ---- Leaders ---- */}
+      {app.screen === "leaders" && (() => {
+        const inStage = (st: Stage) => team.filter((p) => p.stage === st);
+        const trained = (list: LeaderRec[]) => list.filter((p) => p.trained === TRAINING.length).length;
+        return (
+          <>
+            <ScreenHeader title="Leaders" subtitle={`Apprentice, leader, coach · ${team.length} people · ${overdue.length} overdue for a 1:1`} action={<PrimaryButton onClick={() => openOneOnOne()}><MessageSquare size={14} /> Log a 1:1</PrimaryButton>} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+              <Stat label="Apprentices" value={String(inStage("Apprentice").length)} sub={`${trained(inStage("Apprentice"))} ready to lead`} />
+              <Stat label="Leaders" value={String(inStage("Leader").length)} sub={`${trained(inStage("Leader"))} fully trained`} />
+              <Stat label="Coaches" value={String(inStage("Coach").length)} sub={`${team.length - inStage("Coach").length} people coached`} />
+              <Stat label="1:1s overdue" value={String(overdue.length)} sub={`Over ${CADENCE} days since the last`} tone={overdue.length ? "bad" : "good"} />
+            </div>
+            <div className="mb-3 overflow-x-auto max-w-full">
+              <Segmented id="bs-stage" value={stageTab} onChange={setStageTab} options={[{ id: "all", label: "All" }, { id: "Apprentice", label: "Apprentices" }, { id: "Leader", label: "Leaders" }, { id: "Coach", label: "Coaches" }]} />
+            </div>
+            <Table
+              rows={team.filter((p) => stageTab === "all" || p.stage === stageTab)}
+              rowKey={(p) => p.id}
+              empty="No one at this stage yet."
+              columns={[
+                { key: "name", label: "Person", render: (p) => <span className="flex items-center gap-2"><Avatar name={p.name} size={24} /><span><span className="block text-ink">{p.name}</span><span className="block text-[0.7rem] text-mist">{stageChip(p.stage)} {groupOf(p.groupId).name}</span></span></span> },
+                { key: "train", label: "Training", hideOnMobile: true, render: (p) => <span><span className="flex items-center gap-2"><Meter value={p.trained} max={TRAINING.length} className="w-12" /><span className="font-mono text-[0.72rem] text-graphite">{p.trained}/{TRAINING.length}</span></span><span className="block text-[0.68rem] text-mist mt-0.5">{nextStep(p)}</span></span> },
+                {
+                  key: "coach",
+                  label: "Coach",
+                  hideOnMobile: true,
+                  render: (p) =>
+                    p.stage === "Coach" ? (
+                      <span className="text-ink-soft">{p.coach}</span>
+                    ) : (
+                      <select value={p.coach} aria-label={`Coach for ${p.name}`} onChange={(e) => assignCoach(p, e.target.value)} className="h-7 px-1.5 max-w-full rounded-md bg-paper border border-rule text-[0.74rem] text-ink cursor-pointer">
+                        {COACHES.map((c) => <option key={c}>{c}</option>)}
+                      </select>
+                    ),
+                },
+                { key: "last", label: "Last 1:1", render: (p) => <span className="flex flex-col items-start gap-0.5"><span className="text-ink">{agoText(p.last)}</span>{oneOnOneStatus(p.last)}</span> },
+                { key: "act", label: "", align: "right", render: (p) => <SmallButton label={`Log a 1:1 with ${p.name}`} onClick={() => openOneOnOne(p.id)}><MessageSquare size={12} /><span className="hidden lg:inline">Log 1:1</span></SmallButton> },
+              ]}
+            />
+          </>
+        );
+      })()}
+
       {/* ---- Reading plans ---- */}
       {app.screen === "plans" && (
         <>
@@ -1371,6 +1482,13 @@ export function BibleStudyPrototype() {
         <Field label="Plan"><select value={pDraft.planId} onChange={(e) => setPDraft({ ...pDraft, planId: e.target.value })} className={inputClass}>{PLANS.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select></Field>
         <Field label="Group"><select value={pDraft.groupId} onChange={(e) => setPDraft({ ...pDraft, groupId: e.target.value })} className={inputClass}>{groups.map((g) => <option key={g.id} value={g.id}>{g.name} · now on {planOf(g.planId).title}</option>)}</select></Field>
         <p className="text-[0.72rem] text-mist">The group starts at week 1. Members get the readings in the app each week.</p>
+      </ProtoModal>
+
+      <ProtoModal open={isOpen("oneonone")} title="Log a 1:1" onClose={close} footer={<PrimaryButton onClick={saveOneOnOne}><Check size={14} /> Save 1:1</PrimaryButton>}>
+        <Field label="With"><select value={oDraft.id} onChange={(e) => setODraft({ ...oDraft, id: e.target.value })} className={inputClass}>{team.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.stage}{p.last > CADENCE ? " · overdue" : ""}</option>)}</select></Field>
+        <Field label="When"><select value={oDraft.ago} onChange={(e) => setODraft({ ...oDraft, ago: Number(e.target.value) })} className={inputClass}>{Array.from({ length: 8 }, (_, n) => <option key={n} value={n}>{n === 0 ? "Today" : n === 1 ? "Yesterday" : `${DAYS[(TODAY - n + 7) % 7]}, ${monthDay(TODAY - n)}`}</option>)}</select></Field>
+        <Field label="What you talked about"><textarea value={oDraft.note} onChange={(e) => setODraft({ ...oDraft, note: e.target.value })} placeholder="Wins, struggles, and the next step" className={textareaClass} /></Field>
+        <p className="text-[0.72rem] text-mist">The next 1:1 is due {dueOn(oDraft.ago)}. This goes on the care log.</p>
       </ProtoModal>
     </ProtoApp>
   );

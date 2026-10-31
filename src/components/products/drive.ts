@@ -30,6 +30,7 @@ export interface ProtoDrive {
   target?: { key: number; stack: StackEntry[] };
   brand?: ProtoBrand;
   framed?: boolean;
+  page?: boolean; // full-page demo: fills its container and drives the browser's back button
   onPath?: (path: string) => void;
 }
 

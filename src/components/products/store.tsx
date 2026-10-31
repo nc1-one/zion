@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  ProtoHeading,
   Avatar,
   Bars,
   Field,
@@ -34,6 +35,8 @@ import {
   PrimaryButton,
   ProtoApp,
   ProtoModal,
+  type ProtoAlert,
+  type ProtoSearchItem,
   ScreenHeader,
   Segmented,
   SmallButton,
@@ -302,6 +305,8 @@ const ADJUSTMENTS: Adjustment[] = [
   { id: "a1", variantId: "p3a", loc: "Cubao roastery", delta: 30, reason: "Roast batch received", at: "Oct 27", by: "Jun Pascual" },
 ];
 const REASONS = ["Roast batch received", "Count correction", "Damaged or expired", "Transfer between locations"];
+// When each starting low-stock variant dropped under the line. One that drops during a visit reads "Just now".
+const LOW_SINCE: Record<string, string> = { p2b: "Oct 26", p4a: "Oct 28", p7b: "Oct 27", p9a: "Oct 25", p10b: "Oct 27" };
 
 const PAYMENTS: PayMethod[] = [
   { id: "gcash", name: "GCash", detail: "E-wallet · settles next banking day", fee: "2.0% per order", on: true },
@@ -1084,6 +1089,45 @@ export function StorePrototype() {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
+  // ---- Search (⌘K) and the bell ----
+  // Every record with its own screen, opened the way the app opens it: section first, then the record.
+  // `text` is what the palette matches on; the stack keeps the id and label the screen expects.
+  const found = (hint: string, root: string, screen: string, id: string, label: string, text = label): ProtoSearchItem => ({ label: text, hint, stack: [{ screen: root }, { screen, id, label }] });
+  const search: ProtoSearchItem[] = [
+    ...products.map((p) => found("Product", "products", "product", p.id, p.title)),
+    ...customers.map((c) => found("Customer", "customers", "customer", c.id, c.name)),
+    ...collections.map((c) => found("Collection", "inventory", "collection", c.id, c.title)),
+    ...discounts.map((d) => found("Discount", "discounts", "discount", d.id, d.code)),
+    ...campaigns.map((c) => found("Campaign", "marketing", "campaign", c.id, c.name)),
+    // Orders last, so people and products win the first few rows. Searching a name still finds their orders.
+    ...orders.slice(0, 30).map((o) => {
+      const who = customer(o.customerId)?.name;
+      return found("Order", "orders", "order", o.id, o.id, who ? `${o.id} · ${who}` : o.id);
+    }),
+  ];
+
+  // The bell lists exactly what the badge used to count: failed renewals, then variants low on stock.
+  const inbox: ProtoAlert[] = [
+    ...failedSubs.map((s) => {
+      const who = customer(s.customerId);
+      return {
+        text: `Renewal failed for ${who?.name ?? "a subscriber"}`,
+        time: `Due ${s.next} · ${s.method}`,
+        stack: who ? [{ screen: "customers" }, { screen: "customer", id: who.id, label: who.name }] : [{ screen: "marketing" }],
+      };
+    }),
+    ...[...lowVariants]
+      .sort((a, b) => available(a.v) - available(b.v))
+      .map(({ p, v: x }) => {
+        const left = available(x);
+        return {
+          text: `${p.variants.length > 1 ? `${p.title}, ${x.name}` : p.title}: ${left <= 0 ? "out of stock" : `${left} left`}`,
+          time: LOW_SINCE[x.id] ?? "Just now",
+          stack: [{ screen: "inventory" }, { screen: "product", id: p.id, label: p.title }],
+        };
+      }),
+  ];
+
   const lineRow = (l: Line) => {
     const hit = find(l.variantId);
     return (
@@ -1100,7 +1144,7 @@ export function StorePrototype() {
   };
 
   return (
-    <ProtoApp app={app} name="Online Store · Kapwa Coffee Co." user="Rhea Domingo" nav={nav} alerts={lowVariants.length + failedSubs.length}>
+    <ProtoApp app={app} name="Online Store · Kapwa Coffee Co." user="Rhea Domingo" nav={nav} inbox={inbox} search={search}>
       {/* ---------------- Home ---------------- */}
       {app.screen === "home" && (
         <>
@@ -1333,7 +1377,7 @@ export function StorePrototype() {
           <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h4 className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{order.id}</h4>
+                <ProtoHeading className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{order.id}</ProtoHeading>
                 <PayBadge o={order} />
                 <FulfilBadge o={order} />
                 {order.archived && <Status tone="muted">Archived</Status>}
@@ -1524,7 +1568,7 @@ export function StorePrototype() {
             <div className="flex items-center gap-3 min-w-0">
               <Thumb tone={product.tone} label={product.title} size={40} />
               <div className="min-w-0">
-                <h4 className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em] truncate">{product.title}</h4>
+                <ProtoHeading className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em] truncate">{product.title}</ProtoHeading>
                 <div className="mt-1 flex items-center gap-2">
                   <Status tone={product.status === "Active" ? "good" : "muted"}>{product.status}</Status>
                   <span className="text-[0.74rem] text-mist">{`${product.type} · ${count(product.variants.length, "variant")}`}</span>
@@ -1922,7 +1966,7 @@ export function StorePrototype() {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Avatar name={person.name} size={48} />
             <div className="flex-1 min-w-0">
-              <h4 className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{person.name}</h4>
+              <ProtoHeading className="text-[1.2rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{person.name}</ProtoHeading>
               <p className="text-[0.76rem] text-mist mt-0.5">{`${person.city} · Customer since ${person.since}`}</p>
             </div>
             <SmallButton onClick={() => openDraft(person.id)}>
@@ -2118,7 +2162,7 @@ export function StorePrototype() {
           <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h4 className={cn("text-[1.2rem] leading-tight font-semibold text-ink", discount.method === "Code" && "font-mono")}>{discount.code}</h4>
+                <ProtoHeading className={cn("text-[1.2rem] leading-tight font-semibold text-ink", discount.method === "Code" && "font-mono")}>{discount.code}</ProtoHeading>
                 <Status tone={discount.status === "Active" ? "good" : discount.status === "Scheduled" ? "warn" : "muted"}>{discount.status}</Status>
               </div>
               <p className="text-[0.78rem] text-mist mt-0.5">{summary(discount)}</p>

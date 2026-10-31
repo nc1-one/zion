@@ -11,16 +11,20 @@ import {
   FileText,
   LayoutDashboard,
   Lock,
+  MapPin,
   Minus,
+  Navigation,
   Package,
   PackageCheck,
   Pencil,
   Plus,
   Printer,
   Receipt,
+  Route,
   Search,
   Send,
   ShoppingCart,
+  Signature,
   Store,
   Truck,
   Users,
@@ -28,7 +32,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, inputClass, useProtoApp, type Column } from "./ProtoKit";
+import { ProtoHeading, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, inputClass, useProtoApp, type Column, type ProtoAlert, type ProtoSearchItem } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
 // ---- Formatting ------------------------------------------------------------------
@@ -46,6 +50,8 @@ const lastNo = (ids: (string | undefined)[], prefix: string, floor = 0) =>
 const unitOne = (unit: string) => unit.replace(/e?s$/, "");
 const roundQty = (n: number) => (n >= 50 ? Math.ceil(n / 10) * 10 : Math.ceil(n));
 const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
+// Times on the dispatch board are minutes after midnight.
+const clock = (m: number) => `${Math.floor(m / 60) % 12 || 12}:${String(m % 60).padStart(2, "0")} ${m < 720 ? "AM" : "PM"}`;
 
 // Ids for records created in the prototype. Only called from event handlers.
 let seq = 100;
@@ -95,6 +101,9 @@ interface Bill { id: string; supplierId: string; poId?: string; ref: string; iss
 interface Payment { id: string; date: number; contactId: string; dir: "in" | "out"; method: Method; amount: number; docId: string; ref: string }
 interface Move { id: string; date: number; ref: string; itemId: string; qty: number; from: string; to: string }
 interface Transfer { id: string; from: Branch; to: Branch; date: number; lines: { itemId: string; qty: number }[]; status: "Ready" | "In transit" | "Done" }
+interface Truck { id: string; name: string; model: string; plate: string; driver: string }
+type StopStatus = "Loading" | "On the road" | "Delivered";
+interface Run { saleId: string; truckId: string; status: StopStatus; eta: number; at?: string; signedBy?: string }
 interface PosReceipt { id: string; time: string; branch: Branch; lines: Line[]; method: "Cash" | "GCash" | "Card" }
 
 type SaleFilter = "all" | "quotes" | "orders" | "toinvoice" | "invoiced";
@@ -165,11 +174,11 @@ const SALES: Sale[] = [
   { id: "SO-2423", customerId: "c10", branch: "Pasig", date: -1, stage: "sent", lines: [L("i2", 300), L("i3", 200), L("i1", 400)], trail: tr(["Quotation created by Aileen Cruz", -1], ["Sent to Bea Torres by email", -1]) },
   { id: "SO-2422", customerId: "c11", branch: "Quezon City", date: -2, stage: "sent", lines: [L("i9", 1500), L("i1", 150), L("i10", 8)], trail: tr(["Quotation created by Jun Reyes", -2], ["Sent to Ptr. Daniel Navarro by email", -2], ["Customer opened the quotation", -1]) },
   { id: "SO-2421", customerId: "c9", branch: "Pasig", date: -2, stage: "sent", lines: [L("i5", 12), L("i13", 24), L("i6", 40)], trail: tr(["Quotation created by Aileen Cruz", -2], ["Sent to Vincent Lim by email", -2], ["Customer opened the quotation", 0]) },
-  { id: "SO-2420", customerId: "c7", branch: "Quezon City", date: -3, stage: "order", confirmed: -1, lines: [L("i7", 20), L("i14", 120)], trail: tr(["Quotation created by Jun Reyes", -3], ["Sent to Arnel Bayani by email", -3], ["Confirmed, stock reserved at Quezon City", -1]) },
+  { id: "SO-2420", customerId: "c7", branch: "Quezon City", date: -3, stage: "order", confirmed: -1, lines: [L("i7", 20), L("i14", 120)], trail: tr(["Quotation created by Jun Reyes", -3], ["Sent to Arnel Bayani by email", -3], ["Confirmed, stock reserved at Quezon City", -1], ["Assigned to Truck 1, Ador Pascual", -1], ["Out for delivery on Truck 1", 0]) },
   { id: "SO-2419", customerId: "c5", branch: "Quezon City", date: 0, stage: "order", confirmed: 0, lines: [L("i7", 30), L("i1", 50)], trail: tr(["Quotation created by Jun Reyes", -1], ["Confirmed by phone, stock reserved at Quezon City", 0]) },
-  { id: "SO-2418", customerId: "c1", branch: "Quezon City", date: 0, stage: "order", confirmed: 0, lines: [L("i1", 120), L("i3", 60)], trail: tr(["Quotation created by Jun Reyes", -1], ["Sent to Ramon Dela Cruz by email", -1], ["Confirmed, stock reserved at Quezon City", 0]) },
-  { id: "SO-2417", customerId: "c2", branch: "Pasig", date: 0, stage: "order", confirmed: 0, lines: [L("i4", 40), L("i5", 6)], trail: tr(["Quotation created by Aileen Cruz", 0], ["Confirmed, stock reserved at Pasig", 0]) },
-  { id: "SO-2416", customerId: "c3", branch: "Quezon City", date: -2, stage: "delivered", confirmed: -2, delivery: "QC/OUT/0231", lines: [L("i2", 200), L("i8", 50), L("i1", 80)], trail: tr(["Quotation created by Jun Reyes", -3], ["Confirmed, stock reserved at Quezon City", -2], ["Delivered, QC/OUT/0231, signed by R. Garcia", -1]) },
+  { id: "SO-2418", customerId: "c1", branch: "Quezon City", date: 0, stage: "order", confirmed: 0, lines: [L("i1", 120), L("i3", 60)], trail: tr(["Quotation created by Jun Reyes", -1], ["Sent to Ramon Dela Cruz by email", -1], ["Confirmed, stock reserved at Quezon City", 0], ["Assigned to Truck 2, Bong Agustin", 0]) },
+  { id: "SO-2417", customerId: "c2", branch: "Pasig", date: 0, stage: "order", confirmed: 0, lines: [L("i4", 40), L("i5", 6)], trail: tr(["Quotation created by Aileen Cruz", 0], ["Confirmed, stock reserved at Pasig", 0], ["Assigned to Truck 2, Bong Agustin", 0]) },
+  { id: "SO-2416", customerId: "c3", branch: "Quezon City", date: -2, stage: "delivered", confirmed: -2, delivery: "QC/OUT/0231", lines: [L("i2", 200), L("i8", 50), L("i1", 80)], trail: tr(["Quotation created by Jun Reyes", -3], ["Confirmed, stock reserved at Quezon City", -2], ["Out for delivery on Truck 1", 0], ["Delivered, QC/OUT/0231, signed by R. Garcia", 0]) },
   { id: "SO-2415", customerId: "c4", branch: "Pasig", date: -4, stage: "invoiced", confirmed: -4, delivery: "PSG/OUT/0118", invoiceId: "INV-3050", lines: [L("i6", 60), L("i5", 4)], trail: sold("Aileen Cruz", -4, "Pasig", "PSG/OUT/0118", "INV-3050") },
   { id: "SO-2414", customerId: "c5", branch: "Quezon City", date: -8, stage: "invoiced", confirmed: -8, delivery: "QC/OUT/0228", invoiceId: "INV-3047", lines: [L("i9", 2000), L("i14", 150)], trail: sold("Jun Reyes", -8, "Quezon City", "QC/OUT/0228", "INV-3047") },
   { id: "SO-2413", customerId: "c6", branch: "Pasig", date: -10, stage: "invoiced", confirmed: -10, delivery: "PSG/OUT/0116", invoiceId: "INV-3046", lines: [L("i4", 25)], trail: sold("Aileen Cruz", -10, "Pasig", "PSG/OUT/0116", "INV-3046") },
@@ -228,9 +237,9 @@ const MOVES: Move[] = [
   mv(0, "OR-000484", "i5", 2, "QC/Stock", "Customers"),
   mv(0, "OR-000484", "i13", 2, "QC/Stock", "Customers"),
   mv(0, "OR-000483", "i1", 10, "PSG/Stock", "Customers"),
-  mv(-1, "QC/OUT/0231", "i2", 200, "QC/Stock", "Customers"),
-  mv(-1, "QC/OUT/0231", "i8", 50, "QC/Stock", "Customers"),
-  mv(-1, "QC/OUT/0231", "i1", 80, "QC/Stock", "Customers"),
+  mv(0, "QC/OUT/0231", "i2", 200, "QC/Stock", "Customers"),
+  mv(0, "QC/OUT/0231", "i8", 50, "QC/Stock", "Customers"),
+  mv(0, "QC/OUT/0231", "i1", 80, "QC/Stock", "Customers"),
   mv(-1, "INT/0043", "i14", 100, "QC/Stock", "In transit"),
   mv(-2, "QC/IN/0117", "i6", 200, "Vendors", "QC/Stock"),
   mv(-2, "INT/0042", "i3", 40, "In transit", "PSG/Stock"),
@@ -264,6 +273,24 @@ const RECEIPTS: PosReceipt[] = [
   { id: "OR-000479", time: "8:47 AM", branch: "Quezon City", lines: [L("i7", 3)], method: "Cash" },
   { id: "OR-000478", time: "8:12 AM", branch: "Pasig", lines: [L("i12", 4), L("i4", 6)], method: "GCash" },
 ];
+
+const TRUCKS: Truck[] = [
+  { id: "t1", name: "Truck 1", model: "Isuzu Elf", plate: "NDA 4821", driver: "Ador Pascual" },
+  { id: "t2", name: "Truck 2", model: "Hino 300", plate: "NCX 7094", driver: "Bong Agustin" },
+  { id: "t3", name: "Truck 3", model: "Mitsubishi L300", plate: "ZQT 318", driver: "Rene Lacson" },
+];
+const RUNS: Run[] = [
+  { saleId: "SO-2416", truckId: "t1", status: "Delivered", eta: 530, at: "8:50 AM", signedBy: "R. Garcia" },
+  { saleId: "SO-2420", truckId: "t1", status: "On the road", eta: 735 },
+  { saleId: "SO-2418", truckId: "t2", status: "Loading", eta: 795 },
+  { saleId: "SO-2417", truckId: "t2", status: "Loading", eta: 900 },
+];
+const STOP_TONE: Record<StopStatus, "good" | "warn" | "muted"> = { Loading: "muted", "On the road": "warn", Delivered: "good" };
+// Street and lot for each customer's delivery site; the city comes from the contact.
+const SITE: Record<string, string> = {
+  c1: "Blk 6 Lot 14 Regalado Ave", c2: "22 West Capitol Dr", c3: "Site 3, Batasan Rd", c4: "108 Ortigas Ave Ext", c5: "55 Quirino Hwy", c6: "9 Evangelista St",
+  c7: "Phase 2, Bayani Homes site", c8: "17 Aurora Blvd", c9: "86 Felix Ave", c10: "ADB Ave, tower 2 site", c11: "Church grounds, Sumulong Hwy",
+};
 
 const CASH: Record<Account, number> = { "BDO current": 1284500, "BPI savings": 642300, "GCash and Maya": 86420, "Cash drawers": 48650 };
 
@@ -380,7 +407,7 @@ function Tile({ label, value, note, on, alert, onClick }: { label: string; value
   );
 }
 
-const Heading = ({ children }: { children: React.ReactNode }) => <h5 className="text-[0.8rem] font-semibold text-ink mb-2">{children}</h5>;
+const Heading = ({ children }: { children: React.ReactNode }) => <ProtoHeading sub className="text-[0.8rem] font-semibold text-ink mb-2">{children}</ProtoHeading>;
 const linkClass = "text-gold-bright hover:text-ink cursor-pointer text-left";
 
 // Paired bars for revenue against expenses.
@@ -414,9 +441,18 @@ function PairBars({ data }: { data: typeof MONTHS }) {
   );
 }
 
+// A customer's signature on a delivery. Draws itself when freshly signed.
+function SignatureMark({ className, draw }: { className?: string; draw?: boolean }) {
+  return (
+    <svg viewBox="0 0 160 50" className={cn("text-ink", className)} role="img" aria-label="Customer signature">
+      <motion.path d="M6 34 C 20 6, 30 46, 44 24 S 66 8, 74 30 S 98 44, 108 18 S 132 30, 154 22" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" initial={draw ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 0.8 }} />
+    </svg>
+  );
+}
+
 // ---- The app -------------------------------------------------------------------------
 
-type Modal = "doc" | "pay" | "transfer" | "rule" | "contact" | null;
+type Modal = "doc" | "pay" | "transfer" | "rule" | "contact" | "pod" | null;
 interface DocForm { kind: "sale" | "purchase"; partyId: string; branch: Branch; lines: { itemId: string; qty: number }[]; pick: string; pickQty: string }
 interface PayForm { kind: "invoice" | "bill"; docId: string; amount: string; method: Method; ref: string }
 
@@ -432,6 +468,7 @@ export function ErpPrototype() {
   const [moves, setMoves] = useState(MOVES);
   const [transfers, setTransfers] = useState(TRANSFERS);
   const [receipts, setReceipts] = useState(RECEIPTS);
+  const [runs, setRuns] = useState(RUNS);
   const [cash, setCash] = useState(CASH);
   const [reminded, setReminded] = useState<string[]>([]);
   const [closeDone, setCloseDone] = useState<string[]>([]);
@@ -470,6 +507,7 @@ export function ErpPrototype() {
   const [tf, setTf] = useState<{ from: Branch; itemId: string; qty: string }>({ from: "Quezon City", itemId: "i12", qty: "" });
   const [rf, setRf] = useState<{ itemId: string; values: Record<Branch, { min: string; max: string }> }>({ itemId: "i1", values: { "Quezon City": { min: "", max: "" }, Pasig: { min: "", max: "" } } });
   const [cf, setCf] = useState({ name: "", kind: "Customer" as "Customer" | "Supplier", person: "", phone: "", city: "", terms: "30" });
+  const [pod, setPod] = useState({ saleId: "", by: "", signed: false });
   const closeModal = () => setModal(null);
 
   // ---- Lookups and derived numbers ----
@@ -503,6 +541,12 @@ export function ErpPrototype() {
   const payable = (sid: string) => sum(openBills.filter((b) => b.supplierId === sid).map(balance));
   const overdueOf = (id: string) => sum(overdueInv.filter((i) => i.customerId === id).map(balance)) + sum(openBills.filter((b) => b.supplierId === id && b.due < 0).map(balance));
   const overLimit = (c: Contact | undefined, extra: number) => (c?.credit ? receivable(c.id) + extra - c.credit : 0);
+
+  // Confirmed orders with no truck yet, and the stops still to make today.
+  const unassigned = sales.filter((s) => s.stage === "order" && !runs.some((r) => r.saleId === s.id));
+  const stopsLeft = runs.filter((r) => r.status !== "Delivered");
+  const onRoad = runs.filter((r) => r.status === "On the road");
+  const trucksOut = new Set(onRoad.map((r) => r.truckId)).size;
 
   const stockValue = sum(items.map((i) => (i.stock["Quezon City"] + i.stock.Pasig) * i.cost));
   const salesToday = sum(receipts.map((r) => grand(r.lines))) + sum(sales.filter((s) => s.confirmed === 0).map((s) => grand(s.lines)));
@@ -548,14 +592,16 @@ export function ErpPrototype() {
     patchSale(s.id, { stage: "order", confirmed: 0 }, `Confirmed, stock reserved at ${s.branch}`);
     app.notify(short ? `${s.id} confirmed. ${item(short.itemId)?.name} is short at ${s.branch}; reordering picks it up.` : `${s.id} confirmed. Stock reserved at ${s.branch}.`);
   };
-  const deliverSale = (s: Sale) => {
+  const deliverSale = (s: Sale, signedBy?: string) => {
     const prefix = `${CODE[s.branch]}/OUT/`;
     const ref = pad(prefix, lastNo(sales.map((x) => x.delivery), prefix) + 1);
     shiftStock(s.lines.map((l) => ({ itemId: l.itemId, branch: s.branch, delta: -l.qty })));
     addMoves(s.lines.map((l) => ({ date: 0, ref, itemId: l.itemId, qty: l.qty, from: LOC[s.branch], to: "Customers" })));
-    patchSale(s.id, { stage: "delivered", delivery: ref }, `Delivered, ${ref}`);
+    patchSale(s.id, { stage: "delivered", delivery: ref }, signedBy ? `Delivered, ${ref}, signed by ${signedBy}` : `Delivered, ${ref}`);
+    setRuns((l) => l.map((r) => (r.saleId === s.id ? { ...r, status: "Delivered", at: "Just now", signedBy } : r)));
     const low = s.lines.map((l) => item(l.itemId)).find((i) => i && i.stock[s.branch] - qtyOf(s.lines, i.id) < i.rule[s.branch].min);
-    app.notify(`${ref} validated. Stock updated at ${s.branch}${low ? `; ${low.name} is now below minimum` : ""}.`);
+    const tail = low ? `; ${low.name} is now below minimum` : "";
+    app.notify(signedBy ? `${s.id} delivered, signed by ${signedBy}. ${ref} validated; stock updated at ${s.branch}${tail}.` : `${ref} validated. Stock updated at ${s.branch}${tail}.`);
   };
   const invoiceSale = (s: Sale) => {
     const id = pad("INV-", lastNo(invoices.map((i) => i.id), "INV-") + 1);
@@ -563,6 +609,40 @@ export function ErpPrototype() {
     setInvoices((list) => [{ id, customerId: s.customerId, saleId: s.id, issued: 0, due: terms, lines: s.lines, paid: 0, log: [{ text: `Posted from ${s.id} and emailed`, date: 0 }] }, ...list]);
     patchSale(s.id, { stage: "invoiced", invoiceId: id }, `Invoiced, ${id}`);
     app.notify(`${id} posted to ${nameOf(s.customerId)}: ${peso(grand(s.lines))} with VAT, due ${day(terms)}`);
+  };
+
+  // ---- Deliveries: assign to a truck, send out, confirm with a signature ----
+  const addressOf = (id: string) => [SITE[id], contact(id)?.city].filter(Boolean).join(", ");
+  const assignStop = (s: Sale, truckId: string) => {
+    const t = TRUCKS.find((x) => x.id === truckId);
+    if (!t) return;
+    const eta = Math.max(750, Math.max(0, ...runs.filter((r) => r.truckId === t.id && r.status !== "Delivered").map((r) => r.eta)) + 90);
+    setRuns((l) => [...l, { saleId: s.id, truckId: t.id, status: "Loading", eta }]);
+    patchSale(s.id, {}, `Assigned to ${t.name}, ${t.driver}`);
+    app.notify(`${s.id} loaded on ${t.name}. ${t.driver} should reach ${nameOf(s.customerId)} around ${clock(eta)}.`);
+  };
+  const unassignStop = (r: Run) => {
+    const t = TRUCKS.find((x) => x.id === r.truckId);
+    setRuns((l) => l.filter((x) => x.saleId !== r.saleId));
+    patchSale(r.saleId, {}, `Taken off ${t?.name}`);
+    app.notify(`${r.saleId} taken off ${t?.name}. Assign it to another truck.`);
+  };
+  const sendOut = (t: Truck) => {
+    const going = runs.filter((r) => r.truckId === t.id && r.status === "Loading");
+    if (!going.length) return;
+    setRuns((l) => l.map((r) => (r.truckId === t.id && r.status === "Loading" ? { ...r, status: "On the road" } : r)));
+    setSales((l) => l.map((s) => (going.some((r) => r.saleId === s.id) ? { ...s, trail: [...s.trail, { text: `Out for delivery on ${t.name}`, date: 0 }] } : s)));
+    app.notify(`${t.name} is on the road with ${going.length === 1 ? "1 stop" : `${going.length} stops`}. Customers get an SMS with the arrival time.`);
+  };
+  const openPod = (r: Run) => {
+    setPod({ saleId: r.saleId, by: contact(sales.find((s) => s.id === r.saleId)?.customerId)?.person ?? "", signed: false });
+    setModal("pod");
+  };
+  const podSale = sales.find((s) => s.id === pod.saleId);
+  const confirmStop = () => {
+    if (!podSale || podSale.stage !== "order" || !pod.signed || !pod.by.trim()) return;
+    deliverSale(podSale, pod.by.trim());
+    setModal(null);
   };
 
   // ---- Purchase: RFQ → order → receipt → vendor bill ----
@@ -846,6 +926,7 @@ export function ErpPrototype() {
     { id: "sales", label: "Sales", icon: ShoppingCart, badge: sales.filter((s) => s.stage === "order" || s.stage === "delivered").length },
     { id: "purchase", label: "Purchase", icon: Truck, badge: purchases.filter((p) => p.stage === "order" && p.expected <= 0).length },
     { id: "inventory", label: "Inventory", icon: Package, badge: toOrder.length },
+    { id: "deliveries", label: "Deliveries", icon: Route, badge: unassigned.length },
     { id: "pos", label: "Point of sale", icon: Store },
     { id: "contacts", label: "Contacts", icon: Users },
     { id: "accounting", label: "Invoicing", icon: Receipt, badge: overdueInv.length },
@@ -854,6 +935,7 @@ export function ErpPrototype() {
 
   const sale = app.screen === "sale" ? sales.find((x) => x.id === app.id) : undefined;
   const saleInv = invoices.find((i) => i.id === sale?.invoiceId);
+  const saleRun = runs.find((r) => r.saleId === sale?.id);
   const po = app.screen === "purchase-doc" ? purchases.find((x) => x.id === app.id) : undefined;
   const poBill = bills.find((b) => b.id === po?.billId);
   const inv = app.screen === "invoice" ? invoices.find((x) => x.id === app.id) : undefined;
@@ -870,6 +952,22 @@ export function ErpPrototype() {
     ...overdueInv.filter((i) => i.due < -30).map((i) => ({ key: i.id, icon: Receipt, title: nameOf(i.customerId), note: `${i.id} · ${peso(balance(i))} unpaid`, badge: <Status tone="bad">{`${-i.due}d late`}</Status>, go: () => app.open("invoice", i.id, i.id) })),
   ];
 
+  // Everything with a detail screen, opened from its own section like the app does.
+  const record = (root: string, screen: string, id: string, label: string, hint: string): ProtoSearchItem => ({ label, hint, stack: [{ screen: root }, { screen, id, label }] });
+  const searchItems: ProtoSearchItem[] = [
+    ...items.map((i) => record("inventory", "item", i.id, i.name, "Item")),
+    ...sales.map((s) => record("sales", "sale", s.id, s.id, sIdx(s.stage) < 2 ? "Quotation" : "Sales order")),
+    ...purchases.map((p) => record("purchase", "purchase-doc", p.id, p.id, pIdx(p.stage) < 2 ? "RFQ" : "Purchase order")),
+    ...invoices.map((i) => record("accounting", "invoice", i.id, i.id, "Invoice")),
+    ...bills.map((b) => record("accounting", "bill", b.id, b.id, "Bill")),
+    ...contacts.map((c) => record("contacts", "contact", c.id, c.name, c.kind)),
+  ];
+  // The bell counts what the old badge counted: overdue invoices and rules waiting for an RFQ.
+  const inbox: ProtoAlert[] = [
+    ...[...overdueInv].sort((a, b) => a.due - b.due).map((i) => ({ text: `${i.id} ${nameOf(i.customerId)}: ${peso(balance(i))} overdue`, time: `Due ${day(i.due)}`, stack: [{ screen: "accounting" }, { screen: "invoice", id: i.id, label: i.id }] })),
+    ...toOrder.map((r) => ({ text: `${r.item.name} below minimum at ${r.branch}`, time: "Today", stack: [{ screen: "inventory" }, { screen: "item", id: r.item.id, label: r.item.name }] })),
+  ];
+
   const closeSteps = [
     { id: "bank", label: "Bank and e-wallets reconciled", note: "BDO, BPI, GCash and Maya matched daily", done: true },
     { id: "invoiced", label: "Deliveries invoiced", note: sales.some((s) => s.stage === "delivered") ? `${sales.filter((s) => s.stage === "delivered").length} delivered order not invoiced` : "Every delivery has an invoice", done: !sales.some((s) => s.stage === "delivered"), fix: () => { setSaleFilter("toinvoice"); app.section("sales"); } },
@@ -882,7 +980,7 @@ export function ErpPrototype() {
   const closeCount = closeSteps.filter((s) => s.done).length;
 
   return (
-    <ProtoApp app={app} name="ERP · Bautista Builders Supply" user="Marites Bautista" nav={nav} alerts={toOrder.length + overdueInv.length}>
+    <ProtoApp app={app} name="ERP · Bautista Builders Supply" user="Marites Bautista" nav={nav} inbox={inbox} search={searchItems}>
       {/* ---------------- Dashboard ---------------- */}
       {app.screen === "dashboard" && (
         <>
@@ -1024,6 +1122,7 @@ export function ErpPrototype() {
                   ["Ships from", `${sale.branch} · ${LOC[sale.branch]}`],
                   ["Payment terms", `${contact(sale.customerId)?.terms ?? 30} days`],
                   [sIdx(sale.stage) < 2 ? "Valid until" : "Confirmed", day(sIdx(sale.stage) < 2 ? sale.date + 14 : (sale.confirmed ?? sale.date))],
+                  ...(saleRun ? ([["Truck", <button key="t" type="button" onClick={() => app.section("deliveries")} className={linkClass}>{`${TRUCKS.find((t) => t.id === saleRun.truckId)?.name} · ${saleRun.status}`}</button>]] as [string, React.ReactNode][]) : []),
                 ]}
               />
               {sIdx(sale.stage) < 3 && overLimit(contact(sale.customerId), grand(sale.lines)) > 0 && (
@@ -1335,6 +1434,89 @@ export function ErpPrototype() {
                   </li>
                 ))}
                 {moves.every((m) => m.itemId !== it.id) && <li className="py-2 text-[0.8rem] text-graphite">No moves this month.</li>}
+              </ul>
+            </Panel>
+          </div>
+        </>
+      )}
+
+      {/* ---------------- Deliveries ---------------- */}
+      {app.screen === "deliveries" && (
+        <>
+          <ScreenHeader title="Deliveries" subtitle={`Thursday, October 29 · ${TRUCKS.length} trucks · ${stopsLeft.length} ${stopsLeft.length === 1 ? "stop" : "stops"} to go`} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+            <Stat label="Delivered today" value={`${runs.length - stopsLeft.length} of ${runs.length}`} sub={`${stopsLeft.length} still to go`} tone="good" />
+            <Stat label="On the road" value={String(onRoad.length)} sub={`${trucksOut} ${trucksOut === 1 ? "truck" : "trucks"} out`} />
+            <Stat label="Loading" value={String(runs.filter((r) => r.status === "Loading").length)} sub="Waiting for the driver" />
+            <Stat label="To assign" value={String(unassigned.length)} sub="Confirmed, no truck yet" tone={unassigned.length ? "bad" : undefined} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-3 items-start">
+            <div className="flex flex-col gap-3 lg:order-1">
+              {TRUCKS.map((t) => {
+                const stops = runs.filter((r) => r.truckId === t.id).sort((a, b) => a.eta - b.eta);
+                const made = stops.filter((r) => r.status === "Delivered").length;
+                return (
+                  <Panel
+                    key={t.id}
+                    title={`${t.name} · ${t.driver}`}
+                    action={
+                      stops.some((r) => r.status === "Loading") ? (
+                        <SmallButton onClick={() => sendOut(t)}><Navigation size={11} /> Send out</SmallButton>
+                      ) : stops.some((r) => r.status === "On the road") ? (
+                        <Status tone="warn">On the road</Status>
+                      ) : (
+                        <Status tone={stops.length ? "good" : "muted"}>{stops.length ? "Route done" : "Free"}</Status>
+                      )
+                    }
+                  >
+                    <div className="flex justify-between gap-3 text-[0.7rem] text-mist mb-1.5"><span>{`${t.model} · ${t.plate}`}</span><span>{`${made} of ${stops.length} delivered`}</span></div>
+                    <Meter value={made} max={Math.max(1, stops.length)} />
+                    <ul className="flex flex-col divide-y divide-rule-soft mt-2 -mb-1">
+                      {stops.map((r) => {
+                        const s = sales.find((x) => x.id === r.saleId);
+                        if (!s) return null;
+                        return (
+                          <li key={r.saleId} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
+                            <div className="flex-1 basis-44 min-w-0">
+                              <div className="flex items-baseline gap-2 text-[0.8rem]">
+                                <button type="button" onClick={() => app.open("sale", s.id, s.id)} className={cn(linkClass, "font-mono")}>{s.id}</button>
+                                <span className="text-ink truncate">{nameOf(s.customerId)}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-[0.68rem] text-mist"><MapPin size={11} className="shrink-0" aria-hidden /><span className="truncate">{addressOf(s.customerId)}</span></div>
+                              {r.status === "Delivered" && (
+                                <div className="flex items-center gap-1 mt-0.5 text-[0.68rem] text-good"><Signature size={11} className="shrink-0" aria-hidden /><span className="truncate">{`${r.signedBy ? `Signed by ${r.signedBy}` : "Validated in the office"} · ${r.at}${s.delivery ? ` · ${s.delivery}` : ""}`}</span></div>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {r.status === "Delivered" ? r.signedBy && <SignatureMark className="hidden sm:block w-14 h-5" /> : <span className="font-mono text-[0.72rem] text-ink-soft">{clock(r.eta)}</span>}
+                              <Status tone={STOP_TONE[r.status]}>{r.status}</Status>
+                              {r.status === "Loading" && <SmallButton label={`Take ${s.id} off ${t.name}`} onClick={() => unassignStop(r)}><X size={11} /></SmallButton>}
+                              {r.status === "On the road" && <SmallButton onClick={() => openPod(r)}><Signature size={11} /> Confirm delivery</SmallButton>}
+                            </div>
+                          </li>
+                        );
+                      })}
+                      {stops.length === 0 && <li className="py-3 text-[0.78rem] text-mist">No stops yet. Assign a confirmed order to start this route.</li>}
+                    </ul>
+                  </Panel>
+                );
+              })}
+            </div>
+            <Panel title="Orders to assign" className="order-first lg:order-2" action={<Status tone={unassigned.length ? "bad" : "good"}>{unassigned.length ? `${unassigned.length} waiting` : "All assigned"}</Status>}>
+              <ul className="flex flex-col divide-y divide-rule-soft -my-1">
+                {unassigned.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
+                    <div className="flex-1 basis-32 min-w-0">
+                      <button type="button" onClick={() => app.open("sale", s.id, s.id)} className={cn(linkClass, "block max-w-full truncate text-[0.8rem]")}>{`${s.id} · ${nameOf(s.customerId)}`}</button>
+                      <div className="text-[0.68rem] text-mist truncate">{`${s.lines.length} ${s.lines.length === 1 ? "product" : "products"} from ${s.branch} · ${contact(s.customerId)?.city}`}</div>
+                    </div>
+                    <select aria-label={`Assign ${s.id} to a truck`} value="" onChange={(e) => assignStop(s, e.target.value)} className={cn(inputClass, "w-auto h-8 text-[0.76rem]")}>
+                      <option value="" disabled>Assign to truck…</option>
+                      {TRUCKS.map((t) => <option key={t.id} value={t.id}>{`${t.name} · ${t.driver.split(" ")[0]}`}</option>)}
+                    </select>
+                  </li>
+                ))}
+                {unassigned.length === 0 && <li className="py-2 text-[0.8rem] text-graphite">Every confirmed order has a truck.</li>}
               </ul>
             </Panel>
           </div>
@@ -1915,6 +2097,20 @@ export function ErpPrototype() {
         <p className={cn("text-[0.72rem]", Number(tf.qty) > free(tf.itemId, tf.from) ? "text-danger" : "text-graphite")}>
           {`${free(tf.itemId, tf.from)} free at ${tf.from}, ${item(tf.itemId)?.stock[other(tf.from)]} at ${other(tf.from)}.`}
         </p>
+      </ProtoModal>
+
+      <ProtoModal open={modal === "pod"} title="Confirm delivery" onClose={closeModal} footer={<PrimaryButton onClick={confirmStop} disabled={!pod.signed || !pod.by.trim()}><Check size={14} /> Confirm delivery</PrimaryButton>}>
+        <KeyValues items={[["Order", podSale?.id ?? "—"], ["Customer", nameOf(podSale?.customerId)], ["Address", addressOf(podSale?.customerId ?? "")], ["Products", podSale ? podSale.lines.map((l) => `${l.qty.toLocaleString()} ${item(l.itemId)?.unit}`).join(", ") : "—"]]} />
+        <Field label="Received by">
+          <input value={pod.by} onChange={(e) => setPod({ ...pod, by: e.target.value })} className={inputClass} />
+        </Field>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[0.76rem] font-medium text-ink-soft">Customer signature</span>
+          <button type="button" onClick={() => setPod({ ...pod, signed: true })} className="h-24 rounded-lg border border-dashed border-mist bg-paper flex items-center justify-center text-[0.76rem] text-mist cursor-pointer">
+            {pod.signed ? <SignatureMark draw className="w-40 h-14" /> : "Tap to sign"}
+          </button>
+        </div>
+        <p className="text-[0.72rem] text-graphite">{`Confirming validates the delivery, takes the stock out of ${podSale?.branch ?? "the branch"}, and leaves the order ready to invoice.`}</p>
       </ProtoModal>
 
       <ProtoModal open={modal === "rule"} title="Edit reordering rules" onClose={closeModal} footer={<PrimaryButton onClick={saveRule}>Save rules</PrimaryButton>}>
