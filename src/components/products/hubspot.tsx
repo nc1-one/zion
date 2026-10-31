@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Building2, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock, Columns3, FileText, GitBranch, HandCoins, Inbox, LayoutDashboard, ListChecks, ListFilter, Mail, MapPin, Megaphone, Pencil, Phone, Plus, Receipt, Search, Send, Share2, Smartphone, StickyNote, UserPlus, Users, Workflow, X, type LucideIcon } from "lucide-react";
-import { Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
+import { ProtoHeading, Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp, type ProtoAlert, type ProtoSearchItem } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
 // Zion's illustration of a HubSpot CRM set up for an NGO. Sample data only.
@@ -768,8 +768,43 @@ export function HubSpotPrototype() {
     );
   };
 
+  // ---- Search (⌘K) and the bell ----
+  // Every record with a detail screen, opened the way the app opens it: section first, then the record.
+  const found = (hint: string, root: string, screen: string, id: string, label: string): ProtoSearchItem => ({ label, hint, stack: [{ screen: root }, { screen, id, label }] });
+  const search: ProtoSearchItem[] = [
+    ...contacts.map((x) => found("Contact", "contacts", "contact", x.id, x.name)),
+    ...companies.map((x) => found("Company", "companies", "company", x.id, x.name)),
+    ...deals.map((x) => found("Deal", "pipeline", "deal", x.id, x.name)),
+    ...lists.map((x) => found("List", "lists", "list", x.id, x.name)),
+    ...campaigns.map((x) => found("Campaign", "campaigns", "campaign", x.id, x.name)),
+    ...forms.map((x) => found("Form", "campaigns", "form", x.id, x.name)),
+    ...flows.map((x) => found("Workflow", "automations", "workflow", x.id, x.name)),
+    ...tickets.map((x) => found("Ticket", "inbox", "ticket", x.id, x.subject)),
+  ];
+
+  // New tickets, then overdue tasks, oldest first. Same two things the bell has always counted.
+  const inbox: ProtoAlert[] = [
+    ...tickets
+      .filter((t) => t.status === "New")
+      .map((t) => ({
+        text: `New ticket from ${contact(t.contactId)?.name ?? "a donor"}: ${t.subject}`,
+        time: t.opened,
+        stack: [{ screen: "inbox" }, { screen: "ticket", id: t.id, label: t.subject }],
+      })),
+    ...[...overdue]
+      .sort((a, b) => a.due.localeCompare(b.due))
+      .map((t) => {
+        const tc = contact(t.contactId);
+        return {
+          text: `Overdue: ${t.title}`,
+          time: tc ? `Due ${fmtDate(t.due)} · ${tc.name}` : `Due ${fmtDate(t.due)}`,
+          stack: tc ? [{ screen: "contacts" }, { screen: "contact", id: tc.id, label: tc.name }] : [{ screen: "tasks" }],
+        };
+      }),
+  ];
+
   return (
-    <ProtoApp app={app} name="HubSpot setup · Hope Philippines Foundation" user={ME} nav={nav} alerts={tickets.filter((t) => t.status === "New").length + overdue.length}>
+    <ProtoApp app={app} name="HubSpot setup · Hope Philippines Foundation" user={ME} nav={nav} inbox={inbox} search={search}>
       {/* ---- Dashboard ---- */}
       {app.screen === "dashboard" && (
         <>
@@ -940,7 +975,7 @@ export function HubSpotPrototype() {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Avatar name={c.name} size={44} />
             <div className="flex-1 min-w-0">
-              <h4 className="text-[1.25rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{c.name}</h4>
+              <ProtoHeading className="text-[1.25rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{c.name}</ProtoHeading>
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                 <Status tone={lifeTone(c.lifecycle)}>{c.lifecycle}</Status>
                 {company(c.companyId) && <span className="text-[0.72rem] text-graphite">{`${c.role} · ${company(c.companyId)?.name}`}</span>}
@@ -1401,7 +1436,7 @@ export function HubSpotPrototype() {
                 </div>
                 <div className="p-4">
                   <div className="h-20 rounded-md bg-gold-wash flex items-end p-2"><span className="text-[0.64rem] text-gold">Photo: scholars at the Tondo learning center</span></div>
-                  <h5 className="mt-3 text-[1.05rem] font-semibold text-ink leading-snug">Send a child to school this year</h5>
+                  <ProtoHeading sub className="mt-3 text-[1.05rem] font-semibold text-ink leading-snug">Send a child to school this year</ProtoHeading>
                   <p className="text-[0.76rem] text-graphite mt-1">₱1,000 a month covers a student&apos;s books, fees and a daily meal.</p>
                   <Meter value={pageRaised} max={600000} className="mt-3" />
                   <div className="flex justify-between text-[0.66rem] text-mist mt-1">

@@ -3,10 +3,11 @@
 import React, { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Lock, Pause, Play, Smartphone } from "lucide-react";
+import { ArrowRight, ArrowUp, ArrowUpRight, Check, ChevronLeft, ChevronRight, ExternalLink, Lock, Pause, Play, Smartphone } from "lucide-react";
 import { useAssessment } from "@/components/assessment/AssessmentProvider";
 import { ProtoDriveProvider, type ProtoDrive, type StackEntry } from "@/components/products/drive";
-import { SHOWCASE, type TourStep } from "@/components/products/showcase";
+import { SHOWCASE, demoPath, type TourStep } from "@/components/products/showcase";
+import { findText, hitTarget, sleep, waitFor } from "@/components/products/tour-dom";
 import { BRANDS } from "@/components/products/brands";
 import { Button } from "@/components/ui/Button";
 import { RegionSelect, useRegion } from "@/components/ui/RegionSelect";
@@ -41,7 +42,6 @@ const DEFAULT_MODULES = Object.fromEntries(
 
 const STEP_SECONDS = 7.5;
 const EASE = [0.16, 1, 0.3, 1] as const;
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const pathOf = (stack: StackEntry[]) => `/${stack[0].screen}${stack.length > 1 ? `/${stack[stack.length - 1].id ?? stack[stack.length - 1].screen}` : ""}`;
 const firstStack = (id: Product["id"]): StackEntry[] => [{ screen: SHOWCASE[id].tour.find((t) => t.screen)!.screen! }];
 
@@ -52,41 +52,6 @@ const subscribeSmall = (onChange: () => void) => {
   query.addEventListener("change", onChange);
   return () => query.removeEventListener("change", onChange);
 };
-
-// ---- Finding things in the live demo --------------------------------------------
-
-// The visible element whose own text matches, exact match first.
-function findText(root: Element | null, text: string): HTMLElement | null {
-  if (!root) return null;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let partial: HTMLElement | null = null;
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const value = node.nodeValue?.trim();
-    const el = node.parentElement;
-    if (!value || !el || !el.getClientRects().length) continue;
-    if (value === text) return el;
-    if (!partial && value.startsWith(text)) partial = el;
-  }
-  return partial;
-}
-
-// What a click on that text would hit: a control, a row, or the panel around it.
-function hitTarget(el: HTMLElement) {
-  return (
-    el.closest<HTMLElement>("button, a, select, tr, [role=row]") ??
-    el.closest<HTMLElement>("[class*='rounded'][class*='border']") ??
-    el
-  );
-}
-
-async function waitFor<T>(find: () => T | null, timeout = 2500): Promise<T | null> {
-  const end = Date.now() + timeout;
-  for (;;) {
-    const found = find();
-    if (found || Date.now() > end) return found;
-    await sleep(100);
-  }
-}
 
 // ---- Section --------------------------------------------------------------------
 
@@ -273,6 +238,24 @@ export function Products() {
     return () => window.clearTimeout(timer);
   }, [inView, reduce, phoneFirst, play, productId]);
 
+  // Open a screen in the demo and bring the demo into view.
+  const jump = (stack: StackEntry[]) => {
+    stop();
+    setPhoneOpen(false);
+    setMobileView("web");
+    setTarget((t) => ({ key: t.key + 1, stack }));
+    document.getElementById("product-stage")?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+  };
+
+  // Arriving from a full-page demo (/?product=hris#products) opens that product.
+  const openLinked = useEffectEvent((id: Product["id"]) => pickProduct(id));
+  useEffect(() => {
+    const linked = PRODUCTS.find((p) => p.id === new URLSearchParams(window.location.search).get("product"));
+    if (!linked) return;
+    const timer = window.setTimeout(() => openLinked(linked.id), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const toggle = (id: string) =>
     setModules((all) => ({
       ...all,
@@ -284,7 +267,7 @@ export function Products() {
       <div className="max-w-[1240px] mx-auto">
         <div className="max-w-[40rem]">
           <RevealHeading text="Software built with excellence, priced for the mission." className="heading-section text-ink" />
-          <p className="mt-5 text-[1.1rem] leading-relaxed text-graphite">Seven apps, ready to run. Every demo below is live.</p>
+          <p className="mt-5 text-[1.1rem] leading-relaxed text-graphite">Nine apps, ready to run. Every demo below is live, and each opens full screen.</p>
         </div>
 
         {/* Suite switcher */}
@@ -335,7 +318,18 @@ export function Products() {
                 <h3 className="font-display text-[1.9rem] leading-none font-semibold tracking-[-0.03em] text-ink">{product.name}</h3>
                 <p className="mt-2 text-[0.98rem] text-graphite">{product.hook}</p>
               </div>
-              <span className="font-mono text-[0.75rem] text-mist">{product.platforms}</span>
+              <div className="flex items-center gap-5">
+                <span className="hidden sm:inline font-mono text-[0.75rem] text-mist">{product.platforms}</span>
+                <a
+                  href={demoPath(product.id)}
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-[0.85rem] font-medium text-ink ring-1 ring-rule hover:ring-mist hover:bg-sheet transition-[box-shadow,background-color]"
+                >
+                  Open full demo <ArrowUpRight size={15} />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              </div>
             </div>
 
             {small && (
@@ -377,8 +371,8 @@ export function Products() {
                       <div className="flex items-center justify-center gap-1.5 h-6 px-3 w-full max-w-[28rem] rounded-md bg-white ring-1 ring-[#E4E7EC] text-[0.72rem] text-[#344054]">
                         <Lock size={10} className="shrink-0 text-[#667085]" />
                         <span className="truncate">
-                          {show.host}
-                          <span className="text-[#667085]">{path}</span>
+                          zionsystems.dev{demoPath(product.id)}
+                          <span className="text-[#667085]">#{path}</span>
                         </span>
                         <span className="ml-1 px-1.5 py-px rounded bg-[#F2F4F7] text-[0.62rem] font-medium text-[#475467] shrink-0">Sample data</span>
                       </div>
@@ -397,6 +391,16 @@ export function Products() {
                       <Smartphone size={12} />
                       <span className="hidden sm:inline">{show.mobile}</span>
                     </button>
+                    <a
+                      href={demoPath(product.id)}
+                      target="_blank"
+                      rel="noopener"
+                      aria-label={`Open ${product.name} in a new tab`}
+                      title="Open in a new tab"
+                      className="shrink-0 -ml-1.5 w-6 h-6 rounded-md flex items-center justify-center text-[#344054] hover:bg-white transition-colors"
+                    >
+                      <ExternalLink size={12} />
+                    </a>
                   </div>
 
                   <div className="relative">
@@ -533,6 +537,29 @@ export function Products() {
                 </div>
               </div>
 
+            )}
+
+            {/* What's inside: each capability opens its screen in the demo */}
+            {show.features.length > 0 && (
+              <div className="mt-12">
+                <h4 className="heading-card text-ink">What&rsquo;s inside</h4>
+                <p className="mt-1 text-[0.85rem] text-mist">Pick one to see it in the demo.</p>
+                <ul className="mt-5 grid grid-cols-1 md:grid-cols-2 md:gap-x-10 border-t border-rule">
+                  {show.features.map((f) => (
+                    <li key={f.label} className="border-b border-rule">
+                      <button type="button" onClick={() => jump(f.stack)} className="group w-full flex items-start justify-between gap-4 py-3.5 text-left cursor-pointer">
+                        <span className="min-w-0">
+                          <span className="block text-[0.95rem] font-medium text-ink">{f.label}</span>
+                          <span className="block text-[0.85rem] leading-snug text-graphite mt-0.5">{f.detail}</span>
+                        </span>
+                        <span className="shrink-0 mt-0.5 flex items-center gap-1 text-[0.78rem] text-mist opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+                          Show <ArrowUp size={13} />
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             {/* Plan builder and price */}

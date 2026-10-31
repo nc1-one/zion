@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarDays, Check, ChevronRight, Clock, Download, FileText, Landmark, LayoutDashboard, ListChecks, Mail, Megaphone, Pencil, Plus, Search, Send, Target, Upload, UserPlus, Users, Wallet } from "lucide-react";
-import { Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
+import { CalendarDays, Check, ChevronRight, Clock, Download, FileText, Landmark, LayoutDashboard, ListChecks, Mail, Megaphone, Paperclip, Pencil, Plus, Receipt, Search, Send, Target, Upload, UserPlus, Users, Wallet } from "lucide-react";
+import { ProtoHeading, Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp, type ProtoAlert, type ProtoSearchItem } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
 type Tone = "good" | "warn" | "bad" | "muted";
@@ -26,6 +26,11 @@ const fmtDay = (iso: string) => `${WEEKDAYS[weekday(iso)]}, ${fmt(iso)}`;
 const fmtYear = (iso: string) => `${fmt(iso)}, ${iso.slice(0, 4)}`;
 const fmtRange = (a: string, b: string) => (a === b ? fmt(a) : a.slice(0, 7) === b.slice(0, 7) ? `${fmt(a)}–${Number(b.slice(8, 10))}` : `${fmt(a)} to ${fmt(b)}`);
 const daysUntil = (iso: string) => dayNo(iso) - dayNo(TODAY);
+// "Today", "2 days ago", "In 14 days": how far a date is from the demo's today.
+const relDay = (iso: string) => {
+  const d = daysUntil(iso);
+  return d === 0 ? "Today" : d === 1 ? "Tomorrow" : d === -1 ? "Yesterday" : d > 1 ? `In ${d} days` : d > -14 ? `${-d} days ago` : fmt(iso);
+};
 const inRange = (iso: string, from: string, to: string) => iso >= from && iso <= to;
 const validDate = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && !Number.isNaN(Date.parse(iso));
 const addMonths = (iso: string, n: number) => {
@@ -161,6 +166,22 @@ const OVERTIME: Overtime[] = [
   { id: "o6", staffId: "s7", date: "2026-10-28", hours: 2, kind: "Regular day", reason: "Midweek prayer livestream ran long", status: "Pending" },
   { id: "o7", staffId: "s9", date: "2026-10-17", hours: 3, kind: "Rest day", reason: "Kids church decorating", status: "Declined" },
 ];
+
+// ---- Expense reimbursements -------------------------------------------------------------
+// Staff submit a receipt. Approved claims join the pay run as a non-taxable adjustment.
+
+const EXPENSE_CATEGORIES = ["Transport", "Meals", "Supplies", "Ministry event", "Training"] as const;
+type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+interface Expense { id: string; staffId: string; category: ExpenseCategory; amount: number; date: string; note: string; receipt: string; status: "Pending" | "Approved" | "Declined"; paidIn?: string }
+
+const EXPENSES: Expense[] = [
+  { id: "e1", staffId: "s11", category: "Transport", amount: 3450, date: "2026-10-27", note: "Ferry and van for the Mindoro missions trip", receipt: "Santiago-ferry-tickets.jpg", status: "Pending" },
+  { id: "e2", staffId: "s8", category: "Supplies", amount: 1860, date: "2026-10-26", note: "Craft materials for the Kids Christmas Program", receipt: "Pascual-craft-supplies.pdf", status: "Pending" },
+  { id: "e3", staffId: "s7", category: "Meals", amount: 640, date: "2026-10-28", note: "Snacks for the livestream volunteers", receipt: "Soriano-snacks.jpg", status: "Pending" },
+  { id: "e4", staffId: "s5", category: "Supplies", amount: 1850, date: "2026-10-22", note: "Aircon parts for the fellowship hall", receipt: "Cruz-aircon-parts.pdf", status: "Approved", paidIn: "Oct 16–31" },
+  { id: "e5", staffId: "s9", category: "Meals", amount: 380, date: "2026-10-21", note: "Lunch for the kids church volunteers", receipt: "Gonzales-lunch.jpg", status: "Declined" },
+];
+const expenseAdjustment = (e: Expense) => ({ id: `x${e.id}`, staffId: e.staffId, label: `${e.category} reimbursement`, amount: e.amount });
 
 // ---- Pay math (sample rates) -----------------------------------------------------------
 // Sample rates for the demo: SSS 5% employee and 10% employer on a salary credit up to
@@ -460,7 +481,7 @@ function MonthGrid({ month, items }: { month: string; items: (iso: string) => Ca
 
 // ---- App ---------------------------------------------------------------------------------
 
-type Modal = "upload" | "leave" | "approve" | "adjust" | "salary" | "ot" | "filing" | "hire" | "goal" | "post";
+type Modal = "upload" | "leave" | "approve" | "adjust" | "salary" | "ot" | "expense" | "filing" | "hire" | "goal" | "post";
 interface DayInfo { label: string; tone: Tone; inAt: number; outAt: number; ot: number; late?: Late; present: boolean; absent: boolean }
 
 export function ChurchHRISPrototype() {
@@ -470,7 +491,8 @@ export function ChurchHRISPrototype() {
   const [leaves, setLeaves] = useState(LEAVES);
   const [ots, setOts] = useState(OVERTIME);
   const [excused, setExcused] = useState<string[]>([]);
-  const [adjustments, setAdjustments] = useState([{ id: "a1", staffId: "s5", label: "Rice subsidy", amount: 1000 }]);
+  const [expenses, setExpenses] = useState(EXPENSES);
+  const [adjustments, setAdjustments] = useState([{ id: "a1", staffId: "s5", label: "Rice subsidy", amount: 1000 }, ...EXPENSES.filter((e) => e.status === "Approved" && e.paidIn === CUTOFF.period).map(expenseAdjustment)]);
   const [run, setRun] = useState<"Draft" | "Approved" | "Paid">("Draft");
   const [frozen, setFrozen] = useState<Line[] | null>(null);
   const [thirteenthSet, setThirteenthSet] = useState(false);
@@ -502,6 +524,7 @@ export function ChurchHRISPrototype() {
   const [adjDraft, setAdjDraft] = useState({ staffId: "s1", kind: ADJ_KINDS[0].label, amount: "1500" });
   const [salaryDraft, setSalaryDraft] = useState("");
   const [otDraft, setOtDraft] = useState({ staffId: "s5", date: TODAY, hours: "2", kind: "Regular day" as OtKind, reason: "" });
+  const [expDraft, setExpDraft] = useState({ staffId: "s11", category: "Transport" as ExpenseCategory, amount: "", date: TODAY, note: "", file: "" });
   const [filingDraft, setFilingDraft] = useState({ agency: "bir" as Agency, ref: "", channel: "Online banking", date: TODAY });
   const [hireDraft, setHireDraft] = useState({ name: "", role: "", dept: "Admin" as Dept, start: "2026-11-23" });
   const [goalDraft, setGoalDraft] = useState({ title: "", due: "2026-12-31" });
@@ -607,14 +630,16 @@ export function ChurchHRISPrototype() {
   const docsOf = (id: string) => docs.filter((d) => d.staffId === id);
   const docAlerts = staff.flatMap((s) =>
     requiredDocs(s).flatMap((kind) => {
-      const st = docState(docs.find((d) => d.staffId === s.id && d.kind === kind));
-      return st.tone === "bad" || st.tone === "warn" ? [{ staff: s, kind, ...st }] : [];
+      const doc = docs.find((d) => d.staffId === s.id && d.kind === kind);
+      const st = docState(doc);
+      return st.tone === "bad" || st.tone === "warn" ? [{ staff: s, kind, expires: doc?.expires, ...st }] : [];
     }),
   );
   const alertsFor = (id: string) => docAlerts.filter((a) => a.staff.id === id);
 
   const pendingLeave = leaves.filter((l) => l.status === "Pending");
   const pendingOt = ots.filter((o) => o.status === "Pending");
+  const pendingExp = expenses.filter((e) => e.status === "Pending");
   const octLines = [...PREV.lines, ...lines];
   const unfiled = AGENCIES.filter((a) => !filings[a.id]);
   const reviewOf = (id?: string) => reviews.find((r) => r.staffId === id);
@@ -644,6 +669,10 @@ export function ChurchHRISPrototype() {
   const openOt = (staffId: string) => {
     setOtDraft({ staffId, date: TODAY, hours: "2", kind: "Regular day", reason: "" });
     setModal("ot");
+  };
+  const openExpense = () => {
+    setExpDraft({ staffId: "s11", category: "Transport", amount: "", date: TODAY, note: "", file: "" });
+    setModal("expense");
   };
 
   const draftStaff = byId(leaveDraft.staffId);
@@ -679,6 +708,22 @@ export function ChurchHRISPrototype() {
     setTimeView("overtime");
     close();
     app.notify(`Overtime request for ${nameOf(otDraft.staffId)} filed`);
+  };
+  const fileExpense = () => {
+    const amount = Number(expDraft.amount);
+    const s = byId(expDraft.staffId);
+    if (!s || !amount || !expDraft.note.trim() || !validDate(expDraft.date)) return;
+    setExpenses((list) => [{ id: `e${Date.now()}`, staffId: s.id, category: expDraft.category, amount, date: expDraft.date, note: expDraft.note.trim(), receipt: expDraft.file || `${lastName(s.name)}-receipt.jpg`, status: "Pending" }, ...list]);
+    close();
+    app.notify(`${peso(amount)} expense for ${s.name} filed. Waiting for approval.`);
+  };
+  const decideExpense = (e: Expense, status: "Approved" | "Declined") => {
+    const s = byId(e.staffId);
+    if (!s) return;
+    setExpenses((list) => list.map((x) => (x.id === e.id ? { ...x, status, paidIn: status === "Approved" ? (locked ? "Nov 1–15" : CUTOFF.period) : undefined } : x)));
+    if (status === "Declined") return app.notify(`Expense declined. ${firstName(s.name)} was notified in the staff app.`);
+    if (!locked) setAdjustments((list) => [...list, expenseAdjustment(e)]);
+    app.notify(locked ? `Approved. ${peso(e.amount)} goes to the Nov 1–15 cutoff.` : `Approved. ${peso(e.amount)} added to the Oct 16–31 pay run.`);
   };
   const excuse = (late: Late) => {
     setExcused((list) => [...list, late.id]);
@@ -759,6 +804,7 @@ export function ChurchHRISPrototype() {
     { id: "directory", label: "Staff", icon: Users, badge: staff.length },
     { id: "time", label: "Time", icon: Clock, badge: pendingOt.length || undefined },
     { id: "leave", label: "Leave", icon: CalendarDays, badge: pendingLeave.length || undefined },
+    { id: "expenses", label: "Expenses", icon: Receipt, badge: pendingExp.length || undefined },
     { id: "payroll", label: "Payroll", icon: Wallet },
     { id: "remittances", label: "Remittances", icon: Landmark, badge: unfiled.length || undefined },
     { id: "performance", label: "Reviews", icon: Target },
@@ -783,6 +829,7 @@ export function ChurchHRISPrototype() {
   const attention = [
     ...pendingLeave.map((l) => ({ key: l.id, name: nameOf(l.staffId), sub: `${l.type} leave · ${fmtRange(l.from, l.to)}`, status: <Status tone="warn">Pending</Status>, label: "Review", go: () => { setLeaveView("requests"); app.section("leave"); } })),
     ...(pendingOt.length ? [{ key: "ot", name: "", sub: `${pendingOt.map((o) => firstName(nameOf(o.staffId))).join(", ")}`, title: `${pendingOt.length} overtime requests`, status: <Status tone="warn">Pending</Status>, label: "Review", go: () => { setTimeView("overtime"); app.section("time"); } }] : []),
+    ...(pendingExp.length ? [{ key: "exp", name: "", sub: pendingExp.map((e) => firstName(nameOf(e.staffId))).join(", "), title: `${pendingExp.length} expense ${pendingExp.length === 1 ? "claim" : "claims"}`, status: <Status tone="warn">Pending</Status>, label: "Review", go: () => app.section("expenses") }] : []),
     ...docAlerts.map((a) => ({ key: `${a.staff.id}-${a.kind}`, name: a.staff.name, sub: a.kind, status: <Status tone={a.tone}>{a.text}</Status>, label: "Open", go: () => openProfile(a.staff, "docs") })),
     ...staff.filter((s) => s.type === "Probationary" && daysUntil(addMonths(s.hired, 6)) <= 45).map((s) => ({ key: `prob-${s.id}`, name: s.name, sub: `Probation ends ${fmt(addMonths(s.hired, 6))}`, status: <Status tone="warn">Review due</Status>, label: "Open", go: () => app.open("review", s.id, s.name) })),
     ...staff.filter((s) => s.contractEnd).map((s) => ({ key: `ctr-${s.id}`, name: s.name, sub: `Contract ends ${fmt(s.contractEnd ?? "")}`, status: <Status tone="warn">Renewal</Status>, label: "Open", go: () => openProfile(s) })),
@@ -806,8 +853,36 @@ export function ChurchHRISPrototype() {
   const visibleStaff = staff.filter((s) => (dept === "All" || s.dept === dept) && `${s.name} ${s.role}`.toLowerCase().includes(query.toLowerCase()));
   const root = staff.find((s) => !s.manager);
 
+  // Command palette: each record opens the way the app opens it, root section first.
+  const search: ProtoSearchItem[] = [
+    ...staff.map((s) => ({ label: s.name, hint: "Staff", stack: [{ screen: "directory" }, { screen: "profile", id: s.id, label: s.name }] })),
+    ...posts.map((p) => ({ label: p.title, hint: p.kind, stack: [{ screen: "policies" }, { screen: "policy", id: p.id, label: p.title }] })),
+    ...AGENCIES.map((a) => ({ label: a.name, hint: "Remittance", stack: [{ screen: "remittances" }, { screen: "remit", id: a.id, label: a.name }] })),
+    ...[CUTOFF, ...[...PAST].reverse()].map((r) => ({ label: `Pay run ${r.period}`, hint: "Pay run", stack: [{ screen: "payroll" }, { screen: "run", id: r.id, label: r.period }] })),
+    ...reviews.flatMap((r) => {
+      const s = byId(r.staffId);
+      return s ? [{ label: `${s.name} · ${r.kind.toLowerCase()} review`, hint: "Review", stack: [{ screen: "performance" }, { screen: "review", id: s.id, label: s.name }] }] : [];
+    }),
+  ];
+
+  // Bell: one item per pending leave, pending overtime, and 201 file alert.
+  const raised: ProtoAlert[] = [
+    ...pendingLeave.map((l) => ({ text: `${nameOf(l.staffId)} asked for ${l.type.toLowerCase()} leave, ${fmtRange(l.from, l.to)}`, time: relDay(l.filed), stack: [{ screen: "leave" }] })),
+    ...pendingOt.map((o) => ({ text: `${nameOf(o.staffId)} asked for ${o.hours} h overtime, ${fmt(o.date)}`, time: relDay(o.date), stack: [{ screen: "time" }] })),
+    ...docAlerts.map((a) => ({
+      text: `${a.staff.name}: ${a.kind} ${a.text.replace(/^./, (c) => c.toLowerCase())}`,
+      time: a.expires ? relDay(a.expires) : `Since ${fmt(a.staff.hired)}`,
+      stack: [{ screen: "directory" }, { screen: "profile", id: a.staff.id, label: a.staff.name }],
+    })),
+  ];
+  // The bell keys items by text, so a repeated request gets a number.
+  const inbox = raised.map((a, i) => {
+    const same = raised.slice(0, i).filter((x) => x.text === a.text).length;
+    return same ? { ...a, text: `${a.text} (${same + 1})` } : a;
+  });
+
   return (
-    <ProtoApp app={app} name="Church HRIS · Grace Fellowship" user="Tess Aquino" nav={nav} alerts={pendingLeave.length + pendingOt.length + docAlerts.length}>
+    <ProtoApp app={app} name="Church HRIS · Grace Fellowship" user="Tess Aquino" nav={nav} inbox={inbox} search={search}>
       {/* ---- Overview ---- */}
       {app.screen === "dashboard" && (
         <>
@@ -815,7 +890,7 @@ export function ChurchHRISPrototype() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
             <Stat label="Headcount" value={String(staff.length)} sub={`${staff.filter((s) => s.type === "Regular").length} regular · ${hires.length} starting soon`} />
             <Stat label="Next pay date" value="Oct 30" sub={run === "Draft" ? "Pay run in draft" : run === "Approved" ? "Approved, not yet released" : "Paid, payslips sent"} tone={run === "Paid" ? "good" : undefined} />
-            <Stat label="Waiting for you" value={String(pendingLeave.length + pendingOt.length)} sub={`${pendingLeave.length} leave · ${pendingOt.length} overtime`} />
+            <Stat label="Waiting for you" value={String(pendingLeave.length + pendingOt.length + pendingExp.length)} sub={`${pendingLeave.length} leave · ${pendingOt.length} overtime · ${pendingExp.length} expenses`} />
             <Stat label="201 file alerts" value={String(docAlerts.length)} sub="Missing or expiring" tone={docAlerts.length ? "bad" : "good"} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-3">
@@ -920,7 +995,7 @@ export function ChurchHRISPrototype() {
             <div className="flex flex-wrap items-center gap-3 mb-3">
               <Avatar name={sp.name} size={48} />
               <div className="flex-1 min-w-[12rem]">
-                <h4 className="text-[1.35rem] leading-tight font-semibold text-ink">{sp.name}</h4>
+                <ProtoHeading className="text-[1.35rem] leading-tight font-semibold text-ink">{sp.name}</ProtoHeading>
                 <span className="text-[0.78rem] text-graphite">{sp.role} · {sp.dept} · GF-{String(100 + Number(sp.id.slice(1))).padStart(4, "0")}</span>
               </div>
               <Status tone={typeTone(sp.type)}>{sp.type}</Status>
@@ -1251,6 +1326,51 @@ export function ChurchHRISPrototype() {
           )}
         </>
       )}
+
+      {/* ---- Expenses ---- */}
+      {app.screen === "expenses" && (() => {
+        const sumOf = (list: Expense[]) => list.reduce((t, e) => t + e.amount, 0);
+        const inRun = expenses.filter((e) => e.status === "Approved" && e.paidIn === CUTOFF.period);
+        const later = expenses.filter((e) => e.status === "Approved" && e.paidIn !== CUTOFF.period);
+        return (
+          <>
+            <ScreenHeader title="Expenses" subtitle={`${pendingExp.length} waiting · Approved claims are added to the next pay run`} action={<PrimaryButton onClick={openExpense}><Plus size={14} /> Submit expense</PrimaryButton>} />
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mb-3">
+              <Stat label="Waiting for approval" value={peso(sumOf(pendingExp))} sub={`${pendingExp.length} ${pendingExp.length === 1 ? "claim" : "claims"}`} />
+              <Stat label="In the Oct 16–31 pay run" value={peso(sumOf(inRun))} sub={`${inRun.length} approved`} tone={inRun.length ? "good" : undefined} />
+              <Stat label="For the Nov 1–15 cutoff" value={peso(sumOf(later))} sub={`${later.length} approved`} />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Panel title={`Waiting for approval · ${pendingExp.length}`}>
+                <Rows>
+                  {pendingExp.map((e) => (
+                    <Row key={e.id} name={nameOf(e.staffId)} title={`${nameOf(e.staffId)} · ${e.category}, ${peso(e.amount)}`} sub={`${fmtDay(e.date)} · ${e.note}`}>
+                      <span className="inline-flex items-center gap-1 max-w-[9rem] text-[0.68rem] text-mist"><Paperclip size={11} className="shrink-0" /><span className="truncate">{e.receipt}</span></span>
+                      <SmallButton onClick={() => decideExpense(e, "Declined")}>Decline</SmallButton>
+                      <PrimaryButton onClick={() => decideExpense(e, "Approved")}>Approve</PrimaryButton>
+                    </Row>
+                  ))}
+                  {pendingExp.length === 0 && <li className="py-3 text-[0.8rem] text-graphite">No expenses waiting.</li>}
+                </Rows>
+              </Panel>
+              <Table
+                rows={expenses.filter((e) => e.status !== "Pending")}
+                rowKey={(e) => e.id}
+                empty="No decided claims yet."
+                onRowClick={(e) => { const s = byId(e.staffId); if (s) openProfile(s, "pay"); }}
+                columns={[
+                  { key: "who", label: "Staff", render: (e) => <span className="text-ink">{nameOf(e.staffId)}</span> },
+                  { key: "cat", label: "Category", hideOnMobile: true, render: (e) => <span><span className="block">{e.category}</span><span className="block text-[0.66rem] text-mist">{fmt(e.date)}</span></span> },
+                  { key: "receipt", label: "Receipt", hideOnMobile: true, render: (e) => <span className="inline-flex items-center gap-1 max-w-[10rem] text-[0.72rem]"><Paperclip size={11} className="text-mist shrink-0" /><span className="truncate">{e.receipt}</span></span> },
+                  { key: "amount", label: "Amount", align: "right", render: (e) => mono(e.amount) },
+                  { key: "status", label: "Status", render: (e) => <span><Status tone={e.status === "Approved" ? "good" : "bad"}>{e.status}</Status>{e.paidIn && <span className="block mt-0.5 text-[0.64rem] text-mist">{`${e.paidIn} pay run`}</span>}</span> },
+                ]}
+              />
+              <p className="text-[0.72rem] text-mist">Reimbursements are not taxed. They are added after tax, so contributions and withholding stay the same.</p>
+            </div>
+          </>
+        );
+      })()}
 
       {/* ---- Payroll ---- */}
       {app.screen === "payroll" && (
@@ -1879,6 +1999,26 @@ export function ChurchHRISPrototype() {
           const s = byId(otDraft.staffId);
           return s && Number(otDraft.hours) > 0 ? <p className="text-[0.72rem] text-mist">{`About ${peso(otAmount({ ...otDraft, id: "", hours: Number(otDraft.hours), status: "Pending" }, s.monthly))} at ${otDraft.kind === "Rest day" ? "130%" : "125%"} of ${peso(dailyRate(s.monthly) / 8)} an hour. Managerial staff are not listed.`}</p> : null;
         })()}
+      </ProtoModal>
+
+      <ProtoModal open={modal === "expense"} title="Submit expense" onClose={close} footer={<PrimaryButton onClick={fileExpense} disabled={!Number(expDraft.amount) || !expDraft.note.trim() || !validDate(expDraft.date)}><Send size={14} /> Submit for approval</PrimaryButton>}>
+        <Field label="Staff member">
+          <select value={expDraft.staffId} onChange={(e) => setExpDraft({ ...expDraft, staffId: e.target.value })} className={inputClass}>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Category">
+            <select value={expDraft.category} onChange={(e) => setExpDraft({ ...expDraft, category: e.target.value as ExpenseCategory })} className={inputClass}>{EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
+          </Field>
+          <Field label="Amount (₱)">
+            <input inputMode="numeric" value={expDraft.amount} onChange={(e) => setExpDraft({ ...expDraft, amount: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="1200" className={inputClass} />
+          </Field>
+        </div>
+        <Field label="Date paid"><input type="date" value={expDraft.date} onChange={(e) => setExpDraft({ ...expDraft, date: e.target.value })} className={inputClass} /></Field>
+        <Field label="What it was for"><input value={expDraft.note} onChange={(e) => setExpDraft({ ...expDraft, note: e.target.value })} placeholder="Tarps for the outreach booth" className={inputClass} /></Field>
+        <Field label="Receipt (photo or PDF)">
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setExpDraft({ ...expDraft, file: e.target.files?.[0]?.name ?? "" })} className="text-[0.75rem] text-graphite file:mr-3 file:px-2.5 file:py-1 file:rounded-md file:border file:border-rule file:bg-transparent file:text-ink file:text-[0.72rem] file:cursor-pointer" />
+        </Field>
+        <p className="text-[0.72rem] text-mist">{`Once approved, it is added to the ${locked ? "Nov 1–15" : "Oct 16–31"} pay run after tax. The receipt is kept with the claim.`}</p>
       </ProtoModal>
 
       <ProtoModal open={modal === "filing"} title={`Mark filed · ${AGENCIES.find((a) => a.id === filingDraft.agency)?.name ?? ""}`} onClose={close} footer={<PrimaryButton onClick={saveFiling} disabled={!filingDraft.ref.trim() || !validDate(filingDraft.date)}><Check size={14} /> Save filing</PrimaryButton>}>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DriveContext, type ProtoShell, type StackEntry } from "./drive";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,6 +15,20 @@ export interface ProtoNavItem {
   label: string;
   icon: LucideIcon;
   badge?: number;
+}
+
+// An alert under the bell. Most open the record they're about.
+export interface ProtoAlert {
+  text: string;
+  time: string;
+  stack?: StackEntry[];
+}
+
+// A record the command palette can find, e.g. a person or an invoice.
+export interface ProtoSearchItem {
+  label: string;
+  hint: string; // what it is: "Person", "Invoice"
+  stack: StackEntry[];
 }
 
 export type { ProtoDrive, StackEntry } from "./drive";
@@ -48,6 +62,11 @@ export function useProtoApp(home: string) {
     setDir(1);
     setStack([{ screen }]);
   }, []);
+  // Jump straight to any screen: a search result, an alert, the browser's back button.
+  const go = useCallback((next: StackEntry[], direction = 1) => {
+    setDir(direction);
+    setStack(next);
+  }, []);
   const back = useCallback(() => {
     setDir(-1);
     setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
@@ -55,7 +74,7 @@ export function useProtoApp(home: string) {
   const notify = useCallback((text: string) => setToast((t) => ({ key: (t?.key ?? 0) + 1, text })), []);
   const clearToast = useCallback(() => setToast(null), []);
 
-  return { screen: top.screen, id: top.id, stack, dir, open, section, back, notify, toast, clearToast };
+  return { screen: top.screen, id: top.id, stack, dir, open, section, go, back, notify, toast, clearToast };
 }
 
 export type ProtoAppState = ReturnType<typeof useProtoApp>;
@@ -109,6 +128,13 @@ function useBrand() {
 
 // ---- App shell -------------------------------------------------------------------
 
+const pathOf = (stack: StackEntry[]) => {
+  const top = stack[stack.length - 1];
+  return `/${stack[0].screen}${stack.length > 1 ? `/${top.id ?? top.screen}` : ""}`;
+};
+
+const isPaletteKey = (e: { key: string; metaKey: boolean; ctrlKey: boolean }) => (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+
 // Screens slide forward when opened and back when closed.
 const SLIDE = {
   enter: (dir: number) => ({ opacity: 0, x: dir * 20 }),
@@ -122,6 +148,8 @@ export function ProtoApp({
   user,
   nav,
   alerts = 0,
+  inbox,
+  search = [],
   children,
 }: {
   app: ProtoAppState;
@@ -129,6 +157,8 @@ export function ProtoApp({
   user: string;
   nav: ProtoNavItem[];
   alerts?: number;
+  inbox?: ProtoAlert[]; // what the bell lists; its length replaces `alerts`
+  search?: ProtoSearchItem[]; // records the command palette can find
   children: React.ReactNode;
 }) {
   const [product, org] = name.split(" · ");
@@ -136,13 +166,85 @@ export function ProtoApp({
   const crumbs = [root?.label ?? "", ...app.stack.slice(1).map((s) => s.label ?? "")];
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [modalHost, setModalHost] = useState<HTMLDivElement | null>(null);
-  const { brand, framed, onPath } = useContext(DriveContext);
+  const [bellOpen, setBellOpen] = useState(false);
+  const { brand, framed, page, onPath } = useContext(DriveContext);
   const top = app.stack[app.stack.length - 1];
-  const path = `/${app.stack[0].screen}${app.stack.length > 1 ? `/${top.id ?? top.screen}` : ""}`;
+  const path = pathOf(app.stack);
+  const count = inbox ? inbox.length : Math.max(0, alerts);
+  const navIds = nav.map((n) => n.id).join(" ");
+  const { go } = app;
+  const restoring = useRef(true);
+  const landing = useRef<{ state: unknown; hash: string } | null>(null);
+  const landed = useRef(false);
+
+  // Records opened this visit show up first in search.
+  const [seenPath, setSeenPath] = useState(path);
+  const [recent, setRecent] = useState<ProtoSearchItem[]>([]);
+  if (path !== seenPath) {
+    setSeenPath(path);
+    if (app.stack.length > 1 && top.label) {
+      const item = { label: top.label, hint: "Recent", stack: app.stack };
+      setRecent((r) => [item, ...r.filter((x) => x.label !== item.label)].slice(0, 5));
+    }
+  }
 
   useEffect(() => {
     onPath?.(path);
   }, [path, onPath]);
+
+  // Full-page demos keep the screen in the URL so Back, Forward and reload work.
+  useEffect(() => {
+    if (!page) return;
+    const restore = (state: unknown) => {
+      const saved = (state as { zionStack?: StackEntry[] } | null)?.zionStack;
+      if (!saved?.length) return false;
+      restoring.current = true;
+      go(saved, -1);
+      return true;
+    };
+    // A typed or linked #/section has no saved stack; open that section.
+    const fromHash = (hash: string) => {
+      const first = hash.replace(/^#\/?/, "").split("/")[0];
+      if (!first || !navIds.split(" ").includes(first)) return;
+      restoring.current = true;
+      go([{ screen: first }]);
+    };
+    const onPop = (e: PopStateEvent) => restore(e.state) || fromHash(window.location.hash);
+    window.addEventListener("popstate", onPop);
+    // Read where the visitor was (after a reload or from a link) before the
+    // first sync below overwrites it, once per mount.
+    landing.current ??= { state: window.history.state, hash: window.location.hash };
+    const timer = window.setTimeout(() => {
+      if (landed.current || !landing.current) return;
+      landed.current = true;
+      if (!restore(landing.current.state)) fromHash(landing.current.hash);
+    });
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      window.clearTimeout(timer);
+    };
+  }, [page, go, navIds]);
+
+  useEffect(() => {
+    if (!page) return;
+    const state = { zionStack: app.stack, zionPath: path };
+    const same = (window.history.state as { zionPath?: string } | null)?.zionPath === path;
+    if (restoring.current || same) window.history.replaceState(state, "", `#${path}`);
+    else window.history.pushState(state, "", `#${path}`);
+    restoring.current = false;
+  }, [page, path, app.stack]);
+
+  // ⌘K anywhere on a full-page demo; inside the frame when embedded.
+  useEffect(() => {
+    if (!page) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!isPaletteKey(e)) return;
+      e.preventDefault();
+      setPaletteOpen(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [page]);
 
   useEffect(() => {
     if (!app.toast) return;
@@ -185,7 +287,19 @@ export function ProtoApp({
   );
 
   return (
-    <div className={cn("proto-light relative bg-paper overflow-hidden flex flex-col h-[660px] text-left", !framed && "rounded-xl border border-rule")} style={style}>
+    <div
+      className={cn("proto-light relative bg-paper overflow-hidden flex flex-col text-left", page ? "h-full" : "h-[660px]", !framed && !page && "rounded-xl border border-rule")}
+      style={style}
+      onKeyDown={
+        page
+          ? undefined
+          : (e) => {
+              if (!isPaletteKey(e)) return;
+              e.preventDefault();
+              setPaletteOpen(true);
+            }
+      }
+    >
       {/* top bar */}
       <div className={cn("relative flex items-center gap-3 px-3 sm:px-4 h-12 shrink-0", isBar || isDark ? "proto-dark border-b border-rule" : "bg-sheet border-b border-rule")} style={isBar || isDark ? darkStyle : undefined}>
         {logo}
@@ -196,21 +310,14 @@ export function ProtoApp({
           className="hidden md:flex items-center gap-2 flex-1 max-w-[22rem] h-8 px-2.5 rounded-lg border border-rule bg-paper text-[0.78rem] text-mist hover:border-mist transition-colors cursor-pointer"
         >
           <Search size={14} />
-          <span className="flex-1 text-left">Search or jump to…</span>
+          <span className="flex-1 text-left">{search.length ? "Search records or jump to…" : "Search or jump to…"}</span>
           <kbd className="font-mono text-[0.65rem] px-1.5 py-0.5 rounded border border-rule bg-sheet">⌘K</kbd>
         </button>
         <div className="ml-auto flex items-center gap-3 shrink-0">
           <button type="button" onClick={() => setPaletteOpen(true)} className="md:hidden text-graphite cursor-pointer" aria-label="Search">
             <Search size={16} />
           </button>
-          <span className="relative text-graphite" aria-label={`${alerts} alerts`}>
-            <Bell size={16} />
-            {alerts > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-danger text-white text-[0.6rem] font-bold flex items-center justify-center">
-                {alerts}
-              </span>
-            )}
-          </span>
+          <AlertBell count={count} inbox={inbox} open={bellOpen} setOpen={setBellOpen} onGo={(stack) => go(stack)} />
           <span className="flex items-center gap-2">
             <Avatar name={user} size={26} />
             <span className="hidden lg:inline text-[0.78rem] text-ink-soft">{user}</span>
@@ -245,7 +352,7 @@ export function ProtoApp({
       <div className={cn("flex-1 min-h-0 grid grid-cols-1", !isTop && "grid-rows-[auto_minmax(0,1fr)] sm:grid-rows-1 sm:grid-cols-[11.5rem_minmax(0,1fr)]")}>
         {/* sidebar */}
         {!isTop && (
-          <nav aria-label={`${product} navigation`} className={cn("flex sm:flex-col gap-0.5 p-2 sm:p-2.5 border-b sm:border-b-0 border-rule overflow-x-auto sm:overflow-visible", SIDEBAR[shell])} style={isDark ? darkStyle : undefined}>
+          <nav aria-label={`${product} navigation`} className={cn("flex sm:flex-col gap-0.5 p-2 sm:p-2.5 border-b sm:border-b-0 border-rule overflow-x-auto sm:overflow-x-visible sm:overflow-y-auto", SIDEBAR[shell])} style={isDark ? darkStyle : undefined}>
             {nav.map((item) => {
               const on = item.id === app.stack[0].screen;
               return (
@@ -272,7 +379,7 @@ export function ProtoApp({
         )}
 
         {/* main */}
-        <div data-proto-main className="flex flex-col min-h-0 bg-paper">
+        <div data-proto-main role={page ? "main" : undefined} className="flex flex-col min-h-0 bg-paper">
           {app.stack.length > 1 && (
             <div className="flex items-center gap-1.5 h-10 px-4 border-b border-rule bg-sheet shrink-0 text-[0.75rem]">
               <button type="button" onClick={app.back} className="flex items-center gap-0.5 mr-1.5 pr-2.5 border-r border-rule text-graphite hover:text-ink cursor-pointer">
@@ -296,7 +403,7 @@ export function ProtoApp({
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="p-4 sm:p-5"
+                className={cn("p-4 sm:p-5", page && "lg:p-7 max-w-[84rem]")}
               >
                 <ModalHost.Provider value={modalHost}>{children}</ModalHost.Provider>
               </motion.div>
@@ -306,7 +413,7 @@ export function ProtoApp({
       </div>
 
       <div ref={setModalHost} className="absolute inset-0 z-20 pointer-events-none [&>*]:pointer-events-auto" />
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} nav={nav} onGo={(id) => app.section(id)} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} nav={nav} records={search} recent={recent} onGo={(stack) => go(stack)} />
 
       <AnimatePresence>
         {app.toast && (
@@ -328,10 +435,124 @@ export function ProtoApp({
   );
 }
 
-// Jump to any section by typing, like ⌘K in real apps.
-function CommandPalette({ open, onClose, nav, onGo }: { open: boolean; onClose: () => void; nav: ProtoNavItem[]; onGo: (id: string) => void }) {
+// The bell lists what needs attention; each alert opens its record.
+function AlertBell({
+  count,
+  inbox,
+  open,
+  setOpen,
+  onGo,
+}: {
+  count: number;
+  inbox?: ProtoAlert[];
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  onGo: (stack: StackEntry[]) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, setOpen]);
+
+  const badge = count > 0 && (
+    <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 rounded-full bg-danger text-sheet text-[0.6rem] font-bold flex items-center justify-center">{count}</span>
+  );
+
+  if (!inbox) {
+    return (
+      <span className="relative text-graphite" aria-label={`${count} alerts`}>
+        <Bell size={16} />
+        {badge}
+      </span>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`${count} alerts`} className="relative flex text-graphite hover:text-ink cursor-pointer">
+        <Bell size={16} />
+        {badge}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.14 }}
+            className="absolute right-0 top-7 z-30 w-[min(20rem,80vw)] bg-sheet rounded-xl border border-rule shadow-[0_24px_48px_-12px_rgba(16,24,40,0.25)] overflow-hidden"
+          >
+            <div className="px-3.5 h-10 flex items-center border-b border-rule text-[0.8rem] font-semibold text-ink">Needs attention</div>
+            <ul className="max-h-72 overflow-y-auto p-1.5">
+              {inbox.map((a, i) => (
+                <li key={`${i}-${a.text}`}>
+                  <button
+                    type="button"
+                    disabled={!a.stack}
+                    onClick={() => {
+                      if (a.stack) onGo(a.stack);
+                      setOpen(false);
+                    }}
+                    className="w-full flex gap-2.5 px-2.5 py-2 rounded-md text-left hover:bg-raised disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
+                  >
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gold shrink-0" aria-hidden />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[0.8rem] text-ink leading-snug">{a.text}</span>
+                      <span className="block text-[0.68rem] text-mist mt-0.5">{a.time}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {inbox.length === 0 && <li className="px-3 py-4 text-[0.8rem] text-mist">You&rsquo;re all caught up.</li>}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Jump to any section or record by typing, like ⌘K in real apps.
+function CommandPalette({
+  open,
+  onClose,
+  nav,
+  records,
+  recent,
+  onGo,
+}: {
+  open: boolean;
+  onClose: () => void;
+  nav: ProtoNavItem[];
+  records: ProtoSearchItem[];
+  recent: ProtoSearchItem[];
+  onGo: (stack: StackEntry[]) => void;
+}) {
   const [query, setQuery] = useState("");
-  const results = nav.filter((n) => n.label.toLowerCase().includes(query.toLowerCase()));
+  const [active, setActive] = useState(0);
+  const listId = useId();
+  const q = query.trim().toLowerCase();
+  const record = (r: ProtoSearchItem) => ({ key: `rec:${pathOf(r.stack)}:${r.label}`, label: r.label, hint: r.hint, icon: undefined as LucideIcon | undefined, stack: r.stack });
+  const sections = nav.filter((n) => n.label.toLowerCase().includes(q)).map((n) => ({ key: `nav:${n.id}`, label: n.label, hint: "Go to", icon: n.icon as LucideIcon | undefined, stack: [{ screen: n.id }] }));
+  // Empty: recent records, then every section. Typing: matching sections, then records.
+  // The same record can be opened from different sections; match on the record itself.
+  const same = (a: ProtoSearchItem, b: ProtoSearchItem) => {
+    const x = a.stack[a.stack.length - 1];
+    const y = b.stack[b.stack.length - 1];
+    return x.screen === y.screen && x.id === y.id;
+  };
+  const found = [...recent, ...records.filter((r) => !recent.some((x) => same(x, r)))].filter((r) => `${r.label} ${r.hint}`.toLowerCase().includes(q));
+  const results = q ? [...sections, ...found.slice(0, 8).map(record)] : [...recent.map(record), ...sections];
+  const current = Math.min(active, Math.max(0, results.length - 1));
 
   useEffect(() => {
     if (!open) return;
@@ -340,16 +561,20 @@ function CommandPalette({ open, onClose, nav, onGo }: { open: boolean; onClose: 
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const go = (id: string) => {
-    onGo(id);
+  const close = () => {
     setQuery("");
+    setActive(0);
     onClose();
+  };
+  const go = (stack: StackEntry[]) => {
+    onGo(stack);
+    close();
   };
 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="absolute inset-0 z-30 bg-ink/20 flex justify-center pt-16 px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+        <motion.div className="absolute inset-0 z-30 bg-ink/20 flex justify-center pt-16 px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close}>
           <motion.div
             role="dialog"
             aria-label="Search"
@@ -363,21 +588,49 @@ function CommandPalette({ open, onClose, nav, onGo }: { open: boolean; onClose: 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (results[0]) go(results[0].id);
+                if (results[current]) go(results[current].stack);
               }}
               className="flex items-center gap-2 px-3.5 h-11 border-b border-rule"
             >
               <Search size={15} className="text-mist" />
-              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Jump to…" aria-label="Jump to" className="flex-1 bg-transparent text-[0.85rem] text-ink placeholder:text-mist outline-none" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setActive(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                    e.preventDefault();
+                    const n = results.length || 1;
+                    setActive((current + (e.key === "ArrowDown" ? 1 : -1) + n) % n);
+                  }
+                }}
+                placeholder={records.length ? "Search people, records, or screens" : "Jump to…"}
+                aria-label="Search"
+                role="combobox"
+                aria-expanded
+                aria-controls={listId}
+                aria-activedescendant={results[current] ? `${listId}-${current}` : undefined}
+                className="flex-1 bg-transparent text-[0.85rem] text-ink placeholder:text-mist outline-none"
+              />
               <kbd className="font-mono text-[0.62rem] text-mist">Esc</kbd>
             </form>
-            <ul className="p-1.5 max-h-64 overflow-y-auto">
+            <ul id={listId} role="listbox" aria-label="Results" className="p-1.5 max-h-72 overflow-y-auto">
               {results.map((r, i) => (
-                <li key={r.id}>
-                  <button type="button" onClick={() => go(r.id)} className={cn("w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.82rem] text-ink-soft text-left hover:bg-raised cursor-pointer", i === 0 && query && "bg-raised")}>
-                    <r.icon size={15} className="text-mist" />
-                    <span className="flex-1">{r.label}</span>
-                    {i === 0 && query && <CornerDownLeft size={13} className="text-mist" />}
+                <li key={r.key} id={`${listId}-${i}`} role="option" aria-selected={i === current}>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => go(r.stack)}
+                    onMouseMove={() => setActive(i)}
+                    className={cn("w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[0.82rem] text-ink-soft text-left cursor-pointer", i === current && "bg-raised text-ink")}
+                  >
+                    {r.icon ? <r.icon size={15} className="text-mist shrink-0" /> : <Avatar name={r.label} size={18} />}
+                    <span className="flex-1 truncate">{r.label}</span>
+                    <span className="text-[0.68rem] text-mist shrink-0">{r.hint}</span>
+                    {i === current && <CornerDownLeft size={13} className="text-mist shrink-0" />}
                   </button>
                 </li>
               ))}
@@ -459,12 +712,20 @@ export function ProtoModal({
 
 // ---- Building blocks ----------------------------------------------------------------
 
+// Screen and record titles. Embedded, they sit under the section's h3 (h4, h5);
+// on a full-page demo, under the page's h1 (h2, h3).
+export function ProtoHeading({ sub = false, className, children }: { sub?: boolean; className?: string; children: React.ReactNode }) {
+  const { page } = useContext(DriveContext);
+  const Tag = page ? (sub ? "h3" : "h2") : sub ? "h5" : "h4";
+  return <Tag className={className}>{children}</Tag>;
+}
+
 export function ScreenHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   const brand = useBrand();
   return (
     <div className="flex items-start justify-between gap-3 mb-4">
       <div className="min-w-0">
-        <h4 className={cn("font-display leading-tight font-semibold text-ink tracking-[-0.015em]", brand?.font === "serif" ? "text-[1.6rem] leading-none" : "text-[1.2rem]")}>{title}</h4>
+        <ProtoHeading className={cn("font-display leading-tight font-semibold text-ink tracking-[-0.015em]", brand?.font === "serif" ? "text-[1.6rem] leading-none" : "text-[1.2rem]")}>{title}</ProtoHeading>
         {subtitle && <p className="text-[0.78rem] text-mist mt-0.5">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0 flex flex-wrap justify-end gap-2">{action}</div>}

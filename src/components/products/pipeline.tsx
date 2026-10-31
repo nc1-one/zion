@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { ArrowRight, BarChart3, Check, ChevronLeft, ChevronRight, Clock, Coffee, Copy, DoorOpen, Flag, GitBranch, IdCard, Inbox, Kanban, ListChecks, Mail, MessageSquare, Pause, Pencil, Phone, Play, Plus, Printer, QrCode, RefreshCw, Search, Send, StickyNote, UserPlus, Users, Workflow, Zap, type LucideIcon } from "lucide-react";
-import { Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp } from "./ProtoKit";
+import { ProtoHeading, Avatar, Bars, Field, KeyValues, Meter, Panel, PrimaryButton, ProtoApp, ProtoModal, ScreenHeader, Segmented, SmallButton, Stat, Status, Table, Toggle, inputClass, textareaClass, useProtoApp, type ProtoAlert, type ProtoSearchItem } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
 // ---- Types -------------------------------------------------------------------------
@@ -786,13 +786,22 @@ export function AIPipelinePrototype() {
   const [enrollSel, setEnrollSel] = useState<string[]>([]);
 
   // Moving to another screen closes any open slide-over and resets inline edits.
-  const stackKey = app.stack.map((s) => `${s.screen}:${s.id ?? ""}`).join("/");
-  const [seenKey, setSeenKey] = useState(stackKey);
-  if (seenKey !== stackKey) {
-    setSeenKey(stackKey);
+  // A bell alert can also open the inbox on one conversation: its id rides on the root entry.
+  const [seenStack, setSeenStack] = useState(app.stack);
+  if (seenStack !== app.stack) {
+    setSeenStack(app.stack);
     setModal(null);
     setEditing(false);
     setReplyEdit(false);
+    setTimeline("all");
+    const pick = app.screen === "inbox" ? app.id : undefined;
+    if (pick) {
+      setConvId(pick);
+      setInboxView("open");
+      setInboxQuery("");
+      setComposer("");
+      setConvs((l) => l.map((x) => (x.id === pick ? { ...x, unread: false } : x)));
+    }
   }
 
   // ---- Derived ----
@@ -802,7 +811,8 @@ export function AIPipelinePrototype() {
   const openTasks = tasks.filter((x) => !x.done).sort((a, b) => a.due - b.due);
   const overdue = openTasks.filter((x) => x.due < 0);
   const unread = convs.filter((c) => c.open && c.unread).length;
-  const unassigned = convs.filter((c) => c.open && !c.assignee).length;
+  const unassignedConvs = convs.filter((c) => c.open && !c.assignee);
+  const unassigned = unassignedConvs.length;
   const enrolledIn = (f: Flow) => countHere(f.steps);
   const f1 = flows.find((f) => f.id === "f1");
   const topOwner = TEAM.reduce((a, b) => (overdue.filter((x) => x.owner === b).length > overdue.filter((x) => x.owner === a).length ? b : a));
@@ -1186,6 +1196,30 @@ export function AIPipelinePrototype() {
   const worst = funnel.reduce((w, n, i) => (i > 0 && n / funnel[i - 1] < funnel[w] / funnel[w - 1] ? i : w), 1);
   const copy = CARD_COPY[lang];
 
+  // The bell lists what its count used to add up: conversations with no owner, then overdue tasks.
+  const bell: ProtoAlert[] = [
+    ...unassignedConvs.map((c) => ({
+      text: `${person(c.personId)?.name ?? "A guest"} needs an owner`,
+      time: /\d:\d\d/.test(c.at) ? `Today, ${c.at}` : c.at,
+      stack: [{ screen: "inbox", id: c.id }],
+    })),
+    ...overdue.map((k) => {
+      const p = person(k.personId);
+      const days = -k.due;
+      return {
+        text: p && !k.title.includes(first(p.name)) ? `${k.title} (${p.name})` : k.title,
+        time: `${days} ${days === 1 ? "day" : "days"} overdue · ${first(k.owner)}`,
+        stack: p ? [{ screen: "tasks" }, { screen: "person", id: p.id, label: p.name }] : [{ screen: "tasks" }],
+      };
+    }),
+  ];
+
+  // Everyone and every workflow, opened the way the app opens them.
+  const search: ProtoSearchItem[] = [
+    ...people.map((p) => ({ label: p.name, hint: stageLabel(p.stage), stack: [{ screen: "board" }, { screen: "person", id: p.id, label: p.name }] })),
+    ...flows.map((f) => ({ label: f.name, hint: "Workflow", stack: [{ screen: "workflows" }, { screen: "workflow", id: f.id, label: f.name }] })),
+  ];
+
   const nav = [
     { id: "inbox", label: "Inbox", icon: Inbox, badge: unread },
     { id: "board", label: "Board", icon: Kanban },
@@ -1197,7 +1231,7 @@ export function AIPipelinePrototype() {
   ];
 
   return (
-    <ProtoApp app={app} name="AI Church Pipeline · Grace Fellowship" user="Pastor Joel Navarro" nav={nav} alerts={overdue.length + unassigned}>
+    <ProtoApp app={app} name="AI Church Pipeline · Grace Fellowship" user="Pastor Joel Navarro" nav={nav} inbox={bell} search={search}>
       <span ref={scrollAnchor} hidden />
       {/* ---- Inbox ---- */}
       {app.screen === "inbox" && (
@@ -1466,7 +1500,7 @@ export function AIPipelinePrototype() {
           <div className="flex flex-wrap items-center gap-3 mb-3">
             <Avatar name={cur.name} size={46} />
             <div className="flex-1 min-w-0">
-              <h4 className="font-display text-[1.45rem] leading-tight font-semibold text-ink">{cur.name}</h4>
+              <ProtoHeading className="font-display text-[1.45rem] leading-tight font-semibold text-ink">{cur.name}</ProtoHeading>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                 {stalled(cur) ? <Status tone="bad">{`No contact in ${cur.quiet} days`}</Status> : <Status tone="good">{`Contacted ${ago(cur.quiet).toLowerCase()}`}</Status>}
                 <span className="text-[0.72rem] text-mist">

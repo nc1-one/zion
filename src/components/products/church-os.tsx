@@ -23,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import {
+  ProtoHeading,
   Avatar,
   Bars,
   Field,
@@ -32,6 +33,8 @@ import {
   PrimaryButton,
   ProtoApp,
   ProtoModal,
+  type ProtoAlert,
+  type ProtoSearchItem,
   ScreenHeader,
   Segmented,
   SmallButton,
@@ -85,6 +88,8 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const fmt = (d: string) => (d.length <= 4 ? d : `${MONTHS[Number(d.slice(5, 7)) - 1]} ${Number(d.slice(8, 10))}`);
 const hr = (h: number) => `${Math.floor(h) % 12 || 12}${h % 1 ? ":30" : ""} ${h < 12 ? "AM" : "PM"}`;
 const TODAY = "2026-10-29";
+// Whole days from one "2026-10-29" date to a later one.
+const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86400000);
 const SUNDAYS = ["2026-10-25", "2026-10-18", "2026-10-11", "2026-10-04", "2026-09-27", "2026-09-20", "2026-09-13", "2026-09-06"];
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const makeCode = () => Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
@@ -859,8 +864,35 @@ export function ChurchOSPrototype() {
     .filter((g) => (fundFilter === "All" || g.fund === fundFilter) && (methodFilter === "All" || g.method === methodFilter) && giver(g.personId).toLowerCase().includes(giftQuery.toLowerCase()));
   const statementPerson = byId(statementFor);
 
+  // ⌘K finds every record that has its own screen. Ids and labels match what app.open passes.
+  const search: ProtoSearchItem[] = [
+    ...people.map((x) => ({ label: x.name, hint: x.role === "Child" ? "Child" : "Person", stack: [{ screen: "people" }, { screen: "person", id: x.id, label: x.name }] })),
+    ...households.map((h) => ({ label: `${h.name} household`, hint: "Household", stack: [{ screen: "people" }, { screen: "household", id: h.id, label: `${h.name} household` }] })),
+    ...batches.map((b) => ({ label: `${b.name}, ${fmt(b.date)}`, hint: "Batch", stack: [{ screen: "giving" }, { screen: "batch", id: b.id, label: `${b.name}, ${fmt(b.date)}` }] })),
+    ...events.map((e) => ({ label: e.name, hint: "Event", stack: [{ screen: "registrations" }, { screen: "event", id: e.id, label: e.name }] })),
+  ];
+
+  // The bell: follow-ups due today or late, and room requests waiting on the office.
+  const inbox: ProtoAlert[] = [
+    ...openFollowUps
+      .filter((f) => f.due <= TODAY)
+      .map((f) => {
+        const late = daysBetween(f.due, TODAY);
+        return {
+          text: `Follow-up for ${giver(f.personId)} is ${late > 0 ? "overdue" : "due"}`,
+          time: late > 0 ? `${late} ${late === 1 ? "day" : "days"} overdue` : "Today",
+          stack: [{ screen: "people" }, { screen: "person", id: f.personId, label: giver(f.personId) }],
+        };
+      }),
+    ...pendingBookings.map((b) => ({
+      text: `Room request${clashes(b).length > 0 ? " conflicts" : ""}: ${b.title}`,
+      time: `${DAYS[b.day]}, ${hr(b.start)}`,
+      stack: [{ screen: "calendar" }],
+    })),
+  ];
+
   return (
-    <ProtoApp app={app} name="Church OS · Grace Fellowship" user="Pastor Joel Navarro" nav={nav} alerts={openFollowUps.filter((f) => f.due <= TODAY).length + pendingBookings.length}>
+    <ProtoApp app={app} name="Church OS · Grace Fellowship" user="Pastor Joel Navarro" nav={nav} inbox={inbox} search={search}>
       {/* ---- Dashboard ---- */}
       {app.screen === "dashboard" && (
         <>
@@ -983,7 +1015,7 @@ export function ChurchOSPrototype() {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Avatar name={p.name} size={48} />
             <div className="flex-1 min-w-[10rem]">
-              <h4 className="text-[1.35rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{p.name}</h4>
+              <ProtoHeading className="text-[1.35rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{p.name}</ProtoHeading>
               <div className="flex flex-wrap items-center gap-2 mt-1 text-[0.74rem] text-mist">
                 <Status tone={tone(p)}>{statusLabel(p)}</Status>
                 <span>{p.role === "Child" ? `Age ${p.age}` : p.firstVisit ? `First visit ${fmt(p.firstVisit)}` : `With us since ${p.joined}`}</span>

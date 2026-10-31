@@ -28,6 +28,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  ProtoHeading,
   Avatar,
   Bars,
   Field,
@@ -47,6 +48,8 @@ import {
   inputClass,
   textareaClass,
   useProtoApp,
+  type ProtoAlert,
+  type ProtoSearchItem,
 } from "./ProtoKit";
 import { cn } from "@/lib/utils";
 
@@ -148,6 +151,10 @@ const REVENUE_2026 = [1_420_000, 1_310_000, 1_520_000, 1_490_000, 1_380_000, 1_8
 const REVENUE_2025 = [1_240_000, 1_200_000, 1_330_000, 1_290_000, 1_250_000, 1_660_000, 1_420_000, 1_570_000, 1_960_000, 1_530_000];
 const sum = (ns: number[]) => ns.reduce((s, n) => s + n, 0);
 
+// Retention: the share of the previous year's donors who gave again. 2026 is worked out from the donor records.
+const RETENTION_2025 = 54;
+const RETENTION_HISTORY = [{ label: "2023", value: 51 }, { label: "2024", value: 53 }, { label: "2025", value: RETENTION_2025 }];
+
 // What one outcome costs, so gifts translate into results.
 const COST = { meal: 38, scholarYear: 28_800, scholarMonth: 2_400, family: 1_100 };
 
@@ -176,6 +183,14 @@ const DONORS: Donor[] = [
   { id: "d20", name: "Rev. Daniel Ocampo", kind: "Individual", email: "dan.ocampo@gmail.com", phone: "0917 555 0137", city: "Quezon City", segment: "Annual", engagement: 3, since: 2016, lastGift: "2026-04-05", funds: { General: 15000, Feeding: 10000 }, lastYear: 25000, lifetime: 230000, gifts: 11, household: ["Ruth Ocampo"], softCredits: [], owner: "Nico Ramirez" },
   { id: "d21", name: "Marites Fernandez", kind: "Individual", email: "marites.fernandez@gmail.com", phone: "+971 50 555 0192", city: "Dubai, UAE", segment: "Monthly", engagement: 4, since: 2020, lastGift: "2026-10-15", funds: { "Disaster relief": 25000 }, lastYear: 25000, lifetime: 145000, gifts: 70, household: [], softCredits: [], owner: "Jasmine Uy" },
   { id: "d22", name: "Carlos Tan", kind: "Individual", email: "carlos.tan@binondotextiles.ph", phone: "0917 555 0101", city: "Binondo, Manila", segment: "Annual", engagement: 3, since: 2019, lastGift: "2026-10-24", funds: { General: 50000 }, lastYear: 60000, lifetime: 380000, gifts: 8, household: ["Lily Tan"], softCredits: [], owner: "Carmela Santos" },
+  { id: "d23", name: "Edwin Sarmiento", kind: "Individual", email: "edwin.sarmiento@gmail.com", phone: "0917 555 0156", city: "Caloocan", segment: "Lapsed", engagement: 2, since: 2021, lastGift: "2025-12-04", funds: {}, lastYear: 12000, lifetime: 41000, gifts: 14, household: [], softCredits: [], owner: "Jasmine Uy" },
+  { id: "d24", name: "Marilou Pascual", kind: "Individual", email: "marilou.pascual@yahoo.com", phone: "0922 555 0183", city: "Iloilo City", segment: "Lapsed", engagement: 2, since: 2018, lastGift: "2025-11-18", funds: {}, lastYear: 24000, lifetime: 118000, gifts: 19, household: ["Danilo Pascual"], softCredits: [], owner: "Carmela Santos" },
+  { id: "d25", name: "Gomez Dental Clinic", kind: "Company", email: "admin@gomezdental.ph", phone: "(02) 8555 0127", city: "Pasig", segment: "Lapsed", engagement: 2, since: 2022, lastGift: "2025-09-22", funds: {}, lastYear: 30000, lifetime: 90000, gifts: 4, household: [], softCredits: [], owner: "Nico Ramirez" },
+  { id: "d26", name: "Bernadette Ong", kind: "Individual", email: "bernadette.ong@ongholdings.ph", phone: "0917 555 0165", city: "San Juan", segment: "Lapsed", engagement: 3, since: 2020, lastGift: "2025-06-30", funds: {}, lastYear: 60000, lifetime: 275000, gifts: 11, household: ["Henry Ong"], softCredits: [], owner: "Carmela Santos" },
+  { id: "d27", name: "Victor Ilagan", kind: "Individual", email: "victor.ilagan@gmail.com", phone: "0935 555 0149", city: "Davao City", segment: "Lapsed", engagement: 1, since: 2023, lastGift: "2025-08-09", funds: {}, lastYear: 6000, lifetime: 14000, gifts: 8, household: [], softCredits: [], owner: "Jasmine Uy" },
+  { id: "d28", name: "Rosario Benitez", kind: "Individual", email: "rosario.benitez@gmail.com", phone: "0918 555 0171", city: "Cebu City", segment: "Lapsed", engagement: 1, since: 2017, lastGift: "2024-12-12", funds: {}, lastYear: 0, lifetime: 52000, gifts: 9, household: [], softCredits: [], owner: "Jasmine Uy" },
+  { id: "d29", name: "St. Anne Parish Youth Ministry", kind: "Church", email: "youth@stanneparish.org", phone: "(02) 8555 0138", city: "Taytay, Rizal", segment: "Lapsed", engagement: 1, since: 2019, lastGift: "2024-04-21", funds: {}, lastYear: 0, lifetime: 36000, gifts: 5, household: [], softCredits: [], owner: "Nico Ramirez" },
+  { id: "d30", name: "Alfredo Dimaculangan", kind: "Individual", email: "alfredo.dimaculangan@gmail.com", phone: "0919 555 0192", city: "Lipa, Batangas", segment: "Lapsed", engagement: 1, since: 2016, lastGift: "2023-11-26", funds: {}, lastYear: 0, lifetime: 88000, gifts: 16, household: ["Nena Dimaculangan"], softCredits: [], owner: "Carmela Santos" },
 ];
 
 const g = (id: string, donorId: string, amount: number, fund: Fund, method: Method, date: string, kind: GiftKind, receipt: number, ack: Ack, campaignId?: string): Gift => ({ id, donorId, amount, fund, method, date, kind, receipt: `BP-2026-${receipt}`, ack, campaignId });
@@ -401,7 +416,9 @@ function givingByYear(d: Donor) {
   const start = Math.max(d.since, 2022);
   const earlierYears = Math.max(1, 2025 - d.since);
   const rest = Math.max(0, d.lifetime - ytd(d) - d.lastYear);
-  return Array.from({ length: 2026 - start + 1 }, (_, i) => start + i).map((y) => ({ label: String(y), value: y === 2026 ? ytd(d) : y === 2025 ? d.lastYear : Math.round(rest / earlierYears) }));
+  const lastGiftYear = d.lastGift ? Number(d.lastGift.slice(0, 4)) : 0;
+  // Earlier years are an even split of the rest, except years after the last gift.
+  return Array.from({ length: 2026 - start + 1 }, (_, i) => start + i).map((y) => ({ label: String(y), value: y === 2026 ? ytd(d) : y === 2025 ? d.lastYear : y > lastGiftYear ? 0 : Math.round(rest / earlierYears) }));
 }
 
 // ---- Local building blocks ---------------------------------------------------------------
@@ -509,6 +526,7 @@ export function DonorsPrototype() {
   const [session, setSession] = useState({ amount: 0, count: 0 });
   const [nudged, setNudged] = useState<string[]>([]);
   const [resent, setResent] = useState<string[]>([]);
+  const [reached, setReached] = useState<string[]>([]);
 
   const [donorQuery, setDonorQuery] = useState("");
   const [segFilter, setSegFilter] = useState<"all" | Segment>("all");
@@ -520,7 +538,15 @@ export function DonorsPrototype() {
   const [fundFilter, setFundFilter] = useState<"all" | Fund>("all");
   const [campaignKind, setCampaignKind] = useState<"all" | CampaignKind>("all");
   const [grantStage, setGrantStage] = useState<"all" | GrantStage>("all");
-  const [reportMode, setReportMode] = useState<"donor" | "board">("donor");
+  // Opening Impact reports starts on the donor report. { screen: "reports", id: "retention" } starts on retention.
+  const [reportMode, setReportMode] = useState<"donor" | "board" | "retention">(app.screen === "reports" && app.id === "retention" ? "retention" : "donor");
+  const [seenStack, setSeenStack] = useState(app.stack);
+  if (app.stack !== seenStack) {
+    setSeenStack(app.stack);
+    // Going back from a donor to the report keeps the tab you were on.
+    if (app.screen === "reports" && app.stack.length === 1 && app.dir > 0) setReportMode(app.id === "retention" ? "retention" : "donor");
+  }
+  const [retentionView, setRetentionView] = useState<"lybunt" | "sybunt">("lybunt");
   const [reportScope, setReportScope] = useState<"donor" | "segment">("donor");
   const [reportDonor, setReportDonor] = useState("d1");
   const [reportSeg, setReportSeg] = useState<Segment>("Major");
@@ -556,6 +582,16 @@ export function DonorsPrototype() {
   const lapsed = donors.filter((d) => d.segment === "Lapsed");
   const openTasks = [...tasks].filter((t) => !t.done).sort((a, b) => a.due.localeCompare(b.due));
   const mrr = sum(recurring.filter((r) => r.status === "Active").map((r) => r.amount));
+
+  // Retention, from the records: last year's donors who have given again in 2026.
+  const lastYearDonors = donors.filter((d) => d.lastYear > 0);
+  const retained = lastYearDonors.filter((d) => ytd(d) > 0).length;
+  const retention = lastYearDonors.length ? Math.round((retained / lastYearDonors.length) * 100) : 0;
+  const lybunt = donors.filter((d) => d.lastYear > 0 && ytd(d) === 0).sort((a, b) => b.lastYear - a.lastYear);
+  const sybunt = donors.filter((d) => d.lifetime > 0 && ytd(d) === 0).sort((a, b) => b.lifetime - a.lifetime);
+  const lybuntValue = sum(lybunt.map((d) => d.lastYear));
+  const retentionList = retentionView === "lybunt" ? lybunt : sybunt;
+  const toReach = retentionList.filter((d) => !reached.includes(d.id));
 
   const openDonor = (d: Donor) => {
     setProfileTab("overview");
@@ -683,6 +719,16 @@ export function DonorsPrototype() {
     app.section("reports");
   };
 
+  // Email lapsed donors a win-back note, log it on each timeline and set a follow-up.
+  const reachOut = (list: Donor[]) => {
+    const todo = list.filter((d) => !reached.includes(d.id));
+    if (!todo.length) return;
+    setReached((l) => [...l, ...todo.map((d) => d.id)]);
+    for (const d of todo) logTouch(d.id, "Email", `Win-back email sent. ${d.lastYear ? `Gave ${peso(d.lastYear)} in 2025.` : `Last gave ${fmtDate(d.lastGift)}.`}`);
+    setTasks((l) => [...l, ...todo.map((d): Task => ({ id: nextId("t"), donorId: d.id, text: `Follow up on the win-back email to ${d.name}`, due: "2026-11-05", done: false }))]);
+    app.notify(todo.length === 1 ? `Win-back email sent to ${todo[0].name}. Follow-up added.` : `Win-back emails sent to ${todo.length} donors. Follow-ups added.`);
+  };
+
   // ---- Current records ----
   const dn = app.screen === "donor" ? donor(app.id) : undefined;
   const gf = app.screen === "gift" ? gifts.find((x) => x.id === app.id) : undefined;
@@ -736,14 +782,33 @@ export function DonorsPrototype() {
     { id: "comms", label: "Communication", icon: Mail },
   ];
 
+  // The bell: one line per gift still waiting for a thank-you. Thanking it clears it.
+  const thankText = (x: Gift) => `Thank ${nameOf(x.donorId)} for ${peso(x.amount)}`;
+  const inbox: ProtoAlert[] = pending.map((x) => ({
+    text: pending.filter((y) => thankText(y) === thankText(x)).length > 1 ? `${thankText(x)} (${x.receipt})` : thankText(x),
+    time: relDays(x.date),
+    stack: [{ screen: "gifts" }, { screen: "gift", id: x.id, label: x.receipt }],
+  }));
+
+  // ⌘K finds any record that has its own screen. Same ids and labels as app.open uses.
+  const found = (hint: string, root: string, screen: string, id: string, label: string, shown = label): ProtoSearchItem => ({ label: shown, hint, stack: [{ screen: root }, { screen, id, label }] });
+  const search: ProtoSearchItem[] = [
+    ...donors.map((d) => found("Donor", "donors", "donor", d.id, d.name)),
+    ...campaigns.map((c) => found("Campaign", "campaigns", "campaign", c.id, c.name)),
+    ...programs.map((p) => found("Program", "programs", "program", p.id, p.name)),
+    ...grants.map((x) => found("Grant", "grants", "grant", x.id, x.funder)),
+    ...emails.map((x) => found("Email", "comms", "email", x.id, x.subject)),
+    ...[...gifts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30).map((x) => found("Gift", "gifts", "gift", x.id, x.receipt, `${nameOf(x.donorId)} · ${peso(x.amount)} · ${x.receipt}`)),
+  ];
+
   return (
-    <ProtoApp app={app} name="Donors & Impact · Bukas Palad Foundation" user="Carmela Santos" nav={nav} alerts={pending.length}>
+    <ProtoApp app={app} name="Donors & Impact · Bukas Palad Foundation" user="Carmela Santos" nav={nav} inbox={inbox} search={search}>
       {/* ---------------- Dashboard ---------------- */}
       {app.screen === "dashboard" && (
         <>
           <ScreenHeader title="Dashboard" subtitle="Thursday, October 29, 2026" action={<PrimaryButton onClick={() => openGift({})}><Plus size={14} /> Record gift</PrimaryButton>} />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
-            <Stat label="Donor retention" value="61%" sub="+7 pts vs 2025" tone="good" />
+            <Stat label="Donor retention" value={`${retention}%`} sub={`+${retention - RETENTION_2025} pts vs 2025`} tone="good" />
             <Stat label="Active donors" value="1,284" sub="Gave in the last 12 months" />
             <Stat label="Raised this year" value={pesoShort(raisedYtd)} sub={`+${growth}% vs same period 2025`} tone="good" />
             <Stat label="Thank-yous pending" value={String(pending.length)} sub={pending.length ? "Thank within 48 hours" : "All caught up"} tone={pending.length ? "bad" : "good"} />
@@ -780,12 +845,18 @@ export function DonorsPrototype() {
             </Panel>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <Panel title="Lapsed-donor alert">
+            <Panel title="Lapsed-donor alert" action={<SmallButton onClick={() => app.go([{ screen: "reports", id: "retention" }])}>Retention</SmallButton>}>
               <p className="text-[0.8rem] text-ink leading-snug">
-                <span className="font-semibold text-danger">37 donors</span> gave last October and nothing since. Together they gave ₱412,500 last year.
+                {lybunt.length ? (
+                  <>
+                    <span className="font-semibold text-danger">{`${lybunt.length} ${lybunt.length === 1 ? "donor" : "donors"}`}</span> gave last year and nothing since. Together they gave {peso(lybuntValue)}.
+                  </>
+                ) : (
+                  "Everyone who gave last year has given again."
+                )}
               </p>
               <ul className="mt-2.5 flex flex-col gap-1.5">
-                {lapsed.slice(0, 3).map((d) => (
+                {lybunt.slice(0, 3).map((d) => (
                   <li key={d.id} className="flex items-center justify-between gap-2 text-[0.74rem]">
                     <button type="button" onClick={() => openDonor(d)} className="text-ink-soft hover:text-ink truncate cursor-pointer">{d.name}</button>
                     <span className="text-mist shrink-0">{`Last gift ${fmtDate(d.lastGift)}`}</span>
@@ -859,10 +930,10 @@ export function DonorsPrototype() {
                 label: "Donor",
                 render: (r) => (
                   <span className="flex items-center gap-2 min-w-0">
-                    <Avatar name={r.name} size={26} />
+                    <span className="hidden sm:inline-flex"><Avatar name={r.name} size={26} /></span>
                     <span className="min-w-0">
-                      <span className="block text-ink truncate">{r.name}</span>
-                      <span className="block text-[0.68rem] text-mist truncate">{r.household.length ? `${r.name.split(" ").slice(-1)[0]} household · ${r.city}` : `${r.kind} · ${r.city}`}</span>
+                      <span className="block text-ink">{r.name}</span>
+                      <span className="block text-[0.68rem] text-mist">{r.household.length ? `${r.name.split(" ").slice(-1)[0]} household · ${r.city}` : `${r.kind} · ${r.city}`}</span>
                     </span>
                   </span>
                 ),
@@ -883,7 +954,7 @@ export function DonorsPrototype() {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <Avatar name={dn.name} size={48} />
             <div className="flex-1 min-w-[12rem]">
-              <h4 className="text-[1.3rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{dn.name}</h4>
+              <ProtoHeading className="text-[1.3rem] leading-tight font-semibold text-ink tracking-[-0.01em]">{dn.name}</ProtoHeading>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <Status tone={SEG_TONE[dn.segment]}>{dn.segment}</Status>
                 <span className="text-[0.74rem] text-mist">{`${dn.kind} · ${dn.city} · since ${dn.since}`}</span>
@@ -917,7 +988,7 @@ export function DonorsPrototype() {
                 <Panel title="Contact">
                   <KeyValues
                     items={[
-                      ["Email", dn.email],
+                      ["Email", <span key="email" className="break-words">{dn.email}</span>],
                       ["Phone", dn.phone],
                       ["City", dn.city],
                       [
@@ -1141,14 +1212,14 @@ export function DonorsPrototype() {
                 onRowClick={(x) => app.open("gift", x.id, x.receipt)}
                 empty={ackFilter === "pending" ? "Every gift has been thanked." : "No gifts match these filters."}
                 columns={[
-                  { key: "date", label: "Date", render: (x) => fmtDate(x.date) },
+                  { key: "date", label: "Date", render: (x) => fmtDate(x.date), hideOnMobile: true },
                   {
                     key: "donor",
                     label: "Donor",
                     render: (x) => (
                       <span className="min-w-0">
-                        <span className="block text-ink truncate">{nameOf(x.donorId)}</span>
-                        <span className="block text-[0.66rem] text-mist">{x.batch ? `${x.receipt} · ${x.batch}` : `${x.receipt} · ${x.kind}`}</span>
+                        <span className="block text-ink">{nameOf(x.donorId)}</span>
+                        <span className="block text-[0.66rem] text-mist"><span className="md:hidden">{`${fmtDate(x.date)} · `}</span>{x.batch ? `${x.receipt} · ${x.batch}` : `${x.receipt} · ${x.kind}`}</span>
                       </span>
                     ),
                   },
@@ -1169,7 +1240,7 @@ export function DonorsPrototype() {
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
                 <Stat label="Monthly donors" value="612" sub="+18 since July" tone="good" />
-                <Stat label="These schedules" value={`${peso(mrr)}/mo`} />
+                <Stat label="These schedules" value={peso(mrr)} sub="Per month" />
                 <Stat label="Failed this month" value={String(recurring.filter((r) => r.status === "Failed").length)} sub="Card or wallet declined" tone={recurring.some((r) => r.status === "Failed") ? "bad" : "good"} />
                 <Stat label="Paused" value={String(recurring.filter((r) => r.status === "Paused").length)} />
               </div>
@@ -1218,7 +1289,7 @@ export function DonorsPrototype() {
 
           {giftTab === "pledges" && (
             <>
-              <div className="grid grid-cols-3 gap-2.5 mb-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3">
                 <Stat label="Pledged" value={pesoShort(sum(pledges.map((p) => p.total)))} sub={`${pledges.length} pledges`} />
                 <Stat label="Collected" value={pesoShort(sum(pledges.map((p) => p.paid)))} sub={`${Math.round((sum(pledges.map((p) => p.paid)) / sum(pledges.map((p) => p.total))) * 100)}% of pledged`} />
                 <Stat label="Overdue" value={String(pledges.filter((p) => p.paid < p.total && p.next < TODAY).length)} sub="Past the due date" tone={pledges.some((p) => p.paid < p.total && p.next < TODAY) ? "bad" : "good"} />
@@ -1230,7 +1301,7 @@ export function DonorsPrototype() {
                 columns={[
                   { key: "donor", label: "Donor", render: (p) => <span className="text-ink">{nameOf(p.donorId)}</span> },
                   { key: "fund", label: "Fund", render: (p) => p.fund, hideOnMobile: true },
-                  { key: "paid", label: "Paid", render: (p) => <span className="flex items-center gap-2"><Meter value={p.paid} max={p.total} className="w-16" /><span className="font-mono text-[0.7rem]">{`${pesoShort(p.paid)} / ${pesoShort(p.total)}`}</span></span> },
+                  { key: "paid", label: "Paid", render: (p) => <span className="flex items-center gap-2"><Meter value={p.paid} max={p.total} className="w-16 hidden sm:block" /><span className="font-mono text-[0.7rem]">{`${pesoShort(p.paid)} / ${pesoShort(p.total)}`}</span></span> },
                   { key: "next", label: "Next payment", render: (p) => (p.paid >= p.total ? <Status tone="good">Fulfilled</Status> : <span className={p.next < TODAY ? "text-danger" : ""}>{`${peso(p.installment)} · ${fmtDate(p.next)}`}</span>), hideOnMobile: true },
                   {
                     key: "act",
@@ -1238,7 +1309,7 @@ export function DonorsPrototype() {
                     align: "right",
                     render: (p) =>
                       p.paid < p.total ? (
-                        <span className="inline-flex gap-1.5">
+                        <span className="inline-flex flex-col sm:flex-row items-end gap-1.5">
                           <SmallButton onClick={() => { logTouch(p.donorId, "Email", `Pledge reminder sent for ${peso(p.installment)} due ${fmtDate(p.next)}.`); app.notify(`Reminder sent to ${nameOf(p.donorId)}`); }}>Remind</SmallButton>
                           <SmallButton onClick={() => openGift({ donorId: p.donorId, fund: p.fund, kind: "Pledge payment", amount: String(p.installment), method: "Bank transfer" })}>Record payment</SmallButton>
                         </span>
@@ -1338,7 +1409,7 @@ export function DonorsPrototype() {
             subtitle={`${cp.kind} · ${cp.fund} fund · ${fmtDate(cp.starts)} to ${fmtDate(cp.ends)}`}
             action={
               <>
-                <SmallButton onClick={() => app.notify(`Link copied: give.bukaspalad.org/${cp.slug}`)}><Share2 size={12} /> Share page</SmallButton>
+                <SmallButton label="Share page" onClick={() => app.notify(`Link copied: give.bukaspalad.org/${cp.slug}`)}><Share2 size={12} /><span className="hidden sm:inline">Share page</span></SmallButton>
                 {cp.status === "Draft" ? (
                   <PrimaryButton onClick={() => { setCampaigns((l) => l.map((c) => (c.id === cp.id ? { ...c, status: "Live" } : c))); app.notify(`${cp.name} is live`); }}>Publish page</PrimaryButton>
                 ) : cp.status === "Live" ? (
@@ -1510,7 +1581,7 @@ export function DonorsPrototype() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <Panel title={`${pg.metric} by month`}>
-              <Bars data={pg.monthly.map((v, i) => ({ label: MONTHS[i], value: v }))} format={compact} />
+              <div className="overflow-x-auto"><div className="min-w-[22rem]"><Bars data={pg.monthly.map((v, i) => ({ label: MONTHS[i], value: v }))} format={compact} /></div></div>
             </Panel>
             <Panel title="By site">
               <ul className="flex flex-col gap-3">
@@ -1559,190 +1630,253 @@ export function DonorsPrototype() {
         <>
           <ScreenHeader
             title="Impact reports"
-            subtitle="Show donors and the board what the gifts did"
-            action={<Segmented id="rp-mode" value={reportMode} onChange={setReportMode} options={[{ id: "donor", label: "Donor report" }, { id: "board", label: "Board report" }]} />}
+            subtitle={reportMode === "retention" ? "Who came back, who didn't, and who to call" : "Show donors and the board what the gifts did"}
+            action={<Segmented id="rp-mode" value={reportMode} onChange={setReportMode} options={[{ id: "donor", label: "Donor" }, { id: "board", label: "Board" }, { id: "retention", label: "Retention" }]} />}
           />
-          <div className="grid grid-cols-1 lg:grid-cols-[15rem_minmax(0,1fr)] gap-3">
-            <div className="flex flex-col gap-3">
-              {reportMode === "donor" ? (
-                <Panel title="Build report">
-                  <div className="flex flex-col gap-3">
-                    <Group label="Send to">
-                      <Segmented id="rp-scope" value={reportScope} onChange={setReportScope} options={[{ id: "donor", label: "One donor" }, { id: "segment", label: "Segment" }]} />
-                    </Group>
-                    {reportScope === "donor" ? (
-                      <Field label="Donor">
-                        <select value={rd.id} onChange={(e) => setReportDonor(e.target.value)} className={inputClass}>
-                          {donors.filter((d) => ytd(d) > 0).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                        </select>
-                      </Field>
-                    ) : (
-                      <Field label="Segment">
-                        <select value={reportSeg} onChange={(e) => setReportSeg(e.target.value as Segment)} className={inputClass}>
-                          {SEGMENTS.filter((s) => s !== "Lapsed").map((s) => <option key={s} value={s}>{`${s} donors (${AUDIENCE_SIZE[s]})`}</option>)}
-                        </select>
-                      </Field>
-                    )}
-                    <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Program story <Toggle on={withStory} onChange={setWithStory} label="Include a program story" /></div>
-                    <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Letter from Carmela <Toggle on={withLetter} onChange={setWithLetter} label="Include a letter" /></div>
-                    <PrimaryButton
-                      onClick={() => {
-                        const to = reportScope === "donor" ? rd.name : `${reportSeg} donors (${AUDIENCE_SIZE[reportSeg]})`;
-                        setSentReports((l) => [{ id: nextId("s"), to, kind: reportScope === "donor" ? "Donor" : "Segment", date: TODAY }, ...l]);
-                        if (reportScope === "donor") logTouch(rd.id, "Email", "Sent the 2026 impact report.");
-                        app.notify(reportScope === "donor" ? `Impact report sent to ${rd.name}` : `${AUDIENCE_SIZE[reportSeg]} personal impact reports sent`);
-                      }}
-                    >
-                      <Send size={14} /> {reportScope === "donor" ? "Send report" : `Send to ${AUDIENCE_SIZE[reportSeg]} donors`}
-                    </PrimaryButton>
-                    <SmallButton onClick={() => app.notify(`PDF ready: ${rd.name}, 2026 impact`)}><Download size={12} /> Download PDF</SmallButton>
+          {reportMode === "retention" && (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+                <Stat label="Donor retention" value={`${retention}%`} sub={`+${retention - RETENTION_2025} pts vs 2025`} tone="good" />
+                <Stat label="Gave in 2025" value={String(lastYearDonors.length)} sub={`${retained} gave again`} />
+                <Stat label="LYBUNT" value={String(lybunt.length)} sub={`${pesoShort(lybuntValue)} given in 2025`} tone={lybunt.length ? "bad" : "good"} />
+                <Stat label="SYBUNT" value={String(sybunt.length)} sub="Gave before, not in 2026" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <Panel title="Retention by year">
+                  <Bars data={[...RETENTION_HISTORY, { label: "2026", value: retention }]} format={(n) => `${n}%`} height="h-24" />
+                  <p className="mt-3 text-[0.7rem] text-mist leading-snug">Donors who gave again, as a share of the year before. 2026 is to date.</p>
+                </Panel>
+                <Panel title="Win them back">
+                  <p className="text-[0.78rem] text-ink-soft leading-snug">
+                    {toReach.length ? `${toReach.length} of ${retentionList.length} on this list have not heard from us yet.` : "Everyone on this list has been contacted."}
+                  </p>
+                  <p className="mt-1 text-[0.7rem] text-mist leading-snug">Each email is logged on the donor&rsquo;s timeline with a follow-up task.</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <PrimaryButton onClick={() => reachOut(retentionList)} disabled={!toReach.length}><Send size={14} /> {toReach.length ? `Reach out to ${toReach.length}` : "All contacted"}</PrimaryButton>
+                    <SmallButton onClick={() => { loadTemplate("winback"); app.section("comms"); }}><Mail size={12} /> Write a win-back email</SmallButton>
+                    <SmallButton onClick={() => app.notify(`List exported: ${retentionView.toUpperCase()}, ${retentionList.length} donors`)}><Download size={12} /> Export list</SmallButton>
                   </div>
                 </Panel>
-              ) : (
-                <Panel title="Board report">
-                  <div className="flex flex-col gap-3">
-                    <p className="text-[0.78rem] text-ink-soft leading-snug">Q3 2026 for the Nov 12 board meeting. Figures update as gifts and outcomes come in.</p>
-                    <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Grants pipeline <Toggle on={withGrants} onChange={setWithGrants} label="Include grants pipeline" /></div>
-                    <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Top donor names <Toggle on={withNames} onChange={setWithNames} label="Include top donor names" /></div>
-                    <PrimaryButton onClick={() => { setSentReports((l) => [{ id: nextId("s"), to: "Board of trustees", kind: "Board", date: TODAY }, ...l]); app.notify("Board report sent to 9 trustees"); }}><Send size={14} /> Send to board</PrimaryButton>
-                    <SmallButton onClick={() => app.notify("PDF ready: Board report, Q3 2026")}><Download size={12} /> Export PDF</SmallButton>
-                  </div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-3">
+                <Segmented id="rp-ret" value={retentionView} onChange={setRetentionView} options={[{ id: "lybunt", label: `LYBUNT · ${lybunt.length}` }, { id: "sybunt", label: `SYBUNT · ${sybunt.length}` }]} />
+                <span className="text-[0.72rem] text-mist">{retentionView === "lybunt" ? "Gave last year but not this year" : "Gave some year but not this year"}</span>
+              </div>
+              <Table
+                rows={retentionList}
+                rowKey={(d) => d.id}
+                onRowClick={openDonor}
+                empty="Nobody here. Everyone has given this year."
+                columns={[
+                  {
+                    key: "name",
+                    label: "Donor",
+                    render: (d) => (
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span className="hidden sm:inline-flex"><Avatar name={d.name} size={26} /></span>
+                        <span className="min-w-0">
+                          <span className="block text-ink">{d.name}</span>
+                          <span className="block text-[0.68rem] text-mist">{`${d.kind} · ${d.city}`}</span>
+                        </span>
+                      </span>
+                    ),
+                  },
+                  { key: "last", label: "Last gift", render: (d) => <span className="whitespace-nowrap">{fmtDate(d.lastGift)}</span>, hideOnMobile: true },
+                  { key: "val", label: retentionView === "lybunt" ? "2025" : "Lifetime", align: "right", render: (d) => <span className="font-mono text-ink">{peso(retentionView === "lybunt" ? d.lastYear : d.lifetime)}</span> },
+                  { key: "owner", label: "Owner", render: (d) => d.owner, hideOnMobile: true },
+                  {
+                    key: "act",
+                    label: "",
+                    align: "right",
+                    render: (d) => (reached.includes(d.id) ? <Status tone="good">Emailed</Status> : <span className="inline-flex whitespace-nowrap"><SmallButton onClick={() => reachOut([d])}><Mail size={11} /> Reach out</SmallButton></span>),
+                  },
+                ]}
+              />
+            </>
+          )}
+          {reportMode !== "retention" && (
+            <div className="grid grid-cols-1 lg:grid-cols-[15rem_minmax(0,1fr)] gap-3">
+              <div className="flex flex-col gap-3">
+                {reportMode === "donor" ? (
+                  <Panel title="Build report">
+                    <div className="flex flex-col gap-3">
+                      <Group label="Send to">
+                        <Segmented id="rp-scope" value={reportScope} onChange={setReportScope} options={[{ id: "donor", label: "One donor" }, { id: "segment", label: "Segment" }]} />
+                      </Group>
+                      {reportScope === "donor" ? (
+                        <Field label="Donor">
+                          <select value={rd.id} onChange={(e) => setReportDonor(e.target.value)} className={inputClass}>
+                            {donors.filter((d) => ytd(d) > 0).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                          </select>
+                        </Field>
+                      ) : (
+                        <Field label="Segment">
+                          <select value={reportSeg} onChange={(e) => setReportSeg(e.target.value as Segment)} className={inputClass}>
+                            {SEGMENTS.filter((s) => s !== "Lapsed").map((s) => <option key={s} value={s}>{`${s} donors (${AUDIENCE_SIZE[s]})`}</option>)}
+                          </select>
+                        </Field>
+                      )}
+                      <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Program story <Toggle on={withStory} onChange={setWithStory} label="Include a program story" /></div>
+                      <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Letter from Carmela <Toggle on={withLetter} onChange={setWithLetter} label="Include a letter" /></div>
+                      <PrimaryButton
+                        onClick={() => {
+                          const to = reportScope === "donor" ? rd.name : `${reportSeg} donors (${AUDIENCE_SIZE[reportSeg]})`;
+                          setSentReports((l) => [{ id: nextId("s"), to, kind: reportScope === "donor" ? "Donor" : "Segment", date: TODAY }, ...l]);
+                          if (reportScope === "donor") logTouch(rd.id, "Email", "Sent the 2026 impact report.");
+                          app.notify(reportScope === "donor" ? `Impact report sent to ${rd.name}` : `${AUDIENCE_SIZE[reportSeg]} personal impact reports sent`);
+                        }}
+                      >
+                        <Send size={14} /> {reportScope === "donor" ? "Send report" : `Send to ${AUDIENCE_SIZE[reportSeg]} donors`}
+                      </PrimaryButton>
+                      <SmallButton onClick={() => app.notify(`PDF ready: ${rd.name}, 2026 impact`)}><Download size={12} /> Download PDF</SmallButton>
+                    </div>
+                  </Panel>
+                ) : (
+                  <Panel title="Board report">
+                    <div className="flex flex-col gap-3">
+                      <p className="text-[0.78rem] text-ink-soft leading-snug">Q3 2026 for the Nov 12 board meeting. Figures update as gifts and outcomes come in.</p>
+                      <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Grants pipeline <Toggle on={withGrants} onChange={setWithGrants} label="Include grants pipeline" /></div>
+                      <div className="flex items-center justify-between gap-2 text-[0.78rem] text-ink-soft">Top donor names <Toggle on={withNames} onChange={setWithNames} label="Include top donor names" /></div>
+                      <PrimaryButton onClick={() => { setSentReports((l) => [{ id: nextId("s"), to: "Board of trustees", kind: "Board", date: TODAY }, ...l]); app.notify("Board report sent to 9 trustees"); }}><Send size={14} /> Send to board</PrimaryButton>
+                      <SmallButton onClick={() => app.notify("PDF ready: Board report, Q3 2026")}><Download size={12} /> Export PDF</SmallButton>
+                    </div>
+                  </Panel>
+                )}
+                <Panel title="Recently sent">
+                  <ul className={listClass}>
+                    {sentReports.slice(0, 5).map((s) => (
+                      <li key={s.id} className="py-1.5 text-[0.74rem]">
+                        <div className="text-ink truncate">{s.to}</div>
+                        <div className="text-[0.66rem] text-mist">{`${s.kind} report · ${fmtDate(s.date)}`}</div>
+                      </li>
+                    ))}
+                  </ul>
                 </Panel>
-              )}
-              <Panel title="Recently sent">
-                <ul className={listClass}>
-                  {sentReports.slice(0, 5).map((s) => (
-                    <li key={s.id} className="py-1.5 text-[0.74rem]">
-                      <div className="text-ink truncate">{s.to}</div>
-                      <div className="text-[0.66rem] text-mist">{`${s.kind} report · ${fmtDate(s.date)}`}</div>
-                    </li>
-                  ))}
-                </ul>
-              </Panel>
-            </div>
+              </div>
 
-            {reportMode === "donor" ? (
-              <div className="min-w-0">
-                {reportScope === "segment" && <div className="mb-2 text-[0.72rem] text-mist">{`Previewing for ${rd.name}. Each of the ${AUDIENCE_SIZE[reportSeg]} donors gets their own numbers.`}</div>}
-                <motion.article key={`${rd.id}-${withStory}-${withLetter}`} initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} className="bg-sheet border border-rule rounded-lg shadow-[0_8px_24px_-12px_rgba(16,24,40,0.18)] p-5 sm:p-6">
+              {reportMode === "donor" ? (
+                <div className="min-w-0">
+                  {reportScope === "segment" && <div className="mb-2 text-[0.72rem] text-mist">{`Previewing for ${rd.name}. Each of the ${AUDIENCE_SIZE[reportSeg]} donors gets their own numbers.`}</div>}
+                  <motion.article key={`${rd.id}-${withStory}-${withLetter}`} initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} className="bg-sheet border border-rule rounded-lg shadow-[0_8px_24px_-12px_rgba(16,24,40,0.18)] p-5 sm:p-6">
+                    <div className="flex items-center justify-between text-[0.66rem] text-mist">
+                      <span className="font-semibold text-gold">Bukas Palad Foundation</span>
+                      <span>Impact report · 2026 to date</span>
+                    </div>
+                    <ProtoHeading sub className="mt-3 text-[1.15rem] font-semibold text-ink leading-snug">{`${cap(greet(rd))}, here is what you made possible`}</ProtoHeading>
+                    <p className="text-[0.78rem] text-ink-soft mt-1">{`This year you gave ${peso(ytd(rd))} across ${rdFunds.length} ${rdFunds.length === 1 ? "fund" : "funds"}. Every peso is tracked to an outcome.`}</p>
+                    <div className={cn("mt-4 grid gap-2", rdOutcomes.length >= 3 ? "grid-cols-3" : "grid-cols-2")}>
+                      {rdOutcomes.map((o) => (
+                        <div key={o.label} className="rounded-md bg-gold-wash px-3 py-2.5">
+                          <div className="text-[1.25rem] font-semibold text-gold tabular-nums leading-tight">{o.value}</div>
+                          <div className="text-[0.68rem] text-ink-soft">{o.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4">
+                      <div className="text-[0.74rem] font-semibold text-ink mb-2">Where your gifts went</div>
+                      <ul className="flex flex-col gap-2">
+                        {rdFunds.map((f) => (
+                          <li key={f} className="text-[0.74rem]">
+                            <div className="flex justify-between mb-1"><span className="text-ink-soft">{f}</span><span className="font-mono text-ink">{peso(rd.funds[f] ?? 0)}</span></div>
+                            <Meter value={rd.funds[f] ?? 0} max={ytd(rd)} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="mt-4">
+                      <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Your recent gifts</div>
+                      <ul className="flex flex-col gap-1 text-[0.74rem]">
+                        {gifts.filter((x) => x.donorId === rd.id).slice(0, 4).map((x) => (
+                          <li key={x.id} className="flex justify-between gap-2"><span className="text-ink-soft">{`${fmtDate(x.date)} · ${x.fund}`}</span><span className="font-mono text-ink">{peso(x.amount)}</span></li>
+                        ))}
+                        {gifts.every((x) => x.donorId !== rd.id) && <li className="text-graphite">Gift history is attached as a statement.</li>}
+                      </ul>
+                    </div>
+                    {withStory && (
+                      <div className="mt-4 grid grid-cols-[6rem_minmax(0,1fr)] gap-3">
+                        <div className="h-20 rounded-md bg-raised text-graphite text-[0.62rem] flex items-center justify-center text-center px-1">{STORIES[rdTop].photo}</div>
+                        <div>
+                          <div className="text-[0.78rem] font-semibold text-ink">{STORIES[rdTop].title}</div>
+                          <p className="text-[0.74rem] text-ink-soft leading-snug mt-0.5">{STORIES[rdTop].text}</p>
+                        </div>
+                      </div>
+                    )}
+                    {withLetter && (
+                      <div className="mt-4 pt-3 border-t border-rule text-[0.76rem] text-ink-soft leading-relaxed">
+                        Thank you for standing with families in Tondo, Payatas, Baseco and Bicol this year. You made every number on this page happen.
+                        <div className="mt-2 text-ink font-medium">Carmela Santos</div>
+                        <div className="text-[0.7rem] text-mist">Development director, Bukas Palad Foundation</div>
+                      </div>
+                    )}
+                  </motion.article>
+                </div>
+              ) : (
+                <motion.article key={`board-${withGrants}-${withNames}`} initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} className="min-w-0 bg-sheet border border-rule rounded-lg shadow-[0_8px_24px_-12px_rgba(16,24,40,0.18)] p-5 sm:p-6">
                   <div className="flex items-center justify-between text-[0.66rem] text-mist">
                     <span className="font-semibold text-gold">Bukas Palad Foundation</span>
-                    <span>Impact report · 2026 to date</span>
+                    <span>Board report · Q3 2026</span>
                   </div>
-                  <h5 className="mt-3 text-[1.15rem] font-semibold text-ink leading-snug">{`${cap(greet(rd))}, here is what you made possible`}</h5>
-                  <p className="text-[0.78rem] text-ink-soft mt-1">{`This year you gave ${peso(ytd(rd))} across ${rdFunds.length} ${rdFunds.length === 1 ? "fund" : "funds"}. Every peso is tracked to an outcome.`}</p>
-                  <div className={cn("mt-4 grid gap-2", rdOutcomes.length >= 3 ? "grid-cols-3" : "grid-cols-2")}>
-                    {rdOutcomes.map((o) => (
-                      <div key={o.label} className="rounded-md bg-gold-wash px-3 py-2.5">
-                        <div className="text-[1.25rem] font-semibold text-gold tabular-nums leading-tight">{o.value}</div>
-                        <div className="text-[0.68rem] text-ink-soft">{o.label}</div>
+                  <ProtoHeading sub className="mt-3 text-[1.15rem] font-semibold text-ink">Giving and impact, January to October</ProtoHeading>
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      [pesoShort(raisedYtd), `Raised, +${growth}% vs 2025`],
+                      [`${retention}%`, `Donor retention, +${retention - RETENTION_2025} pts`],
+                      ["1,284", "Active donors"],
+                      ["612", "Monthly donors"],
+                    ].map(([v, l]) => (
+                      <div key={l} className="rounded-md bg-gold-wash px-3 py-2.5">
+                        <div className="text-[1.1rem] font-semibold text-gold tabular-nums leading-tight">{v}</div>
+                        <div className="text-[0.66rem] text-ink-soft">{l}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4">
-                    <div className="text-[0.74rem] font-semibold text-ink mb-2">Where your gifts went</div>
-                    <ul className="flex flex-col gap-2">
-                      {rdFunds.map((f) => (
-                        <li key={f} className="text-[0.74rem]">
-                          <div className="flex justify-between mb-1"><span className="text-ink-soft">{f}</span><span className="font-mono text-ink">{peso(rd.funds[f] ?? 0)}</span></div>
-                          <Meter value={rd.funds[f] ?? 0} max={ytd(rd)} />
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-[0.74rem] font-semibold text-ink mb-2">Raised by fund</div>
+                      <Bars height="h-24" format={pesoShort} data={[...programs.map((p) => ({ label: p.fund === "Disaster relief" ? "Relief" : p.fund, value: p.raised })), { label: "General", value: 1_820_000 }]} />
+                    </div>
+                    <div>
+                      <div className="text-[0.74rem] font-semibold text-ink mb-2">Outcomes against target</div>
+                      <ul className="flex flex-col gap-2.5">
+                        {programs.map((p) => (
+                          <li key={p.id} className="text-[0.72rem]">
+                            <div className="flex justify-between mb-1"><span className="text-ink-soft">{p.metric}</span><span className="text-ink tabular-nums">{`${programTotal(p).toLocaleString()} / ${p.target.toLocaleString()}`}</span></div>
+                            <Meter value={programTotal(p)} max={p.target} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Your recent gifts</div>
-                    <ul className="flex flex-col gap-1 text-[0.74rem]">
-                      {gifts.filter((x) => x.donorId === rd.id).slice(0, 4).map((x) => (
-                        <li key={x.id} className="flex justify-between gap-2"><span className="text-ink-soft">{`${fmtDate(x.date)} · ${x.fund}`}</span><span className="font-mono text-ink">{peso(x.amount)}</span></li>
-                      ))}
-                      {gifts.every((x) => x.donorId !== rd.id) && <li className="text-graphite">Gift history is attached as a statement.</li>}
-                    </ul>
-                  </div>
-                  {withStory && (
-                    <div className="mt-4 grid grid-cols-[6rem_minmax(0,1fr)] gap-3">
-                      <div className="h-20 rounded-md bg-raised text-graphite text-[0.62rem] flex items-center justify-center text-center px-1">{STORIES[rdTop].photo}</div>
-                      <div>
-                        <div className="text-[0.78rem] font-semibold text-ink">{STORIES[rdTop].title}</div>
-                        <p className="text-[0.74rem] text-ink-soft leading-snug mt-0.5">{STORIES[rdTop].text}</p>
-                      </div>
+                  {withGrants && (
+                    <div className="mt-4">
+                      <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Grants</div>
+                      <p className="text-[0.74rem] text-ink-soft leading-snug">
+                        {`${pesoShort(sum(grants.filter((x) => x.stage === "Awarded").map((x) => x.amount)))} awarded this year. ${pesoShort(sum(grants.filter((x) => ["Researching", "Drafting", "Submitted"].includes(x.stage)).map((x) => x.amount)))} in open asks across ${grants.filter((x) => ["Researching", "Drafting", "Submitted"].includes(x.stage)).length} funders.`}
+                      </p>
                     </div>
                   )}
-                  {withLetter && (
-                    <div className="mt-4 pt-3 border-t border-rule text-[0.76rem] text-ink-soft leading-relaxed">
-                      Thank you for standing with families in Tondo, Payatas, Baseco and Bicol this year. You made every number on this page happen.
-                      <div className="mt-2 text-ink font-medium">Carmela Santos</div>
-                      <div className="text-[0.7rem] text-mist">Development director, Bukas Palad Foundation</div>
+                  {withNames && (
+                    <div className="mt-4">
+                      <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Top donors, 2026</div>
+                      <ul className="flex flex-col gap-1 text-[0.74rem]">
+                        {[...donors].sort((a, b) => ytd(b) - ytd(a)).slice(0, 5).map((d) => (
+                          <li key={d.id} className="flex justify-between gap-2"><span className="text-ink-soft">{d.name}</span><span className="font-mono text-ink">{peso(ytd(d))}</span></li>
+                        ))}
+                      </ul>
                     </div>
                   )}
+                  <div className="mt-4 pt-3 border-t border-rule">
+                    <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Asks of the board</div>
+                    <ul className="flex flex-col gap-1 text-[0.74rem] text-ink-soft">
+                      <li>{`Introduce two corporate partners for Busog Pasko (${pesoShort((campaigns.find((c) => c.id === "c1")?.goal ?? 0) - (campaigns.find((c) => c.id === "c1")?.raised ?? 0))} to goal).`}</li>
+                      <li>Host a table at Gabi ng Pasasalamat on Nov 21.</li>
+                      <li>Approve the 2027 scholar cohort of 40.</li>
+                    </ul>
+                  </div>
                 </motion.article>
-              </div>
-            ) : (
-              <motion.article key={`board-${withGrants}-${withNames}`} initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} className="min-w-0 bg-sheet border border-rule rounded-lg shadow-[0_8px_24px_-12px_rgba(16,24,40,0.18)] p-5 sm:p-6">
-                <div className="flex items-center justify-between text-[0.66rem] text-mist">
-                  <span className="font-semibold text-gold">Bukas Palad Foundation</span>
-                  <span>Board report · Q3 2026</span>
-                </div>
-                <h5 className="mt-3 text-[1.15rem] font-semibold text-ink">Giving and impact, January to October</h5>
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    [pesoShort(raisedYtd), `Raised, +${growth}% vs 2025`],
-                    ["61%", "Donor retention, +7 pts"],
-                    ["1,284", "Active donors"],
-                    ["612", "Monthly donors"],
-                  ].map(([v, l]) => (
-                    <div key={l} className="rounded-md bg-gold-wash px-3 py-2.5">
-                      <div className="text-[1.1rem] font-semibold text-gold tabular-nums leading-tight">{v}</div>
-                      <div className="text-[0.66rem] text-ink-soft">{l}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-[0.74rem] font-semibold text-ink mb-2">Raised by fund</div>
-                    <Bars height="h-24" format={pesoShort} data={[...programs.map((p) => ({ label: p.fund === "Disaster relief" ? "Relief" : p.fund, value: p.raised })), { label: "General", value: 1_820_000 }]} />
-                  </div>
-                  <div>
-                    <div className="text-[0.74rem] font-semibold text-ink mb-2">Outcomes against target</div>
-                    <ul className="flex flex-col gap-2.5">
-                      {programs.map((p) => (
-                        <li key={p.id} className="text-[0.72rem]">
-                          <div className="flex justify-between mb-1"><span className="text-ink-soft">{p.metric}</span><span className="text-ink tabular-nums">{`${programTotal(p).toLocaleString()} / ${p.target.toLocaleString()}`}</span></div>
-                          <Meter value={programTotal(p)} max={p.target} />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                {withGrants && (
-                  <div className="mt-4">
-                    <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Grants</div>
-                    <p className="text-[0.74rem] text-ink-soft leading-snug">
-                      {`${pesoShort(sum(grants.filter((x) => x.stage === "Awarded").map((x) => x.amount)))} awarded this year. ${pesoShort(sum(grants.filter((x) => ["Researching", "Drafting", "Submitted"].includes(x.stage)).map((x) => x.amount)))} in open asks across ${grants.filter((x) => ["Researching", "Drafting", "Submitted"].includes(x.stage)).length} funders.`}
-                    </p>
-                  </div>
-                )}
-                {withNames && (
-                  <div className="mt-4">
-                    <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Top donors, 2026</div>
-                    <ul className="flex flex-col gap-1 text-[0.74rem]">
-                      {[...donors].sort((a, b) => ytd(b) - ytd(a)).slice(0, 5).map((d) => (
-                        <li key={d.id} className="flex justify-between gap-2"><span className="text-ink-soft">{d.name}</span><span className="font-mono text-ink">{peso(ytd(d))}</span></li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="mt-4 pt-3 border-t border-rule">
-                  <div className="text-[0.74rem] font-semibold text-ink mb-1.5">Asks of the board</div>
-                  <ul className="flex flex-col gap-1 text-[0.74rem] text-ink-soft">
-                    <li>{`Introduce two corporate partners for Busog Pasko (${pesoShort((campaigns.find((c) => c.id === "c1")?.goal ?? 0) - (campaigns.find((c) => c.id === "c1")?.raised ?? 0))} to goal).`}</li>
-                    <li>Host a table at Gabi ng Pasasalamat on Nov 21.</li>
-                    <li>Approve the 2027 scholar cohort of 40.</li>
-                  </ul>
-                </div>
-              </motion.article>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -1772,7 +1906,7 @@ export function DonorsPrototype() {
             rowKey={(x) => x.id}
             onRowClick={(x) => app.open("grant", x.id, x.funder)}
             columns={[
-              { key: "funder", label: "Funder", render: (x) => <span className="min-w-0"><span className="block text-ink truncate">{x.funder}</span><span className="block text-[0.66rem] text-mist truncate">{x.title}</span></span> },
+              { key: "funder", label: "Funder", render: (x) => <span className="min-w-0"><span className="block text-ink">{x.funder}</span><span className="block text-[0.66rem] text-mist">{x.title}</span></span> },
               { key: "fund", label: "Program", render: (x) => x.fund, hideOnMobile: true },
               { key: "amt", label: "Amount", align: "right", render: (x) => <span className="font-mono text-ink">{pesoShort(x.amount)}</span> },
               {
@@ -1911,7 +2045,7 @@ export function DonorsPrototype() {
             rowKey={(x) => x.id}
             onRowClick={(x) => app.open("email", x.id, x.subject)}
             columns={[
-              { key: "subj", label: "Email", render: (x) => <span className="min-w-0"><span className="block text-ink truncate">{x.subject}</span><span className="block text-[0.66rem] text-mist">{`${TEMPLATES[x.template].label} · ${x.audience} donors`}</span></span> },
+              { key: "subj", label: "Email", render: (x) => <span className="min-w-0"><span className="block text-ink">{x.subject}</span><span className="block text-[0.66rem] text-mist">{`${TEMPLATES[x.template].label} · ${x.audience} donors`}</span></span> },
               { key: "date", label: "Date", render: (x) => (x.status === "Scheduled" ? <Status tone="warn">{`Scheduled ${fmtDate(x.date)}`}</Status> : fmtDate(x.date)), hideOnMobile: true },
               { key: "rec", label: "Sent to", align: "right", render: (x) => x.recipients.toLocaleString(), hideOnMobile: true },
               { key: "open", label: "Opened", align: "right", render: (x) => (x.opened ? `${Math.round(x.opened * 100)}%` : "—") },
@@ -1935,7 +2069,7 @@ export function DonorsPrototype() {
                 </>
               ) : (
                 <>
-                  <SmallButton onClick={() => { loadTemplate(em.template, em.audience); setComm((c) => ({ ...c, subject: em.subject, body: em.body })); app.section("comms"); app.notify("Loaded into a new email"); }}>Use as template</SmallButton>
+                  <SmallButton onClick={() => { loadTemplate(em.template, em.audience); setComm((c) => ({ ...c, subject: em.subject, body: em.body })); app.section("comms"); app.notify("Loaded into a new email"); }}><span className="sm:hidden">Reuse</span><span className="hidden sm:inline">Use as template</span></SmallButton>
                   <SmallButton
                     disabled={resent.includes(em.id) || !em.opened}
                     onClick={() => {
@@ -1945,7 +2079,7 @@ export function DonorsPrototype() {
                       app.notify(`Resent to ${n.toLocaleString()} donors who didn't open`);
                     }}
                   >
-                    <Send size={11} /> Resend to non-openers
+                    <Send size={11} /> <span className="sm:hidden">Resend</span><span className="hidden sm:inline">Resend to non-openers</span>
                   </SmallButton>
                 </>
               )
