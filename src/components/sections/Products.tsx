@@ -31,6 +31,7 @@ const PROTOTYPES: Record<Product["id"], React.ComponentType> = {
   donors: dynamic(() => import("@/components/products/donors").then((m) => m.DonorsPrototype), { ssr: false, loading: PrototypeLoading }),
   erp: dynamic(() => import("@/components/products/erp").then((m) => m.ErpPrototype), { ssr: false, loading: PrototypeLoading }),
   store: dynamic(() => import("@/components/products/store").then((m) => m.StorePrototype), { ssr: false, loading: PrototypeLoading }),
+  sentiment: dynamic(() => import("@/components/products/sentiment").then((m) => m.SentimentPrototype), { ssr: false, loading: PrototypeLoading }),
 };
 
 const ProductPhone = dynamic(() => import("@/components/products/phones").then((m) => m.ProductPhone), { ssr: false });
@@ -267,7 +268,7 @@ export function Products() {
       <div className="max-w-[1240px] mx-auto">
         <div className="max-w-[40rem]">
           <RevealHeading text="Software built with excellence, priced for the mission." className="heading-section text-ink" />
-          <p className="mt-5 text-[1.1rem] leading-relaxed text-graphite">Nine apps, ready to run. Every demo below is live, and each opens full screen.</p>
+          <p className="mt-5 text-[1.1rem] leading-relaxed text-graphite">Ten apps, ready to run. Every demo below is live, and each opens full screen.</p>
         </div>
 
         {/* Suite switcher */}

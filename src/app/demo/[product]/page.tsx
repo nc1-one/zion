@@ -9,6 +9,7 @@ import { ErpPrototype } from "@/components/products/erp";
 import { ChurchHRISPrototype } from "@/components/products/hris";
 import { HubSpotPrototype } from "@/components/products/hubspot";
 import { AIPipelinePrototype } from "@/components/products/pipeline";
+import { SentimentPrototype } from "@/components/products/sentiment";
 import { SermonMakerPrototype } from "@/components/products/sermon";
 import { StorePrototype } from "@/components/products/store";
 import { PRODUCTS, type Product } from "@/lib/quotes";
@@ -24,6 +25,7 @@ const APPS: Record<Product["id"], React.ComponentType> = {
   donors: DonorsPrototype,
   erp: ErpPrototype,
   store: StorePrototype,
+  sentiment: SentimentPrototype,
 };
 
 export const dynamicParams = false;

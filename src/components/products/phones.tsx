@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Body, Button, Chips, Choice, Done, Header, Label, PhoneFrame, Stepper, TabBar } from "./phone-kit";
 import { DonorsPhone } from "./donors-phone";
+import { SentimentPhone } from "./sentiment-phone";
 import { StorePhone } from "./store-phone";
 import type { Product } from "@/lib/quotes";
 import { cn } from "@/lib/utils";
@@ -443,6 +444,7 @@ export const PHONES: Record<Product["id"], React.ComponentType> = {
   donors: DonorsPhone,
   erp: ErpPhone,
   store: StorePhone,
+  sentiment: SentimentPhone,
 };
 
 export function ProductPhone({ id, accent }: { id: Product["id"]; accent: string }) {

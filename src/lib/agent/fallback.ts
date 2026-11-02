@@ -4,6 +4,7 @@
 import type { AgentAction, AgentReply } from "./types";
 
 const PRODUCT_WORDS: [RegExp, string, string][] = [
+  [/\b(sentiment|social listening|social media monitor|brand monitor|reputation|opinion mining)/i, "sentiment", "Sentiment Analysis"],
   [/\b(shop|store|e-?commerce|sell online|merch|cart|checkout)/i, "store", "Online Store"],
   [/\b(donor|donation|fundrais|impact|grant)/i, "donors", "Donors & Impact"],
   [/\b(guest|visitor|follow[- ]?up|assimilat)/i, "pipeline", "AI Church Pipeline"],

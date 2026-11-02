@@ -15,7 +15,7 @@ export interface ProductModule {
 }
 
 export interface Product {
-  id: "church-os" | "pipeline" | "sermon" | "bible-study" | "hris" | "hubspot" | "donors" | "erp" | "store";
+  id: "church-os" | "pipeline" | "sermon" | "bible-study" | "hris" | "hubspot" | "donors" | "erp" | "store" | "sentiment";
   group: "church" | "org";
   name: string;
   hook: string; // the problem visitors recognise
@@ -263,6 +263,35 @@ export const PRODUCTS: Product[] = [
       ],
     },
     note: "Payment and courier fees are billed by the provider.",
+  },
+  {
+    id: "sentiment",
+    group: "org",
+    name: "Sentiment Analysis",
+    hook: "The complaint trends before you hear about it.",
+    integrations: ["Facebook", "Instagram", "X", "TikTok", "YouTube", "LinkedIn", "Reddit", "Google reviews", "Slack", "Google Workspace"],
+    platforms: "Web, alerts app on iOS and Android, API",
+    modules: [
+      { id: "listening", label: "Social and web listening, 24 languages", setup: 960, monthly: 0, included: true },
+      { id: "opinions", label: "Topics, opinions, and emotions", setup: 480, monthly: 15 },
+      { id: "alerts", label: "Crisis alerts and incidents", setup: 320, monthly: 15 },
+      { id: "content", label: "Content analyzer and batch files", setup: 320, monthly: 10 },
+      { id: "websites", label: "Website monitoring", setup: 240, monthly: 10 },
+      { id: "benchmarks", label: "Competitor benchmarks", setup: 320, monthly: 15 },
+      { id: "training", label: "Review queue and custom model", setup: 640, monthly: 25 },
+      { id: "reports", label: "Scheduled reports", setup: 160, monthly: 5 },
+      { id: "api", label: "API and webhooks", setup: 240, monthly: 15 },
+      { id: "app", label: "Alerts mobile app", setup: 960, monthly: 25 },
+    ],
+    tiers: {
+      label: "Mentions a month",
+      options: [
+        { id: "s", label: "Up to 25,000", monthly: 79, setupFactor: 1 },
+        { id: "m", label: "25,000 – 250,000", monthly: 199, setupFactor: 1.15 },
+        { id: "l", label: "Over 250,000", monthly: 449, setupFactor: 1.3 },
+      ],
+    },
+    note: "Social platform and news data fees are billed by the provider. Public posts only.",
   },
 ];
 
