@@ -121,4 +121,16 @@ export const BRANDS: Record<Product["id"], Omit<ProtoBrand, "accent">> = {
       </Tile>
     ),
   },
+  sentiment: {
+    shell: "brandbar",
+    barColor: "#2A0F36",
+    stats: "strip",
+    radius: "sharp",
+    mark: (
+      <svg viewBox="0 0 26 26" width="26" height="26" aria-hidden className="shrink-0">
+        <rect width="26" height="26" rx="7" fill="white" />
+        <path d="M5 14h3l2.2-6 3.6 11 2.4-7 1.2 2H21" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="stroke-gold" />
+      </svg>
+    ),
+  },
 };
